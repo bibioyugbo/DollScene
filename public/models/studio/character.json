@@ -1,0 +1,423 @@
+{
+  "version": 1,
+  "license": "CC0-1.0 (MakeHuman / MPFB system assets)",
+  "generator": "scripts/character/build_character.py",
+  "macros": {
+    "gender": 0.0,
+    "age": 0.5,
+    "muscle": 0.5,
+    "weight": 0.55,
+    "proportions": 0.75,
+    "height": 0.5,
+    "cupsize": 0.5,
+    "firmness": 0.55,
+    "race": {
+      "african": 1.0,
+      "asian": 0.0,
+      "caucasian": 0.0
+    }
+  },
+  "heightM": 1.6743689681788965,
+  "morphs": [
+    {
+      "id": "NoseWidth",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "NoseBridge",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "NoseTip",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "NoseLength",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Lips",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "LipWidth",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "CupidsBow",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Jaw",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Chin",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "ChinWidth",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Cheekbones",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Cheeks",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Forehead",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "EyeSize",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "EyeSpacing",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "EyeOpen",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Brows",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "BrowAngle",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "FaceFull",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "FaceLength",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Shoulders",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Bust",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "BustLift",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Waist",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Belly",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Hips",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Glutes",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Thighs",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Arms",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Softness",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Muscle",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    }
+  ],
+  "faceRect": [
+    0.6372490010261536,
+    0.007862999759614468,
+    0.9975150146484375,
+    0.8216339864730835
+  ],
+  "masks": {
+    "faceA": [
+      "lips",
+      "linerUpper",
+      "eyelid",
+      "blush"
+    ],
+    "faceB": [
+      "contour",
+      "highlight",
+      "underEye",
+      "browFill"
+    ],
+    "faceC": [
+      "face",
+      "lipLiner",
+      "scalpHair",
+      "linerLower"
+    ],
+    "body": [
+      "nails"
+    ]
+  },
+  "eyes": [
+    "brown",
+    "brownlight",
+    "green",
+    "grey",
+    "bluegreen"
+  ],
+  "brows": [
+    "eyebrow001",
+    "eyebrow006",
+    "eyebrow010"
+  ],
+  "lashes": [
+    "eyelashes01",
+    "eyelashes02",
+    "eyelashes03"
+  ],
+  "hair": [
+    {
+      "id": "afro01",
+      "name": "Afro",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos"
+      ]
+    },
+    {
+      "id": "short02",
+      "name": "Short natural",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "EyeSpacing_Pos",
+        "EyeOpen_Neg",
+        "Brows_Neg",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "BrowAngle_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Muscle_Neg"
+      ]
+    },
+    {
+      "id": "bob02",
+      "name": "Silk-press bob",
+      "morphs": [
+        "NoseWidth_Neg",
+        "NoseWidth_Pos",
+        "NoseBridge_Neg",
+        "NoseBridge_Pos",
+        "NoseLength_Neg",
+        "NoseLength_Pos",
+        "LipWidth_Neg",
+        "LipWidth_Pos",
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Chin_Neg",
+        "Chin_Pos",
+        "ChinWidth_Neg",
+        "ChinWidth_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "EyeSize_Neg",
+        "EyeSize_Pos",
+        "EyeSpacing_Neg",
+        "EyeSpacing_Pos",
+        "EyeOpen_Neg",
+        "EyeOpen_Pos",
+        "Brows_Neg",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "BrowAngle_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Softness_Neg",
+        "Muscle_Neg",
+        "Muscle_Pos"
+      ]
+    },
+    {
+      "id": "long01",
+      "name": "Long straight wig",
+      "morphs": [
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Softness_Neg",
+        "Softness_Pos",
+        "Muscle_Neg",
+        "Muscle_Pos"
+      ]
+    },
+    {
+      "id": "ponytail01",
+      "name": "Sleek ponytail",
+      "morphs": [
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Muscle_Neg",
+        "Muscle_Pos"
+      ]
+    },
+    {
+      "id": "braid01",
+      "name": "Single braid",
+      "morphs": [
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Softness_Neg",
+        "Softness_Pos",
+        "Muscle_Neg",
+        "Muscle_Pos"
+      ]
+    }
+  ],
+  "outfits": [
+    {
+      "id": "female_sportsuit01",
+      "name": "Studio set",
+      "hideMask": true
+    },
+    {
+      "id": "female_casualsuit01",
+      "name": "Weekend casual",
+      "hideMask": true
+    },
+    {
+      "id": "female_casualsuit02",
+      "name": "Denim day",
+      "hideMask": true
+    },
+    {
+      "id": "female_elegantsuit01",
+      "name": "Evening",
+      "hideMask": true
+    }
+  ],
+  "shoes": [
+    {
+      "id": "shoes01",
+      "name": "Sneakers",
+      "hideMask": true
+    },
+    {
+      "id": "shoes03",
+      "name": "Flats",
+      "hideMask": true
+    },
+    {
+      "id": "shoes06",
+      "name": "Heels",
+      "hideMask": true
+    }
+  ]
+}

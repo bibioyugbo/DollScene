@@ -194,5 +194,17 @@ service cloud.firestore {
     match /reports/{id} {
       allow read, write: if false;
     }
+
+    // Lagos Life studio (functions/src/vatar.ts): players are known only by a verified
+    // Vatar session, so these are server-only.
+    match /vatarPlayers/{id} {
+      allow read, write: if false;
+    }
+    match /vatarPurchases/{id} {
+      allow read, write: if false;
+    }
+    match /vatarWebhookEvents/{id} {
+      allow read, write: if false;
+    }
   }
 }
