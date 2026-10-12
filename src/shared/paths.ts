@@ -1,0 +1,46 @@
+/** Every Firestore path in one place. Uids never contain "_". */
+export const pairId = (a: string, b: string) => (a < b ? `${a}_${b}` : `${b}_${a}`)
+
+export const P = {
+  user: (uid: string) => `users/${uid}`,
+  doll: (uid: string) => `dolls/${uid}`,
+  publicDoll: (uid: string) => `publicDolls/${uid}`,
+  progress: (uid: string) => `playerProgress/${uid}`,
+  inventory: (uid: string) => `inventory/${uid}`,
+  outfits: (uid: string) => `outfits/${uid}`,
+  apartment: (uid: string) => `apartments/${uid}`,
+  friendList: (uid: string) => `friendLists/${uid}`,
+  friendRequest: (from: string, to: string) => `friendRequests/${from}_${to}`,
+  friendship: (a: string, b: string) => `friendships/${pairId(a, b)}`,
+  block: (blocker: string, blocked: string) => `blocks/${blocker}_${blocked}`,
+  follow: (follower: string, followee: string) => `follows/${follower}_${followee}`,
+  conversation: (id: string) => `conversations/${id}`,
+  messages: (cid: string) => `conversations/${cid}/messages`,
+  message: (cid: string, mid: string) => `conversations/${cid}/messages/${mid}`,
+  post: (id: string) => `posts/${id}`,
+  comments: (postId: string) => `posts/${postId}/comments`,
+  comment: (postId: string, id: string) => `posts/${postId}/comments/${id}`,
+  like: (postId: string, uid: string) => `posts/${postId}/likes/${uid}`,
+  notifications: (uid: string) => `notifications/${uid}/items`,
+  notification: (uid: string, id: string) => `notifications/${uid}/items/${id}`,
+  report: (id: string) => `reports/${id}`,
+  transaction: (id: string) => `transactions/${id}`,
+  username: (u: string) => `usernames/${u}`,
+  outing: (id: string) => `outings/${id}`,
+  challengeEntry: (challengeKey: string, uid: string) => `challengeEntries/${challengeKey.replace(/:/g, '~')}_${uid}`,
+  challengeVote: (entryId: string, uid: string) => `challengeVotes/${entryId}__${uid}`,
+} as const
+
+export const C = {
+  publicDolls: 'publicDolls',
+  friendRequests: 'friendRequests',
+  friendships: 'friendships',
+  blocks: 'blocks',
+  follows: 'follows',
+  conversations: 'conversations',
+  posts: 'posts',
+  transactions: 'transactions',
+  challengeEntries: 'challengeEntries',
+  challengeVotes: 'challengeVotes',
+  outings: 'outings',
+} as const

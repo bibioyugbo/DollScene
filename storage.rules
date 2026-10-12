@@ -1,0 +1,39 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function member(cid) {
+      return signedIn()
+        && request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(cid)).data.members;
+    }
+    function image(maxMb) {
+      return request.resource.size < maxMb * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+    }
+
+    // Portraits feed globe bubbles and cards, which guests can see.
+    match /portraits/{uid}/{file} {
+      allow read: if true;
+      allow write: if signedIn() && request.auth.uid == uid && image(1);
+    }
+
+    match /posts/{uid}/{file} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid && image(3);
+    }
+
+    // Retired: voice notes and chat photos. Messaging is text-only, so no new
+    // uploads are accepted. Existing files stay readable to conversation members
+    // until a data-retention decision is made (nothing is deleted automatically).
+    match /voice/{cid}/{file} {
+      allow read: if member(cid);
+      allow write: if false;
+    }
+    match /chat/{cid}/{file} {
+      allow read: if member(cid);
+      allow write: if false;
+    }
+  }
+}

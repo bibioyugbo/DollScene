@@ -1,0 +1,344 @@
+[
+  {
+"id": "meji-meji",
+"name": "Deji Deji",
+"placeholderName": "Deji Deji",
+"region": "nigeria",
+"tagline": "Edgy cuts: leather, chains, combat boots.",
+"licensedPending": false,
+"accent": "#FF3D8B"
+},
+  {
+"id": "bolapsd",
+"name": "Tolapsd",
+"placeholderName": "Tolapsd",
+"region": "nigeria",
+"tagline": "Lagos youth culture: tracksuits, polos, beanies and skull caps.",
+"licensedPending": false,
+"accent": "#A86BFF"
+},
+  {
+"id": "j-bottoms",
+"name": "B Bottoms",
+"placeholderName": "B Bottoms",
+"region": "nigeria",
+"tagline": "Body-inclusive jumpsuits, sexy sets and NAIJA merch.",
+"licensedPending": false,
+"accent": "#FFC24D"
+},
+  {
+"id": "yati",
+"name": "Yati",
+"placeholderName": "Yàtọ̀ Studio",
+"region": "nigeria",
+"tagline": "Minimal lines, loud presence.",
+"licensedPending": true,
+"accent": "#7CF0CF"
+},
+  {
+"id": "ankara-house",
+"name": "Ankara House",
+"placeholderName": "Ankara House",
+"region": "nigeria",
+"tagline": "Wax print, every day.",
+"licensedPending": false,
+"accent": "#FF6B2C"
+},
+  {
+"id": "aso-oke-atelier",
+"name": "Aso-Oke Atelier",
+"placeholderName": "Aso-Oke Atelier",
+"region": "nigeria",
+"tagline": "Hand-loomed ceremony.",
+"licensedPending": false,
+"accent": "#C9A227"
+},
+  {
+"id": "adire-indigo",
+"name": "Adire Indigo Co.",
+"placeholderName": "Adire Indigo Co.",
+"region": "nigeria",
+"tagline": "Abeokuta blues, modern cuts.",
+"licensedPending": false,
+"accent": "#2B4BAA"
+},
+  {
+"id": "gele-couture",
+"name": "Gele Couture",
+"placeholderName": "Gele Couture",
+"region": "nigeria",
+"tagline": "Crowns for every owambe.",
+"licensedPending": false,
+"accent": "#E0457B"
+},
+  {
+"id": "lekki-street",
+"name": "Lekki Street",
+"placeholderName": "Lekki Street",
+"region": "nigeria",
+"tagline": "Island streetwear.",
+"licensedPending": false,
+"accent": "#00B37E"
+},
+  {
+"id": "yaba-youth",
+"name": "Yaba Youth",
+"placeholderName": "Yaba Youth",
+"region": "nigeria",
+"tagline": "Mainland energy, tech-bro fits.",
+"licensedPending": false,
+"accent": "#3D7BFF"
+},
+  {
+"id": "eko-thread",
+"name": "Eko Thread",
+"placeholderName": "Eko Thread",
+"region": "nigeria",
+"tagline": "Agbada to office.",
+"licensedPending": false,
+"accent": "#8C5A3C"
+},
+  {
+"id": "owambe-gold",
+"name": "Owambe Gold",
+"placeholderName": "Owambe Gold",
+"region": "nigeria",
+"tagline": "Jewellery that spends money for you.",
+"licensedPending": false,
+"accent": "#FFC24D"
+},
+  {
+"id": "coral-and-co",
+"name": "Coral & Co.",
+"placeholderName": "Coral & Co.",
+"region": "nigeria",
+"tagline": "Coral, beads and heirlooms.",
+"licensedPending": false,
+"accent": "#E8505B"
+},
+  {
+"id": "naija-glow",
+"name": "Naija Glow",
+"placeholderName": "Naija Glow",
+"region": "nigeria",
+"tagline": "Shades made for melanin.",
+"licensedPending": false,
+"accent": "#B5651D"
+},
+  {
+"id": "crown-and-kinks",
+"name": "Crown & Kinks",
+"placeholderName": "Crown & Kinks",
+"region": "nigeria",
+"tagline": "Hair jewellery and wraps.",
+"licensedPending": false,
+"accent": "#6B3E26"
+},
+  {
+"id": "lagos-living",
+"name": "Lagos Living",
+"placeholderName": "Lagos Living",
+"region": "nigeria",
+"tagline": "Ikoyi calm for any room.",
+"licensedPending": false,
+"accent": "#00A88F"
+},
+  {
+"id": "ile-ayo",
+"name": "Ilé Ayọ̀ Home",
+"placeholderName": "Ilé Ayọ̀ Home",
+"region": "nigeria",
+"tagline": "A house of joy.",
+"licensedPending": false,
+"accent": "#F28C28"
+},
+  {
+"id": "brooklyn-block",
+"name": "Brooklyn Block",
+"placeholderName": "Brooklyn Block",
+"region": "america",
+"tagline": "Streetwear from the stoop.",
+"licensedPending": false,
+"accent": "#2B2B2B"
+},
+  {
+"id": "hollis-ave",
+"name": "Hollis Ave Denim",
+"placeholderName": "Hollis Ave Denim",
+"region": "america",
+"tagline": "Denim with a backbeat.",
+"licensedPending": false,
+"accent": "#3E5C8A"
+},
+  {
+"id": "mercer-luxe",
+"name": "Mercer Luxe",
+"placeholderName": "Mercer Luxe",
+"region": "america",
+"tagline": "Downtown luxury.",
+"licensedPending": false,
+"accent": "#111111"
+},
+  {
+"id": "y2k-mall",
+"name": "Y2K Mall",
+"placeholderName": "Y2K Mall",
+"region": "america",
+"tagline": "Butterfly clips forever.",
+"licensedPending": false,
+"accent": "#FF8FD8"
+},
+  {
+"id": "courtside",
+"name": "Courtside Athletic",
+"placeholderName": "Courtside Athletic",
+"region": "america",
+"tagline": "Built for the bleachers.",
+"licensedPending": false,
+"accent": "#FF5A1F"
+},
+  {
+"id": "sunset-swim",
+"name": "Sunset Blvd Swim",
+"placeholderName": "Sunset Blvd Swim",
+"region": "america",
+"tagline": "Poolside in LA.",
+"licensedPending": false,
+"accent": "#FF9E80"
+},
+  {
+"id": "peach-beauty",
+"name": "Peach State Beauty",
+"placeholderName": "Peach State Beauty",
+"region": "america",
+"tagline": "Atlanta glam.",
+"licensedPending": false,
+"accent": "#FFB07A"
+},
+  {
+"id": "loft-home",
+"name": "Brooklyn Loft Home",
+"placeholderName": "Brooklyn Loft Home",
+"region": "america",
+"tagline": "Exposed brick energy.",
+"licensedPending": false,
+"accent": "#9C4A2F"
+},
+  {
+"id": "maison-lumiere",
+"name": "Maison Lumière",
+"placeholderName": "Maison Lumière",
+"region": "france",
+"tagline": "Couture after dark.",
+"licensedPending": false,
+"accent": "#D4AF37"
+},
+  {
+"id": "rive-gauche",
+"name": "Rive Gauche Prêt",
+"placeholderName": "Rive Gauche Prêt",
+"region": "france",
+"tagline": "Left bank ready-to-wear.",
+"licensedPending": false,
+"accent": "#1C2E4A"
+},
+  {
+"id": "atelier-marais",
+"name": "Atelier Marais",
+"placeholderName": "Atelier Marais",
+"region": "france",
+"tagline": "Bags and small leather goods.",
+"licensedPending": false,
+"accent": "#7A1E3A"
+},
+  {
+"id": "cote-bleue",
+"name": "Côte Bleue",
+"placeholderName": "Côte Bleue",
+"region": "france",
+"tagline": "Riviera eyewear and swim.",
+"licensedPending": false,
+"accent": "#3AA0D8"
+},
+  {
+"id": "maison-lune",
+"name": "Maison Lune",
+"placeholderName": "Maison Lune",
+"region": "france",
+"tagline": "Parisian apartment objects.",
+"licensedPending": false,
+"accent": "#B8A1D9"
+},
+  {
+"id": "second-life",
+"name": "Second Life Thrift",
+"placeholderName": "Second Life Thrift",
+"region": "thrift",
+"tagline": "Pre-loved, re-loved.",
+"licensedPending": false,
+"accent": "#8DA35B"
+},
+  {
+"id": "vintage-vault",
+"name": "Vintage Vault",
+"placeholderName": "Vintage Vault",
+"region": "thrift",
+"tagline": "Archive finds.",
+"licensedPending": false,
+"accent": "#A67C52"
+},
+  {
+"id": "dollcare-basics",
+"name": "DollScene Basics",
+"placeholderName": "DollScene Basics",
+"region": "global",
+"tagline": "The essentials.",
+"licensedPending": false,
+"accent": "#FF3D8B"
+},
+  {
+"id": "noir-lagos",
+"name": "Noir Lagos",
+"placeholderName": "Noir Lagos",
+"region": "nigeria",
+"tagline": "Goth, alt and black lace after dark.",
+"licensedPending": false,
+"accent": "#2B2B2B"
+},
+  {
+"id": "afterhours-eko",
+"name": "Afterhours Eko",
+"placeholderName": "Afterhours Eko",
+"region": "nigeria",
+"tagline": "Island nightlife, sequins and heels.",
+"licensedPending": false,
+"accent": "#FF2E88"
+},
+  {
+"id": "track-club",
+"name": "Track Club Lagos",
+"placeholderName": "Track Club Lagos",
+"region": "nigeria",
+"tagline": "Tracksuits, denim sets, graphic tees.",
+"licensedPending": false,
+"accent": "#C8FF3D"
+},
+  {
+"id": "sugar-rush",
+"name": "Sugar Rush",
+"placeholderName": "Sugar Rush",
+"region": "america",
+"tagline": "Kawaii with a bite.",
+"licensedPending": false,
+"accent": "#FF8FD8"
+},
+  {
+"id": "bend-down-select",
+"name": "Bend Down Select",
+"placeholderName": "Bend Down Select",
+"region": "thrift",
+"tagline": "Yaba market finds. Bend down, select, slay.",
+"licensedPending": false,
+"accent": "#9A9184"
+}
+]

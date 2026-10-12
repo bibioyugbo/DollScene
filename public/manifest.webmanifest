@@ -1,0 +1,9 @@
+{
+  "name": "DollScene",
+  "short_name": "DollScene",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0E0B10",
+  "theme_color": "#FF2E88",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

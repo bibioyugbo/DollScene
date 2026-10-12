@@ -1,0 +1,198 @@
+rules_version = '2';
+
+// DollScene security model:
+//  - Money, inventory, careers, apartments, friendships, follows, posts and
+//    notifications are written ONLY by Cloud Functions (admin SDK bypasses rules).
+//  - Clients write directly only where speed matters: chat messages, receipts,
+//    reactions, typing, presence and marking notifications read.
+//  - Private chats are readable only by conversation members. Messaging is text-only.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isUser(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function onlyChanged(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+    function blocked(a, b) {
+      return exists(/databases/$(database)/documents/blocks/$(a + '_' + b))
+        || exists(/databases/$(database)/documents/blocks/$(b + '_' + a));
+    }
+
+    match /users/{uid} {
+      allow read: if isUser(uid);
+      allow update: if isUser(uid) && onlyChanged(['pushTokens']);
+      allow create, delete: if false;
+    }
+
+    // Full appearance: signed-in players can render each other's dolls.
+    match /dolls/{uid} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // Globe pins and cards are public (city-level location only).
+    match /publicDolls/{uid} {
+      allow read: if true;
+      allow update: if isUser(uid)
+        && onlyChanged(['online', 'lastActive'])
+        && request.resource.data.online is bool
+        && request.resource.data.lastActive is number;
+      allow create, delete: if false;
+    }
+
+    match /playerProgress/{uid} {
+      allow read: if isUser(uid);
+      allow write: if false;
+    }
+    match /inventory/{uid} {
+      allow read: if isUser(uid);
+      allow write: if false;
+    }
+    match /outfits/{uid} {
+      allow read: if isUser(uid);
+      allow write: if false;
+    }
+    // Visitors can see a crib live.
+    match /apartments/{uid} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /friendLists/{uid} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /friendRequests/{id} {
+      allow read: if signedIn() && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow write: if false;
+    }
+    match /friendships/{id} {
+      allow read: if signedIn() && request.auth.uid in resource.data.members;
+      allow write: if false;
+    }
+    match /blocks/{id} {
+      allow read: if signedIn() && resource.data.blocker == request.auth.uid;
+      allow write: if false;
+    }
+    match /follows/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /conversations/{cid} {
+      function member() {
+        return signedIn() && request.auth.uid in resource.data.members;
+      }
+      allow read: if member();
+      // Senders update the preview, unread counters and typing; nothing else.
+      allow update: if member()
+        && onlyChanged(['lastMessage', 'updatedAt', 'unread', 'typing'])
+        && request.resource.data.members == resource.data.members
+        && request.resource.data.status == resource.data.status;
+      allow create, delete: if false;
+
+      match /messages/{mid} {
+        function conv() {
+          return get(/databases/$(database)/documents/conversations/$(cid)).data;
+        }
+        function isMember() {
+          return signedIn() && request.auth.uid in conv().members;
+        }
+        function other() {
+          return conv().members[0] == request.auth.uid ? conv().members[1] : conv().members[0];
+        }
+        function validNew() {
+          let m = request.resource.data;
+          return m.id == mid
+            && m.conversationId == cid
+            && m.senderId == request.auth.uid
+            // Text-only messaging (plus outfit "look" cards). Voice notes and photos are retired.
+            && m.type in ['text', 'look']
+            && m.voice == null
+            && m.image == null
+            && m.text is string && m.text.size() <= 2000
+            && m.deletedForAll == false
+            && m.reactions.size() == 0
+            && m.readBy.size() == 0
+            && m.deliveredTo.size() == 0
+            && m.createdAt is number;
+        }
+
+        allow read: if isMember();
+        allow create: if isMember()
+          && validNew()
+          && (conv().status == 'active' || conv().requestedBy == request.auth.uid)
+          && !blocked(request.auth.uid, other());
+        allow update: if isMember() && (
+          // Recipient receipts.
+          (resource.data.senderId != request.auth.uid
+            && onlyChanged(['deliveredTo', 'readBy'])
+            && request.resource.data.deliveredTo.removeAll(resource.data.deliveredTo).hasOnly([request.auth.uid])
+            && request.resource.data.readBy.removeAll(resource.data.readBy).hasOnly([request.auth.uid]))
+          // Anyone in the chat can set or clear their own reaction.
+          || (onlyChanged(['reactions'])
+            && request.resource.data.reactions.diff(resource.data.reactions).affectedKeys().hasOnly([request.auth.uid]))
+          // Delete for everyone (sender only).
+          || (resource.data.senderId == request.auth.uid
+            && onlyChanged(['deletedForAll', 'text', 'voice', 'look', 'image'])
+            && request.resource.data.deletedForAll == true)
+        );
+        allow delete: if false;
+      }
+    }
+
+    match /posts/{pid} {
+      allow read: if signedIn();
+      allow write: if false;
+      match /comments/{id} {
+        allow read: if signedIn();
+        allow write: if false;
+      }
+      match /likes/{uid} {
+        allow read: if signedIn();
+        allow write: if false;
+      }
+    }
+
+    match /notifications/{uid}/items/{id} {
+      allow read: if isUser(uid);
+      allow update: if isUser(uid) && onlyChanged(['read']);
+      allow create, delete: if false;
+    }
+
+    // Date invites: only the two people involved can see them; server-written.
+    match /outings/{id} {
+      allow read: if signedIn() && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow write: if false;
+    }
+
+    // Username -> uid index. Public so profiles can be found; server-written.
+    match /usernames/{name} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Fashion challenges: entries and votes are written only by Cloud Functions.
+    match /challengeEntries/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /challengeVotes/{id} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /transactions/{id} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+
+    // Moderation queue: admin only.
+    match /reports/{id} {
+      allow read, write: if false;
+    }
+  }
+}

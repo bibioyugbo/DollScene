@@ -1,0 +1,509 @@
+@import "tailwindcss";
+
+/* Two-column layout: iPad landscape / desktop, or a short phone in landscape. */
+@custom-variant split {
+  @media (min-width: 64rem) {
+    @slot;
+  }
+  @media (orientation: landscape) and (max-height: 31.2rem) {
+    @slot;
+  }
+}
+/* Phone landscape only (height under 500px). */
+@custom-variant short (@media (orientation: landscape) and (max-height: 31.2rem));
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Spicy Sale: the game-title face (Play button, wordmark). It's a licensed font,
+ * so drop your copy into public/fonts/ as SpicySale.woff2 (or .otf / .ttf).
+ * Until then, Bagel Fat One stands in.
+ */
+@font-face {
+  font-family: "Spicy Sale";
+  src:
+    local("Spicy Sale"),
+    local("SpicySale-Regular"),
+    url("/fonts/SpicySale.woff2") format("woff2"),
+    url("/fonts/SpicySale.otf") format("opentype"),
+    url("/fonts/SpicySale.ttf") format("truetype");
+  font-display: swap;
+}
+
+@theme {
+  /* iPad portrait starts at 744px */
+  --breakpoint-md: 46.5rem;
+
+  /* Type: Outfit ExtraBold for display, Space Grotesk as the alternate display, DM Sans for UI and body. */
+  --font-display: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-alt: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-spicy: "Spicy Sale", "Bagel Fat One", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  /* Brand face: the wordmark, tagline and Play button. */
+  --font-brand: "Nunito", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Type scale */
+  --text-display: clamp(2.6rem, 6.2vw, 5.4rem);
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.035em;
+
+  --radius-sheet: 24px;
+
+  /* Elevation */
+  --shadow-soft: 0 1px 2px rgb(14 11 16 / 0.06), 0 8px 24px rgb(14 11 16 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(14 11 16 / 0.08), 0 18px 48px rgb(14 11 16 / 0.18);
+  --shadow-glow: 0 0 0 1px rgb(255 46 136 / 0.25), 0 10px 40px rgb(255 46 136 / 0.35);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-card: var(--card);
+  --color-gold: var(--gold);
+  --color-chrome: var(--chrome);
+  --color-blush: var(--blush);
+  --color-ink: var(--ink);
+  --color-bone: var(--bone);
+  --color-electric: var(--electric);
+  --color-acid: var(--acid);
+}
+
+/* Brand palette: bone white, blush pink, ink black, silver chrome, electric pink (+ acid lime). */
+:root {
+  --bone: #f4f0ea;
+  --blush: #f5d4da;
+  --ink: #0e0b10;
+  --chrome: #c7cad1;
+  --electric: #ff2e88;
+  --acid: #c8ff3d;
+  --currency: #e9c46a;
+}
+
+/* Light theme (default) */
+:root {
+  color-scheme: light;
+  --background: var(--bone);
+  --foreground: var(--ink);
+  --primary: var(--electric);
+  --primary-foreground: var(--ink);
+  --secondary: #b0136a;
+  --secondary-foreground: #ffffff;
+  --muted: #ece3df;
+  --muted-foreground: #5c535e;
+  --border: #e0d4d0;
+  --accent: var(--acid);
+  --accent-foreground: var(--ink);
+  --card: #fffdfb;
+  --gold: var(--currency);
+  --logo-hair: var(--ink);
+}
+
+/* Dark theme: explicit choice */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: var(--ink);
+  --foreground: var(--bone);
+  --secondary: #ff8cc4;
+  --secondary-foreground: var(--ink);
+  --muted: #1c171e;
+  --muted-foreground: #b3a9b5;
+  --border: #2d2530;
+  --card: #151117;
+  --logo-hair: #3a3340;
+}
+
+/* Scoped dark: the landing world is always night, whatever the app theme. */
+.force-dark {
+  color-scheme: dark;
+  --background: var(--ink);
+  --foreground: var(--bone);
+  --secondary: #ff8cc4;
+  --secondary-foreground: var(--ink);
+  --muted: #1c171e;
+  --muted-foreground: #b3a9b5;
+  --border: #2d2530;
+  --card: #151117;
+  --logo-hair: #3a3340;
+}
+
+/* Dark theme: system preference, unless light was chosen */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: var(--ink);
+    --foreground: var(--bone);
+    --secondary: #ff8cc4;
+    --secondary-foreground: var(--ink);
+    --muted: #1c171e;
+    --muted-foreground: #b3a9b5;
+    --border: #2d2530;
+    --card: #151117;
+    --logo-hair: #3a3340;
+  }
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    overscroll-behavior: none;
+  }
+
+  button,
+  a,
+  input {
+    touch-action: manipulation;
+  }
+
+  select,
+  textarea {
+    color: inherit;
+    font: inherit;
+  }
+
+  dialog {
+    color: var(--foreground);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--secondary);
+    outline-offset: 2px;
+  }
+
+  /* Range sliders: large thumb for touch */
+  input[type="range"] {
+    appearance: none;
+    width: 100%;
+    height: 44px;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--muted);
+  }
+  input[type="range"]::-moz-range-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--muted);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    margin-top: -10px;
+    border-radius: 999px;
+    background: var(--primary);
+    border: 3px solid var(--card);
+    box-shadow: 0 1px 4px rgb(30 11 38 / 0.25);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--primary);
+    border: 3px solid var(--card);
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@utility pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    filter: blur(12px) saturate(0.4);
+    transform: scale(1.06);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+.prose-legal h2 {
+  margin-top: 1rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.prose-legal p {
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+@keyframes loader-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes loader-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Scoped light: the landing is always the pink daytime world, whatever the app theme. */
+.force-light {
+  color-scheme: light;
+  --background: var(--bone);
+  --foreground: var(--ink);
+  --secondary: #b0136a;
+  --secondary-foreground: #ffffff;
+  --muted: #ece3df;
+  --muted-foreground: #5c535e;
+  --border: #e0d4d0;
+  --card: #fffdfb;
+  --logo-hair: var(--ink);
+}
+
+/* Soft, minimal floral wallpaper for the landing. */
+.bg-floral {
+  background-color: #fff3f8;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22160%22%20height%3D%22160%22%20viewBox%3D%220%200%20160%20160%22%3E%3Ccircle%20cx%3D%2240.9%22%20cy%3D%2239.2%22%20r%3D%226.0%22%20fill%3D%22%23FFD3E5%22/%3E%3Ccircle%20cx%3D%2235.0%22%20cy%3D%2244.9%22%20r%3D%226.0%22%20fill%3D%22%23FFD3E5%22/%3E%3Ccircle%20cx%3D%2227.7%22%20cy%3D%2241.1%22%20r%3D%226.0%22%20fill%3D%22%23FFD3E5%22/%3E%3Ccircle%20cx%3D%2229.1%22%20cy%3D%2233.0%22%20r%3D%226.0%22%20fill%3D%22%23FFD3E5%22/%3E%3Ccircle%20cx%3D%2237.3%22%20cy%3D%2231.8%22%20r%3D%226.0%22%20fill%3D%22%23FFD3E5%22/%3E%3Ccircle%20cx%3D%2234%22%20cy%3D%2238%22%20r%3D%224.2%22%20fill%3D%22%23FFF6FA%22/%3E%3Ccircle%20cx%3D%22124.9%22%20cy%3D%22113.8%22%20r%3D%227.6%22%20fill%3D%22%23FFCADF%22/%3E%3Ccircle%20cx%3D%22114.6%22%20cy%3D%22116.3%22%20r%3D%227.6%22%20fill%3D%22%23FFCADF%22/%3E%3Ccircle%20cx%3D%22109.0%22%20cy%3D%22107.4%22%20r%3D%227.6%22%20fill%3D%22%23FFCADF%22/%3E%3Ccircle%20cx%3D%22115.8%22%20cy%3D%2299.3%22%20r%3D%227.6%22%20fill%3D%22%23FFCADF%22/%3E%3Ccircle%20cx%3D%22125.6%22%20cy%3D%22103.2%22%20r%3D%227.6%22%20fill%3D%22%23FFCADF%22/%3E%3Ccircle%20cx%3D%22118%22%20cy%3D%22108%22%20r%3D%225.4%22%20fill%3D%22%23FFF6FA%22/%3E%3Ccircle%20cx%3D%22114.0%22%20cy%3D%2230.0%22%20r%3D%223.4%22%20fill%3D%22%23FFDDEB%22/%3E%3Ccircle%20cx%3D%22111.2%22%20cy%3D%2233.8%22%20r%3D%223.4%22%20fill%3D%22%23FFDDEB%22/%3E%3Ccircle%20cx%3D%22106.8%22%20cy%3D%2232.4%22%20r%3D%223.4%22%20fill%3D%22%23FFDDEB%22/%3E%3Ccircle%20cx%3D%22106.8%22%20cy%3D%2227.6%22%20r%3D%223.4%22%20fill%3D%22%23FFDDEB%22/%3E%3Ccircle%20cx%3D%22111.2%22%20cy%3D%2226.2%22%20r%3D%223.4%22%20fill%3D%22%23FFDDEB%22/%3E%3Ccircle%20cx%3D%22110%22%20cy%3D%2230%22%20r%3D%222.4%22%20fill%3D%22%23FFFFFF%22/%3E%3Ccircle%20cx%3D%2244.2%22%20cy%3D%22129.5%22%20r%3D%223.8%22%20fill%3D%22%23FFDDEB%22/%3E%3Ccircle%20cx%3D%2239.8%22%20cy%3D%22132.5%22%20r%3D%223.8%22%20fill%3D%22%23FFDDEB%22/%3E%3Ccircle%20cx%3D%2235.7%22%20cy%3D%22129.2%22%20r%3D%223.8%22%20fill%3D%22%23FFDDEB%22/%3E%3Ccircle%20cx%3D%2237.5%22%20cy%3D%22124.3%22%20r%3D%223.8%22%20fill%3D%22%23FFDDEB%22/%3E%3Ccircle%20cx%3D%2242.8%22%20cy%3D%22124.5%22%20r%3D%223.8%22%20fill%3D%22%23FFDDEB%22/%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%22128%22%20r%3D%222.7%22%20fill%3D%22%23FFFFFF%22/%3E%3Ccircle%20cx%3D%2276%22%20cy%3D%2276%22%20r%3D%222%22%20fill%3D%22%23FFD3E5%22/%3E%3Ccircle%20cx%3D%22148%22%20cy%3D%2262%22%20r%3D%221.6%22%20fill%3D%22%23FFD3E5%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2292%22%20r%3D%221.6%22%20fill%3D%22%23FFD3E5%22/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+@keyframes cloud-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cloud-float {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* The big Play keycap breathes so it reads as "press me". */
+@keyframes btn-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.015);
+  }
+}
+
+/* Doll panel springs in from the right (from the bottom on phones). */
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 46.49rem) {
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(60px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* Drip storefronts: neon sign flickers on when you walk in. */
+@keyframes sign-on {
+  0% {
+    opacity: 0.35;
+  }
+  10% {
+    opacity: 1;
+  }
+  14% {
+    opacity: 0.5;
+  }
+  20%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Loader: the default dolls walk down the runway towards the screen. */
+@keyframes doll-walk {
+  0% {
+    opacity: 0;
+    z-index: 0;
+    transform: translate(calc(-50% + var(--lane) * 4vw), -100%) scale(0.22);
+  }
+  12% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    z-index: 100;
+    transform: translate(calc(-50% + var(--lane) * 30vw), 20%) scale(1.9);
+  }
+}
+@keyframes doll-step {
+  from {
+    transform: translateY(0) rotate(-2.5deg);
+  }
+  to {
+    transform: translateY(-4%) rotate(2.5deg);
+  }
+}
+
+/* Landing scenes: twinkling stars and falling snow. */
+@keyframes twinkle {
+  50% {
+    opacity: 0.15;
+    transform: scale(0.6);
+  }
+}
+@keyframes snow-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, var(--tile), 0);
+  }
+}
+
+/* Pick your doll: the next doll slides in from the side you flipped to. */
+@keyframes doll-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(14%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes doll-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-14%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Fitting room: your doll strolls in from the door. */
+@keyframes walk-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-40%) translateY(0) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: translateX(-30%) translateY(-1.5%) scale(0.92);
+  }
+  40% {
+    transform: translateX(-20%) translateY(0) scale(0.95);
+  }
+  60% {
+    transform: translateX(-10%) translateY(-1.5%) scale(0.97);
+  }
+  80% {
+    transform: translateX(-3%) translateY(0) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Level up: the cast dances, confetti falls. */
+@keyframes doll-dance {
+  0% {
+    transform: translateY(0) rotate(-6deg) scaleX(1);
+  }
+  50% {
+    transform: translateY(-14%) rotate(0deg) scaleX(1);
+  }
+  100% {
+    transform: translateY(0) rotate(6deg) scaleX(-1);
+  }
+}
+@keyframes confetti {
+  to {
+    transform: translate(3vw, 110vh) rotate(720deg);
+  }
+}
