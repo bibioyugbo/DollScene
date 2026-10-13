@@ -35,7 +35,7 @@ export function LooksPanel() {
             Save
           </button>
         </form>
-        {connection === 'preview' && <p className="text-[12px] text-muted">Preview mode: looks stay on this device. Open DollScene in Lagos Life to keep them with your account.</p>}
+        {connection === 'preview' && <p className="text-[12px] text-muted">Preview mode: looks stay on this device. Open DollScene from the games app to keep them with your account.</p>}
       </Section>
 
       <Section title="Lookbook" aside={<span className="text-[11px] text-muted">{saved.length} saved</span>}>

@@ -1,0 +1,46 @@
+{
+  "kai_butterfly_red": {
+    "name": "Butterfly tank, red",
+    "store": "kai"
+  },
+  "kai_butterfly_blue": {
+    "name": "Butterfly tank, blue",
+    "store": "kai"
+  },
+  "kai_garden_set": {
+    "name": "Garden cami & midi",
+    "store": "kai"
+  },
+  "mc_corset_mini": {
+    "name": "Blush corset set",
+    "store": "moncherrie"
+  },
+  "mc_slip_dress": {
+    "name": "Lilac slip dress",
+    "store": "moncherrie"
+  },
+  "dbf_sequin_mini": {
+    "name": "Gold sequin mini",
+    "store": "dopebyfabby"
+  },
+  "dbf_flare_set": {
+    "name": "Emerald flare set",
+    "store": "dopebyfabby"
+  },
+  "deeji_iro_buba": {
+    "name": "Adire iro & buba",
+    "store": "deeji"
+  },
+  "deeji_ankara_set": {
+    "name": "Ankara peplum set",
+    "store": "deeji"
+  },
+  "bola_distressed": {
+    "name": "No Rules distressed set",
+    "store": "bolaptsd"
+  },
+  "bola_rock_set": {
+    "name": "Tartan rock set",
+    "store": "bolaptsd"
+  }
+}

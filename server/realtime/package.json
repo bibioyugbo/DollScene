@@ -1,0 +1,17 @@
+{
+  "name": "dollscene-realtime",
+  "private": true,
+  "version": "1.0.0",
+  "description": "DollScene Beauty Studio: live presence, headcounts and public chat (WebSocket).",
+  "type": "module",
+  "main": "index.mjs",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node index.mjs",
+    "dev": "ALLOW_GUESTS=1 PORT=8787 node --watch index.mjs",
+    "test": "node --test test.mjs"
+  },
+  "dependencies": {
+    "ws": "8.18.0"
+  }
+}

@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import StudioApp from './StudioApp'
 import './studio.css'
 
-/** Last-resort screen: never a blank frame inside Lagos Life. */
+/** Last-resort screen: never a blank frame inside the games app. */
 class Crash extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false }
   static getDerivedStateFromError() {

@@ -27,7 +27,7 @@ export class ApiError extends Error {
   }
 }
 
-const BASE = (import.meta.env.VITE_STUDIO_API as string | undefined) ?? '/api/vatar'
+const BASE = (import.meta.env?.VITE_STUDIO_API as string | undefined) ?? '/api/vatar'
 
 async function call<T>(path: string, body: Record<string, unknown> = {}): Promise<T> {
   const session = await vatar.session()

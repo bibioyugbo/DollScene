@@ -41,3 +41,8 @@ backup-pre-v2
 dist-studio
 .character-build
 .character-build.log
+
+# Blender sources (art/blender/**) stay local; only exported GLBs are committed
+*.blend
+*.blend1
+.test-build/

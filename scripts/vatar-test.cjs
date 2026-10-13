@@ -119,7 +119,7 @@ const rejects = async (p, code) => {
   assert.equal(saved.skin.tone, '#123456')
   assert.equal(saved.morphs.Lips, 1, 'clamped')
   assert.equal(saved.morphs.Evil, undefined, 'unknown morph dropped')
-  assert.equal(saved.hair.style, 'afro01', 'unknown style replaced')
+  assert.equal(saved.hair.style, 'afro_big', 'unknown style replaced by the default')
   const lb = await call('looks/save', { session: alice, saved: { id: 'look-abc123', name: 'Owambe', look: {} } })
   assert.equal(lb.looks.length, 1)
   assert.equal((await call('me', { session: bob })).looks.length, 0, 'Bob cannot see Alice’s looks')

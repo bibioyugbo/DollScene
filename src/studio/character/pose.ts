@@ -29,7 +29,12 @@ function aim(b: Bone, child: Bone, target: Vector3) {
   b.updateWorldMatrix(false, true)
 }
 
-export function relaxPose(root: Object3D) {
+/**
+ * Arms down at her sides. `out` opens the arms away from the body (0.2 = a slim body's natural
+ * hang); wider hips, a fuller body or a full skirt need more so the arms and hands rest on the
+ * outside instead of sinking into the hips (see armClearance in StudioCharacter).
+ */
+export function relaxPose(root: Object3D, out = 0.2) {
   root.updateWorldMatrix(true, true)
   for (const side of ['Left', 'Right'] as const) {
     const s = side === 'Left' ? 1 : -1
@@ -38,8 +43,8 @@ export function relaxPose(root: Object3D) {
     const hand = bone(root, `${side}Hand`)
     if (!arm || !fore || !hand) continue
     // glTF space: +Y up, the character faces +Z, her left is +X.
-    aim(arm, fore, new Vector3(0.2 * s, -1, -0.02))
-    aim(fore, hand, new Vector3(0.1 * s, -1, 0.16))
+    aim(arm, fore, new Vector3(out * s, -1, -0.02))
+    aim(fore, hand, new Vector3((0.1 + (out - 0.2) * 0.6) * s, -1, 0.16))
   }
 }
 

@@ -17,7 +17,8 @@
     "test:vatar": "npm --prefix functions run build && node scripts/vatar-test.cjs",
     "dev:app": "vite",
     "build:app": "tsc -b && vite build",
-    "preview:app": "vite preview"
+    "preview:app": "vite preview",
+    "test:studio": "node scripts/test-studio.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

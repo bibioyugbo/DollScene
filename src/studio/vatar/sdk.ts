@@ -72,8 +72,8 @@ export function errorCode(e: unknown): VatarErrorCode {
 
 /** Words a player sees for each refusal. */
 export const ERROR_TEXT: Record<VatarErrorCode, string> = {
-  not_framed: 'Open DollScene from the Lagos Life Games app to use this.',
-  timeout: 'Lagos Life didn’t answer in time. Try again.',
+  not_framed: 'Open DollScene from the games app to use this.',
+  timeout: 'The games app didn’t answer in time. Try again.',
   rate_limited: 'Slow down a little and try again.',
   busy: 'A payment sheet is already open.',
   cancelled: 'Purchase cancelled.',
@@ -81,11 +81,11 @@ export const ERROR_TEXT: Record<VatarErrorCode, string> = {
   not_for_sale: 'This item isn’t on sale right now.',
   owned: 'You already own this.',
   off: 'Games are switched off right now.',
-  signed_out: 'Sign in to Lagos Life first.',
+  signed_out: 'Sign in to the games app first.',
   too_soon: 'Your score was saved. The leaderboard takes one score every 20 seconds.',
   bad_request: 'Something went wrong. Try again.',
-  error: 'Something went wrong on Lagos Life. Try again.',
-  unavailable: 'Lagos Life couldn’t be reached.',
+  error: 'Something went wrong. Try again.',
+  unavailable: 'The games app couldn’t be reached.',
 }
 
 function sdk(): VatarGlobal {

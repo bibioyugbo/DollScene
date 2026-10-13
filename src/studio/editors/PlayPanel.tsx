@@ -106,7 +106,7 @@ function Board() {
       live = false
     }
   }, [connection])
-  if (connection === 'preview') return <p className="text-[13px] text-muted">Open DollScene from the Lagos Life Games app to see the leaderboard.</p>
+  if (connection === 'preview') return <p className="text-[13px] text-muted">Open DollScene from the games app to see the leaderboard.</p>
   if (error) return <p className="text-[13px] text-muted">{error}</p>
   if (!board) return <div className="ds-loading-bar h-0.5 w-full" aria-label="Loading" />
   return (
@@ -152,7 +152,7 @@ function Shop() {
           </Section>
         )
       })}
-      <p className="text-[11px] text-muted">Prices are shown and paid on Lagos Life’s own pay sheet.</p>
+      <p className="text-[11px] text-muted">Prices are shown and paid on the games app’s own pay sheet.</p>
     </div>
   )
 }

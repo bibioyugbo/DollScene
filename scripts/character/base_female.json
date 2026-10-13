@@ -1,0 +1,12 @@
+{
+  "_comment": "MPFB macro settings of ~/Downloads/base_female.blend (her body is macros only, no hand edits). build_character.py and the hair scripts both build her from these, so hair fitted in art/blender/hair/*.blend matches the shipped body exactly.",
+  "gender": 0.0,
+  "age": 0.5,
+  "muscle": 0.5,
+  "weight": 0.5,
+  "proportions": 0.5,
+  "height": 0.5,
+  "cupsize": 0.55,
+  "firmness": 0.55,
+  "race": { "african": 0.4, "asian": 0.33, "caucasian": 0.33 }
+}

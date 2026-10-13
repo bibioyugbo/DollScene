@@ -35,6 +35,7 @@ from bl_ext.blender_org.mpfb.entities.objectproperties import HumanObjectPropert
 from bl_ext.blender_org.mpfb.services.clothesservice import ClothesService  # noqa: E402
 from bl_ext.blender_org.mpfb.services.humanservice import HumanService  # noqa: E402
 from bl_ext.blender_org.mpfb.services.locationservice import LocationService  # noqa: E402
+from bl_ext.blender_org.mpfb.services.rigservice import RigService  # noqa: E402
 from bl_ext.blender_org.mpfb.services.targetservice import TargetService  # noqa: E402
 
 OUT = os.path.abspath(sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else "character-out")
@@ -43,17 +44,9 @@ ASSETS = LocationService.get_user_data()
 
 # ----------------------------------------------------------------------------- what to build
 
-MACROS = {
-    "gender": 0.0,  # female
-    "age": 0.5,  # 25 years: always an adult
-    "muscle": 0.5,
-    "weight": 0.55,
-    "proportions": 0.75,
-    "height": 0.5,
-    "cupsize": 0.5,
-    "firmness": 0.55,
-    "race": {"african": 1.0, "asian": 0.0, "caucasian": 0.0},
-}
+# The base female (~/Downloads/base_female.blend) as MPFB macros: female, age 0.5 = 25 years, always an adult.
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "base_female.json")) as _f:
+    MACROS = {k: v for k, v in json.load(_f).items() if not k.startswith("_")}
 
 # Each slider: (negative recipe, positive recipe). A recipe is a list of ("target", weight)
 # or ("macro:<name>", value) entries. Bilateral targets list both sides.
@@ -92,31 +85,98 @@ BODY_MORPHS = {
     "Belly": ([("stomach-pregnant-decr", 1)], [("stomach-pregnant-incr", 0.45)]),
     "Hips": ([("measure-hips-circ-decr", 1), ("hip-scale-horiz-decr", 0.4)], [("measure-hips-circ-incr", 1), ("hip-scale-horiz-incr", 0.4)]),
     "Glutes": ([("buttocks-volume-decr", 1)], [("buttocks-volume-incr", 1)]),
-    "Thighs": ([("measure-thigh-circ-decr", 1)], [("measure-thigh-circ-incr", 1)]),
-    "Arms": (lr("upperarm-fat-decr"), lr("upperarm-fat-incr")),
+    "Thighs": ([("measure-thigh-circ-decr", 1)], [("measure-thigh-circ-incr", 1)] + lr("upperleg-fat-incr", 0.5)),
+    # Plus-size arms: upper and lower arm and the shoulder soften together (girth only; arm LENGTH
+    # follows the skeleton, i.e. her height, never her weight: see skeleton_consistent below).
+    "Arms": (lr("upperarm-fat-decr") + lr("lowerarm-fat-decr", 0.8), lr("upperarm-fat-incr") + lr("lowerarm-fat-incr", 0.8) + [("measure-upperarm-circ-incr", 0.4)]),
+    "Calves": (lr("lowerleg-fat-decr") + [("measure-calf-circ-decr", 0.5)], lr("lowerleg-fat-incr") + [("measure-calf-circ-incr", 0.5)]),
+    "NeckFull": ([("measure-neck-circ-decr", 0.8)], [("neck-double-incr", 1), ("measure-neck-circ-incr", 0.6)]),
     "Softness": ([("macro:weight", 0.15)], [("macro:weight", 0.95)]),
     "Muscle": ([("macro:muscle", 0.2)], [("macro:muscle", 0.85)]),
+    # Presentation: MakeHuman's gender macro from the base (0, feminine) to 1 (masculine). Only the
+    # positive side differs from the base, so 0.5..1 in the app goes feminine -> masculine.
+    "Masc": ([("macro:gender", 0.0)], [("macro:gender", 1.0)]),
 }
 
 EYES = ["brown", "brownlight", "green", "grey", "bluegreen"]
-BROWS = ["eyebrow001", "eyebrow006", "eyebrow010"]
+BROWS = ["eyebrow001", "eyebrow006", "eyebrow010", "eyebrow003", "eyebrow008"]
 LASHES = ["eyelashes01", "eyelashes02", "eyelashes03"]
+# id -> (source, name). "blend": built by scripts/character/hair/style_<id>.py into
+# art/blender/hair/hair_<id>.blend (object "Hair_<id>", fitted, skinned, with the float attributes
+# _tip/_strand/_section; textures in art/hair_tex/<id>.png). The MPFB library styles (pixie = short04,
+# short02, bob02, long01, ponytail01, braid01) are fitted there too (mpfbkit.py) so they carry the same
+# attributes and sit over clothing. "mpfb:<asset>" (fit here from the library) is still supported.
 HAIR = {
-    "afro01": "Afro",
-    "short02": "Short natural",
-    "bob02": "Silk-press bob",
-    "long01": "Long straight wig",
-    "ponytail01": "Sleek ponytail",
-    "braid01": "Single braid",
+    "afro_short": ("blend", "Short wide afro"),
+    "afro_big": ("blend", "Big puffy afro"),
+    "afro_puffs": ("blend", "Two afro puffs"),
+    "two_braids": ("blend", "Two braided ponytails"),
+    "fulani_braids": ("blend", "Fulani braids"),
+    "box_braids": ("blend", "Box braids"),
+    "knotless_braids": ("blend", "Knotless braids"),
+    "cornrows": ("blend", "Cornrows"),
+    "twists": ("blend", "Two-strand twists"),
+    "bantu_knots": ("blend", "Bantu knots"),
+    "locs": ("blend", "Locs"),
+    "locs_retwist": ("blend", "Retwisted locs"),
+    "microlocs": ("blend", "Microlocs"),
+    "freeform_locs": ("blend", "Freeform locs"),
+    "faux_locs": ("blend", "Faux locs"),
+    "curls": ("blend", "Natural curls"),
+    "braid_out": ("blend", "Braid-out (loose)"),
+    "wavy_wig": ("blend", "Wavy wig"),
+    "leave_out": ("blend", "Leave-out"),
+    "bun": ("blend", "Sleek high bun"),
+    "bonnet": ("blend", "Satin bonnet"),
+    "pixie": ("blend", "Pixie cut"),
+    "short02": ("blend", "Short natural"),
+    "bob02": ("blend", "Silk-press bob"),
+    "long01": ("blend", "Straight wig"),
+    "ponytail01": ("blend", "Sleek ponytail"),
+    "braid01": ("blend", "Single braid"),
 }
+HAIR_BLENDS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "blender", "hair")
+HAIR_TEX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "hair_tex")
 OUTFITS = {
     "female_sportsuit01": "Studio set",
     "female_casualsuit01": "Weekend casual",
     "female_casualsuit02": "Denim day",
     "female_elegantsuit01": "Evening",
+    "male_casualsuit01": "Easy tee & jeans",
+    "male_casualsuit02": "Weekend layers",
+    "male_casualsuit03": "Street casual",
+    "male_casualsuit04": "Relaxed knit",
+    "male_casualsuit05": "Smart casual",
+    "male_casualsuit06": "Off-duty",
+    "male_elegantsuit01": "Tailored suit",
+    "male_worksuit01": "Workwear",
 }
-SHOES = {"shoes01": "Sneakers", "shoes03": "Flats", "shoes06": "Heels"}
+SHOES = {"shoes01": "Sneakers", "shoes02": "Loafers", "shoes03": "Flats", "shoes04": "Boots", "shoes05": "Trainers", "shoes06": "Heels"}
 MORPH_EPS = 0.0008  # metres; a mesh only gets a morph that moves it more than this
+
+# Facial expressions from MakeHuman's expression units (FACS-style), mixed by her ethnicity weights so
+# they fit her face. Single-sided shape keys "Expr_<Name>" (0 = rest, 1 = full), baked onto the body and
+# refitted onto brows, lashes and hair like the sliders, so lids and lashes close together.
+_race = MACROS["race"]
+_race_sum = sum(_race.values())
+
+
+def unit(name, w=1.0):
+    return [(f"expression/units/{r}/{name}", w * _race[r] / _race_sum) for r in ("african", "asian", "caucasian") if _race.get(r, 0) > 0]
+
+
+EXPRESSIONS = {
+    "Expr_BlinkL": unit("eye-left-closure"),
+    "Expr_BlinkR": unit("eye-right-closure"),
+    "Expr_Sleepy": unit("eye-left-slit", 0.85) + unit("eye-right-slit", 0.85) + unit("eyebrows-left-down", 0.25) + unit("eyebrows-right-down", 0.25),
+    "Expr_Smile": unit("mouth-corner-puller") + unit("mouth-elevation", 0.15),
+    "Expr_Open": unit("mouth-open"),
+    "Expr_Pout": unit("mouth-pursing", 0.8) + unit("mouth-protusion", 0.4),
+    "Expr_BrowsUp": unit("eyebrows-left-up") + unit("eyebrows-right-up"),
+    "Expr_Worried": unit("eyebrows-left-inner-up") + unit("eyebrows-right-inner-up"),
+    "Expr_Squint": unit("eye-left-slit", 0.55) + unit("eye-right-slit", 0.55),
+    "Expr_Wince": unit("eye-left-closure", 0.6) + unit("eye-right-closure", 0.6) + unit("nose-compression", 0.6) + unit("mouth-compression", 0.4),
+}
 
 # ----------------------------------------------------------------------------- helpers
 
@@ -125,6 +185,11 @@ def log(*a):
 
 
 def target_path(name):
+    if "/" in name:  # a path under the targets folder, e.g. expression/units/african/mouth-open
+        p = os.path.join(TARGETS, name + ".target.gz")
+        if os.path.exists(p):
+            return p
+        raise FileNotFoundError(name)
     for root, _dirs, files in os.walk(TARGETS):
         if name + ".target.gz" in files:
             return os.path.join(root, name + ".target.gz")
@@ -186,6 +251,12 @@ def activate(obj):
 for o in list(bpy.data.objects):
     bpy.data.objects.remove(o, do_unlink=True)
 
+# Start from empty module folders so a removed or renamed asset doesn't linger and get shipped.
+import shutil  # noqa: E402
+
+for _d in ("hair", "outfits", "shoes"):
+    shutil.rmtree(os.path.join(OUT, _d), ignore_errors=True)
+
 log("creating human")
 human = HumanService.create_human(macro_detail_dict=MACROS)
 rig = HumanService.add_builtin_rig(human, "mixamo", import_weights=True)
@@ -205,12 +276,68 @@ for b in BROWS:
     add("eyebrows", b, "Eyebrows", f"Brows_{b}")
 for l in LASHES:
     add("eyelashes", l, "Eyelashes", f"Lashes_{l}")
-for h in HAIR:
-    add("hair", h, "Hair", f"Hair_{h}")
+custom = {}  # key -> object: hand-built hair, already fitted and skinned in its .blend
+
+
+def add_custom_hair(h):
+    path = os.path.join(HAIR_BLENDS, f"hair_{h}.blend")
+    with bpy.data.libraries.load(path, link=False) as (src, dst):
+        dst.objects = [f"Hair_{h}"]
+    obj = dst.objects[0]
+    bpy.context.scene.collection.objects.link(obj)
+    obj.parent = rig
+    for m in obj.modifiers:
+        if m.type == "ARMATURE":
+            m.object = rig
+    custom[f"Hair_{h}"] = obj
+    return obj
+
+
+for h, (source, _name) in list(HAIR.items()):
+    if source == "blend":
+        # DOLLSCENE_SKIP_MISSING_HAIR=1 lets a test build run while a style is still being made.
+        if os.environ.get("DOLLSCENE_SKIP_MISSING_HAIR") == "1" and not os.path.exists(os.path.join(HAIR_BLENDS, f"hair_{h}.blend")):
+            log("SKIPPING missing hair", h)
+            del HAIR[h]
+            continue
+        add_custom_hair(h)
+    else:
+        add("hair", source.split(":", 1)[1], "Hair", f"Hair_{h}")
 for c in OUTFITS:
     add("clothes", c, "Clothes", f"Outfit_{c}")
 for s in SHOES:
     add("clothes", s, "Clothes", f"Shoes_{s}")
+
+# Store outfits: built by scripts/character/outfit/build_outfits.py on this same base mesh
+# (art/blender/outfits/outfit_<id>.blend, object "Outfit_<id>", skinned, with "_src" = the body
+# vertex each shell vertex came from, "hide_src" = covered body vertices, "ease" = skirt width at
+# the hands). They join `custom` (shape keys, weight cleanup, export) but take their morph deltas
+# from the body below, not from the head like the hand-built hair.
+OUTFIT_BLENDS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "blender", "outfits")
+with open(os.path.join(OUTFIT_BLENDS, "catalog.json")) as _f:
+    STORE_OUTFITS = {k: v for k, v in json.load(_f).items() if os.path.exists(os.path.join(OUTFIT_BLENDS, f"outfit_{k}.blend"))}
+# the shipped MakeHuman outfits, shelved in the stores too
+OUTFIT_STORES = {
+    "female_casualsuit01": "kai", "female_casualsuit02": "kai", "male_casualsuit01": "kai", "male_casualsuit04": "kai",
+    "female_elegantsuit01": "moncherrie", "male_casualsuit05": "moncherrie",
+    "male_elegantsuit01": "dopebyfabby", "female_sportsuit01": "dopebyfabby", "male_casualsuit06": "dopebyfabby",
+    "male_casualsuit02": "deeji",
+    "male_worksuit01": "bolaptsd", "male_casualsuit03": "bolaptsd",
+}
+store_meta = {}
+for oid in STORE_OUTFITS:
+    path = os.path.join(OUTFIT_BLENDS, f"outfit_{oid}.blend")
+    with bpy.data.libraries.load(path, link=False) as (src, dst):
+        dst.objects = [f"Outfit_{oid}"]
+    obj = dst.objects[0]
+    bpy.context.scene.collection.objects.link(obj)
+    obj.parent = rig
+    for m in obj.modifiers:
+        if m.type == "ARMATURE":
+            m.object = rig
+    custom[f"Outfit_{oid}"] = obj
+    store_meta[oid] = {"hide": json.loads(obj.get("hide_src", "[]")), "ease": float(obj.get("ease", 0.0))}
+    log("store outfit", oid, len(obj.data.vertices), "verts")
 
 # ----------------------------------------------------------------------------- 2. morph deltas
 
@@ -246,19 +373,147 @@ neutral_body = coords(human)
 neutral_assets = {k: coords(o, mix=False) for k, o in assets.items()}
 deltas = {}  # shape key name -> {"__body__": delta, asset key: delta}
 
+# Skeleton-consistent morphs. The app ships ONE skeleton (the base female's), but MakeHuman's macros
+# move the joints: the masculine end of the gender macro puts the head 13 cm higher, makes the
+# forearm 28% and the hand 22% longer and the legs 11 cm longer. Baked as plain shape keys over the
+# unchanged skeleton, that stretched the arms past the hips with oversized hands (the "arms far too
+# long" defect) and pulled the face off its head bone. So for every slider we refit the rig the way
+# MakeHuman would, and subtract from each vertex the displacement of the bones it is skinned to
+# (interpolated along each bone, so a lengthened forearm counts as the stretch it is). What remains is
+# the shape change relative to the skeleton: girth, softness, contours. Proportions (limb lengths,
+# neck, legs-to-torso, head height) stay the base's 7.5-head adult on every body, and arm length scales
+# with her height only.
+_DEFORM_BONES = [b.name for b in rig.data.bones if b.use_deform]
+assert np.allclose(np.array(rig.matrix_world), np.eye(4)) and np.allclose(np.array(human.matrix_world), np.eye(4))
+
+
+def joint_positions():
+    bpy.context.view_layer.update()
+    RigService.refit_existing_armature(rig, human)
+    bpy.context.view_layer.update()
+    return (np.array([list(rig.data.bones[n].head_local) for n in _DEFORM_BONES]), np.array([list(rig.data.bones[n].tail_local) for n in _DEFORM_BONES]))
+
+
+def bone_weights(obj):
+    """(n_verts, n_bones) skin weights over the deform bones, normalised per vertex."""
+    col = {obj.vertex_groups[n].index: j for j, n in enumerate(_DEFORM_BONES) if n in obj.vertex_groups}
+    W = np.zeros((len(obj.data.vertices), len(_DEFORM_BONES)))
+    for v in obj.data.vertices:
+        for g in v.groups:
+            j = col.get(g.group)
+            if j is not None:
+                W[v.index, j] = g.weight
+    s = W.sum(axis=1, keepdims=True)
+    return np.where(s > 0, W / np.maximum(s, 1e-12), 0.0)
+
+
+def bone_drift(co_, W, J0, J1):
+    """Per-vertex displacement of the bones it rides, from rig fit J0 to J1 (lerped along each bone)."""
+    (H0, T0), (H1, T1) = J0, J1
+    dH, dT = H1 - H0, T1 - T0
+    out = np.zeros_like(co_)
+    for j in np.nonzero((W > 0).any(axis=0))[0]:
+        if not (np.abs(dH[j]).max() > 1e-6 or np.abs(dT[j]).max() > 1e-6):
+            continue
+        m = W[:, j] > 0
+        seg = T0[j] - H0[j]
+        s_ = np.clip(((co_[m] - H0[j]) @ seg) / max(seg @ seg, 1e-12), 0, 1)
+        out[m] += W[m, j, None] * (dH[j] + s_[:, None] * (dT[j] - dH[j]))
+    return out
+
+
+J_NEUTRAL = joint_positions()
+W_BODY = bone_weights(human)
+W_ASSETS = {k: bone_weights(o) for k, o in assets.items()}
+
 for group in (FACE_MORPHS, BODY_MORPHS):
     for morph, (neg, pos) in group.items():
         for suffix, recipe in (("_Neg", neg), ("_Pos", pos)):
             apply_recipe(recipe)
             refit_assets()
-            d = {"__body__": coords(human) - neutral_body}
+            J = joint_positions()
+            drift = float(max(np.abs(J[0] - J_NEUTRAL[0]).max(), np.abs(J[1] - J_NEUTRAL[1]).max()))
+            d = {"__body__": coords(human) - neutral_body - bone_drift(neutral_body, W_BODY, J_NEUTRAL, J)}
             for k, o in assets.items():
-                d[k] = coords(o, mix=False) - neutral_assets[k]
+                d[k] = coords(o, mix=False) - neutral_assets[k] - bone_drift(neutral_assets[k], W_ASSETS[k], J_NEUTRAL, J)
             deltas[morph + suffix] = d
             clear_recipe(recipe)
-            log("morph", morph + suffix, "max body delta %.4f m" % np.abs(d["__body__"]).max())
+            log("morph", morph + suffix, "max body delta %.4f m" % np.abs(d["__body__"]).max(), "joint drift removed %.4f m" % drift)
+
+_J = joint_positions()
+assert np.allclose(_J[0], J_NEUTRAL[0], atol=1e-5) and np.allclose(_J[1], J_NEUTRAL[1], atol=1e-5), "rig did not return to the neutral fit"
+
+for name, recipe in EXPRESSIONS.items():
+    apply_recipe(recipe)
+    refit_assets()
+    d = {"__body__": coords(human) - neutral_body}
+    for k, o in assets.items():
+        d[k] = coords(o, mix=False) - neutral_assets[k]
+    deltas[name] = d
+    clear_recipe(recipe)
+    log("expression", name, "max body delta %.4f m" % np.abs(d["__body__"]).max())
 
 refit_assets()
+
+# Hand-built hair has no MPFB fitting data: each vertex follows the nearest head/neck skin (inverse
+# distance over 4 neighbours), so face sliders reshape the hair with the skull. Hanging lengths
+# take the delta at the nape, i.e. they ride along rigidly.
+from mathutils.kdtree import KDTree  # noqa: E402
+
+_body_grp = human.vertex_groups["body"].index
+_neck_z = (rig.matrix_world @ rig.data.bones["mixamorig:Neck"].head_local).z
+_anchor = np.array([any(g.group == _body_grp and g.weight > 0.5 for g in v.groups) for v in human.data.vertices]) & (neutral_body[:, 2] > _neck_z - 0.02)
+_anchor_idx = np.nonzero(_anchor)[0]
+_kd = KDTree(len(_anchor_idx))
+for _j, _i in enumerate(_anchor_idx):
+    _kd.insert(neutral_body[_i], _j)
+_kd.balance()
+neutral_custom = {}
+for k, o in custom.items():
+    if k.startswith("Outfit_"):
+        continue
+    co_ = coords(o, mix=False)
+    neutral_custom[k] = co_
+    nbr = np.empty((len(co_), 4), dtype=np.int64)
+    wts = np.empty((len(co_), 4))
+    for vi, p in enumerate(co_):
+        hits = _kd.find_n(p, 4)
+        nbr[vi] = [_anchor_idx[h[1]] for h in hits]
+        w = np.array([1.0 / max(h[2], 1e-4) for h in hits])
+        wts[vi] = w / w.sum()
+    for name, d in deltas.items():
+        d[k] = (d["__body__"][nbr] * wts[..., None]).sum(axis=1)
+
+# Store outfits: a shell vertex takes the morph deltas of the body vertex it was cut from (so it
+# follows every shape exactly); tube vertices (skirts) blend the 6 nearest skin vertices below the neck.
+_body_in = np.array([any(g.group == _body_grp and g.weight > 0.5 for g in v.groups) for v in human.data.vertices])
+_below = np.nonzero(_body_in & (neutral_body[:, 2] < _neck_z))[0]
+_kd_b = KDTree(len(_below))
+for _j, _i in enumerate(_below):
+    _kd_b.insert(neutral_body[_i], _j)
+_kd_b.balance()
+for k, o in custom.items():
+    if not k.startswith("Outfit_"):
+        continue
+    co_ = coords(o, mix=False)
+    neutral_custom[k] = co_
+    src_ = np.empty(len(co_), dtype=np.int32)
+    o.data.attributes["_src"].data.foreach_get("value", src_)
+    assert src_.max() < len(neutral_body), "store outfit was built on a different base mesh"
+    nbr = np.empty((len(co_), 6), dtype=np.int64)
+    wts = np.empty((len(co_), 6))
+    for vi, p in enumerate(co_):
+        if src_[vi] >= 0:
+            nbr[vi] = src_[vi]
+            wts[vi] = 1 / 6
+            continue
+        hits = _kd_b.find_n(p, 6)
+        nbr[vi] = [_below[h[1]] for h in hits]
+        w = np.array([1.0 / max(h[2], 1e-4) ** 2 for h in hits])
+        wts[vi] = w / w.sum()
+    for name, d in deltas.items():
+        d[k] = (d["__body__"][nbr] * wts[..., None]).sum(axis=1)
+    o.data.attributes.remove(o.data.attributes["_src"])
 
 # ----------------------------------------------------------------------------- 3. bake neutral, rebuild shape keys
 
@@ -310,6 +565,8 @@ for k, o in assets.items():
         o.shape_key_clear()
     o.data.vertices.foreach_set("co", neutral_assets[k].ravel())
     asset_keys[k] = add_keys(o, neutral_assets[k], [(n, d[k]) for n, d in deltas.items()])
+for k, o in custom.items():
+    asset_keys[k] = add_keys(o, neutral_custom[k], [(n, d[k]) for n, d in deltas.items()])
 
 # Remove helper geometry (keeps shape keys and per-vertex region flags in step with the mesh).
 log("removing helpers")
@@ -339,7 +596,7 @@ human.name = human.data.name = "Body"
 rig.name = rig.data.name = "Armature"
 for b in rig.data.bones:
     b.name = b.name.replace("mixamorig:", "")
-for obj in [human, *assets.values()]:
+for obj in [human, *assets.values(), *custom.values()]:
     for g in obj.vertex_groups:
         if g.name.startswith("mixamorig:"):
             g.name = g.name.replace("mixamorig:", "")
@@ -348,6 +605,124 @@ for obj in [human, *assets.values()]:
             obj.modifiers.remove(m)
 for k, o in assets.items():
     o.name = k
+hair_objs = {h: custom.get(f"Hair_{h}") or assets[f"Hair_{h}"] for h in HAIR}
+
+# Skin-weight cleanup at the shoulders. With the arms relaxed down from the A-pose, linear blend
+# skinning folded ~30 triangles at each garment's armpit/shoulder seam (the "torn sleeve" shards):
+# MakeHuman's weights change too abruptly between Spine2, Shoulder and Arm, and the glTF export
+# then keeps only the 4 strongest bones per vertex. Smoothing those weights over the mesh (and
+# keeping the 4 strongest, renormalised, ourselves) removes the folds; measured in the app with
+# the relaxed pose, the sports top went from 34 folded triangles to 0-1.
+_DEFORM = {b.name for b in rig.data.bones if b.use_deform}
+_SHOULDER = ["LeftShoulder", "LeftArm", "RightShoulder", "RightArm"]
+
+
+def smooth_skin(obj, bones=_SHOULDER, iters=12, alpha=0.5, rings=2):
+    me = obj.data
+    nv = len(me.vertices)
+    groups = [g for g in obj.vertex_groups if g.name in _DEFORM]
+    if not groups or not len(me.edges):
+        return 0
+    col = {g.index: j for j, g in enumerate(groups)}
+    W = np.zeros((nv, len(groups)), dtype=np.float64)
+    for v in me.vertices:
+        for g in v.groups:
+            j = col.get(g.group)
+            if j is not None:
+                W[v.index, j] = g.weight
+    s = W.sum(axis=1, keepdims=True)
+    W = np.where(s > 0, W / np.maximum(s, 1e-12), W)
+    tgt = [col[obj.vertex_groups[b].index] for b in bones if b in obj.vertex_groups and obj.vertex_groups[b].index in col]
+    if not tgt:
+        return 0
+    region = (W[:, tgt] > 1e-4).any(axis=1)
+    e = np.empty(len(me.edges) * 2, dtype=np.int64)
+    me.edges.foreach_get("vertices", e)
+    e = e.reshape(-1, 2)
+    for _ in range(rings):
+        grow = region.copy()
+        grow[e[region[e[:, 0]], 1]] = True
+        grow[e[region[e[:, 1]], 0]] = True
+        region = grow
+    deg = np.bincount(e.ravel(), minlength=nv).astype(np.float64)
+
+    def top4(W):
+        # what the glTF export keeps: the 4 strongest bones, renormalised
+        keep = np.argsort(-W, axis=1)[:, :4]
+        out = np.zeros_like(W)
+        np.put_along_axis(out, keep, np.take_along_axis(W, keep, axis=1), axis=1)
+        return out / np.maximum(out.sum(axis=1, keepdims=True), 1e-12)
+
+    # Smooth what will actually be exported: cut to 4 bones, smooth, cut again, smooth again.
+    # (Smoothing the full weights and cutting afterwards left ~20 folds per garment.)
+    for _round in range(2):
+        W = top4(W)
+        for _ in range(iters):
+            acc = np.zeros_like(W)
+            np.add.at(acc, e[:, 0], W[e[:, 1]])
+            np.add.at(acc, e[:, 1], W[e[:, 0]])
+            avg = acc / np.maximum(deg, 1)[:, None]
+            W[region] = (1 - alpha) * W[region] + alpha * avg[region]
+    idx = np.argsort(-W, axis=1)[:, :4]
+    top = np.take_along_axis(W, idx, axis=1)
+    top /= np.maximum(top.sum(axis=1, keepdims=True), 1e-12)
+    verts = [int(i) for i in np.nonzero(region)[0]]
+    for g in groups:
+        g.remove(verts)
+    for vi in verts:
+        for k in range(4):
+            if top[vi, k] > 1e-4:
+                groups[idx[vi, k]].add([vi], float(top[vi, k]), "REPLACE")
+    return len(verts)
+
+
+def hair_off_arms(obj):
+    """Hair must ride the head, neck and spine only. MPFB's library hair inherits the body's
+    shoulder/arm weights where it lies on the shoulders, so its lengths followed the arms and
+    swung through the chest and arms whenever they moved (the 'hair through the body' defect).
+    Those weights move to the upper spine (Spine2), which carries the shoulders' rest position."""
+    arm = [g for g in obj.vertex_groups if g.name in _DEFORM and any(k in g.name for k in ("Shoulder", "Arm", "Hand"))]
+    if not arm:
+        return 0
+    spine = obj.vertex_groups.get("Spine2") or obj.vertex_groups.new(name="Spine2")
+    idx = {g.index for g in arm}
+    moved = 0
+    for v in obj.data.vertices:
+        w = sum(g.weight for g in v.groups if g.group in idx)
+        if w <= 0:
+            continue
+        cur = next((g.weight for g in v.groups if g.group == spine.index), 0.0)
+        spine.add([v.index], cur + w, "REPLACE")
+        moved += 1
+    for g in arm:
+        obj.vertex_groups.remove(g)
+    return moved
+
+
+_hair_set = set(hair_objs.values())
+for _o in [human, *assets.values(), *custom.values()]:
+    if _o.name.startswith(("Brows_", "Lashes_")) or _o is assets.get("Eyes"):
+        continue
+    if _o in _hair_set:
+        log("hair weights moved off the arms", _o.name, hair_off_arms(_o), "verts")
+        continue
+    log("smoothed shoulder weights", _o.name, smooth_skin(_o), "verts")
+
+# "_tip" (0 at the root .. 1 at the ends) drives the app's ombre. Hand-built hair carries its own;
+# library hair gets one from how far each vertex sits off the skin and how far it hangs below the crown.
+_skin_kd = KDTree(len(neutral_body))
+for _i in np.nonzero(keep)[0]:
+    _skin_kd.insert(neutral_body[_i], int(_i))
+_skin_kd.balance()
+for h, o in hair_objs.items():
+    if "_tip" in o.data.attributes:
+        continue
+    co_ = coords(o, mix=False)
+    off = np.array([_skin_kd.find(p)[2] for p in co_])
+    drop = co_[:, 2].max() - co_[:, 2]
+    t = 0.35 * off / max(np.percentile(off, 95), 1e-4) + 0.65 * drop / max(drop.max(), 1e-4)
+    a = o.data.attributes.new("_tip", "FLOAT", "POINT")
+    a.data.foreach_set("value", np.clip(t, 0, 1).astype(np.float32))
 
 # ----------------------------------------------------------------------------- 4. textures
 
@@ -603,11 +978,224 @@ fc[..., 2] = hair_paint[sv, su]
 save_px(fa, os.path.join(OUT, "masks", "face_a.png"))
 save_px(fb, os.path.join(OUT, "masks", "face_b.png"))
 save_px(fc, os.path.join(OUT, "masks", "face_c.png"))
+
+# -- skincare regions: where products land when the hands work over the face (face_d / face_e)
+E = (eyeL + eyeR) / 2
+lz0 = (co[:, 2] - E[2]) / d
+ax = np.abs(co[:, 0]) / d
+not_scalp = 1 - vsmooth(flag("scalp"), 2)[:, 0]
+r_fore = face * smoothstep(0.42, 0.7, lz0) * not_scalp * head_front
+r_cheek = {s: ellipse(co[:, 0] * s / d, lz0, 0.82, -0.62, 0.62, 0.5) * (co[:, 0] * s > 0) * head_front for s in (1, -1)}
+r_nose = smoothstep(0.34, 0.16, ax) * smoothstep(-0.95, -0.75, lz0) * smoothstep(0.12, -0.05, lz0) * head_front
+lzl = (co[:, 2] - lips_c[2]) / d
+r_chin = smoothstep(0.85, 0.5, ax) * smoothstep(-0.3, -0.45, lzl) * smoothstep(-1.45, -1.15, lzl) * head_front
+r_perim = face * np.clip(smoothstep(1.05, 1.45, ax) + smoothstep(-1.2, -1.6, lzl), 0, 1)
+inner = np.zeros(nv)
+for EE, s in ((eyeL, 1), (eyeR, -1)):
+    lx, lz, _ly = side(EE, s)
+    inner = np.maximum(inner, ellipse(lx, lz, -0.38, -0.02, 0.16, 0.13) * head_front)
+r_browbone = np.zeros(nv)
+for EE, s in ((eyeL, 1), (eyeR, -1)):
+    lx, lz, _ly = side(EE, s)
+    r_browbone = np.maximum(r_browbone, ellipse(lx, lz, 0.18, 0.36, 0.42, 0.12) * head_front)
+smooth_ = lambda a: vsmooth(a[:, None], 2)[:, 0]
+fd = raster(np.stack([smooth_(r_fore), smooth_(r_cheek[1]), smooth_(r_cheek[-1]), smooth_(r_nose)], axis=1), MS, face_rect)
+fe = raster(np.stack([smooth_(r_chin), smooth_(r_perim), smooth_(inner), smooth_(r_browbone)], axis=1), MS, face_rect)
+save_px(fd, os.path.join(OUT, "masks", "face_d.png"))
+save_px(fe, os.path.join(OUT, "masks", "face_e.png"))
+
+# -- landmarks, wipe paths, blemish spots, nail and piercing anchors (glTF model space: x, z, -y)
+vert_uv = np.zeros((nv, 2))
+_lp = np.empty(len(mesh.loops) * 2)
+uv_layer.foreach_get("uv", _lp)
+_lp = _lp.reshape(-1, 2)
+_lv = np.empty(len(mesh.loops), dtype=np.int64)
+mesh.loops.foreach_get("vertex_index", _lv)
+for li in np.argsort(_lp[:, 0]):  # later (larger u) wins: the head island sits on the right
+    vert_uv[_lv[li]] = _lp[li]
+vnorm = np.empty(nv * 3)
+mesh.vertices.foreach_get("normal", vnorm)
+vnorm = vnorm.reshape(-1, 3)
+gl = lambda p: [round(float(p[0]), 5), round(float(p[2]), 5), round(float(-p[1]), 5)]
+front_y = E[1] + 0.5 * d
+
+
+def snap_front(x, z, rad=0.22):
+    m = (np.abs(co[:, 0] - x) < rad * d) & (np.abs(co[:, 2] - z) < rad * d) & (co[:, 1] < front_y + 1.2 * d)
+    idx = np.nonzero(m)[0]
+    if not len(idx):
+        return int(np.argmin(np.linalg.norm(co - [x, E[1] - d, z], axis=1)))
+    return int(idx[np.argmin(co[idx, 1])])
+
+
+def snap_near(p):
+    return int(np.argmin(np.linalg.norm(co - np.asarray(p), axis=1)))
+
+
+def mark(i):
+    return {"p": gl(co[i]), "n": gl(vnorm[i]), "uv": [round(float(vert_uv[i][0]), 5), round(float(1 - vert_uv[i][1]), 5)]}
+
+
+ex = lambda f: E[0] + f * d
+ez = lambda f: E[2] + f * d
+lmz = lambda f: lips_c[2] + f * d
+landmarks = {
+    "foreheadC": snap_front(ex(0), ez(0.85)),
+    "foreheadL": snap_front(ex(0.65), ez(0.8)),
+    "foreheadR": snap_front(ex(-0.65), ez(0.8)),
+    "cheekL": snap_front(ex(0.85), ez(-0.6)),
+    "cheekR": snap_front(ex(-0.85), ez(-0.6)),
+    "noseBridge": snap_front(ex(0), ez(-0.15)),
+    "noseTip": snap_front(ex(0), ez(-0.62)),
+    "chin": snap_front(ex(0), lmz(-0.75)),
+    "underEyeL": snap_front(ex(0.5), ez(-0.32)),
+    "underEyeR": snap_front(ex(-0.5), ez(-0.32)),
+    "lips": snap_front(ex(0), lmz(0)),
+    "lipCornerL": snap_front(ex(0.42), lmz(0.02)),
+    "lipCornerR": snap_front(ex(-0.42), lmz(0.02)),
+    "templeL": snap_near([E[0] + 1.45 * d, E[1] + 0.35 * d, ez(0.35)]),
+    "templeR": snap_near([E[0] - 1.45 * d, E[1] + 0.35 * d, ez(0.35)]),
+    "jawL": snap_near([E[0] + 1.15 * d, E[1] + 0.25 * d, lmz(-0.55)]),
+    "jawR": snap_near([E[0] - 1.15 * d, E[1] + 0.25 * d, lmz(-0.55)]),
+    "neck": snap_front(ex(0), lmz(-2.3), rad=0.5),
+}
+ears = final_flags["ears"]
+for s, nm in ((1, "L"), (-1, "R")):
+    idx = np.nonzero(ears & (co[:, 0] * s > 0))[0]
+    if len(idx):
+        landmarks["earLobe" + nm] = int(idx[np.argmin(co[idx, 2])])
+        landmarks["earHelix" + nm] = int(idx[np.argmax(co[idx, 2] + co[idx, 1] * 0.5)])
+        landmarks["ear" + nm] = int(idx[np.argmin(np.linalg.norm(co[idx] - co[idx].mean(axis=0), axis=1))])
+tip = co[landmarks["noseTip"]]
+landmarks["septum"] = snap_near([0.0, tip[1] + 0.12 * d, tip[2] - 0.2 * d])
+landmarks["nostrilL"] = snap_front(ex(0.22), ez(-0.7))
+landmarks["nostrilR"] = snap_front(ex(-0.22), ez(-0.7))
+landmarks["labret"] = snap_front(ex(0), lmz(-0.38))
+landmarks["browEndR"] = snap_front(ex(-0.95), ez(0.32))
+H_ = float(co[:, 2].max() - co[:, 2].min())
+# navel: on the front midline, ~60% of her height up (front-most points of that band, then the
+# deepest of them, i.e. the hollow)
+_bi = np.nonzero((np.abs(co[:, 0]) < 0.012) & (np.abs(co[:, 2] - (co[:, 2].min() + 0.6 * H_)) < 0.05) & (co[:, 1] < 0))[0]
+if len(_bi):
+    _front = _bi[np.argsort(co[_bi, 1])[: max(3, len(_bi) // 3)]]
+    landmarks["navel"] = int(_front[np.argmax(co[_front, 1])])
+
+
+def path(points):
+    return [mark(snap_front(ex(x), z))["p"] for x, z in points]
+
+
+strokes = {
+    "forehead": path([(x, ez(0.78)) for x in np.linspace(-0.95, 0.95, 7)]),
+    # circles around each cheek (x, z both in interocular units)
+    "cheekL": [mark(snap_front(ex(0.82 + 0.26 * math.cos(a)), ez(-0.6 + 0.22 * math.sin(a))))["p"] for a in np.linspace(0, 2 * math.pi, 9)],
+    "cheekR": [mark(snap_front(ex(-0.82 + 0.26 * math.cos(a)), ez(-0.6 + 0.22 * math.sin(a))))["p"] for a in np.linspace(0, 2 * math.pi, 9)],
+    "nose": path([(0, ez(-0.1)), (0, ez(-0.35)), (0, ez(-0.58)), (0.15, ez(-0.66)), (-0.15, ez(-0.66))]),
+    "chin": path([(x, lmz(-0.72)) for x in np.linspace(-0.45, 0.45, 5)]),
+    "underEyeL": path([(x, ez(-0.34)) for x in np.linspace(0.25, 0.78, 4)]),
+    "underEyeR": path([(x, ez(-0.34)) for x in np.linspace(-0.25, -0.78, 4)]),
+    "lips": path([(x, lmz(0.02)) for x in np.linspace(-0.42, 0.42, 5)]),
+}
+# blemish spots: forehead, cheeks, chin, nose side, jaw. r: the uv radius of a ~3.5 mm spot there.
+_ed = np.empty(len(mesh.edges) * 2, dtype=np.int64)
+mesh.edges.foreach_get("vertices", _ed)
+_ed = _ed.reshape(-1, 2)
+
+
+def uv_per_m(i):
+    nb = np.concatenate([_ed[_ed[:, 0] == i, 1], _ed[_ed[:, 1] == i, 0]])
+    if not len(nb):
+        return 4.0
+    return float(np.mean(np.linalg.norm(vert_uv[nb] - vert_uv[i], axis=1) / np.maximum(np.linalg.norm(co[nb] - co[i], axis=1), 1e-5)))
+
+
+spots = []
+for name, x, z in (("forehead1", -0.42, ez(0.7)), ("forehead2", 0.32, ez(0.9)), ("cheekL", 0.95, ez(-0.5)), ("cheekR", -0.78, ez(-0.72)),
+                   ("chin", 0.14, lmz(-0.7)), ("nose", 0.24, ez(-0.5)), ("jawR", -0.95, lmz(-0.45)), ("cheekL2", 0.62, ez(-0.85))):
+    i = snap_front(ex(x), z)
+    m_ = mark(i)
+    m_["id"] = name
+    m_["r"] = round(0.0035 * uv_per_m(i), 5)
+    spots.append(m_)
+
+# nails: each fingernail patch, the distal finger bone it rides on, its centre, normal and pointing direction
+nail_idx = np.nonzero(final_flags["fingernails"])[0]
+distal = [f"{side_}Hand{f}3" for side_ in ("Left", "Right") for f in ("Thumb", "Index", "Middle", "Ring", "Pinky")]
+bone_tip = {b: np.array(rig.matrix_world @ rig.data.bones[b].tail_local) for b in distal if b in rig.data.bones}
+bone_head = {b: np.array(rig.matrix_world @ rig.data.bones[b].head_local) for b in bone_tip}
+nails_out = []
+if len(nail_idx) and bone_tip:
+    names_ = list(bone_tip)
+    tips_ = np.array([bone_tip[b] for b in names_])
+    owner = np.argmin(np.linalg.norm(co[nail_idx][:, None, :] - tips_[None], axis=2), axis=1)
+    for bi, b in enumerate(names_):
+        vi = nail_idx[owner == bi]
+        if len(vi) < 3:
+            continue
+        c = co[vi].mean(axis=0)
+        n = vnorm[vi].mean(axis=0)
+        n /= max(np.linalg.norm(n), 1e-6)
+        dvec = bone_tip[b] - bone_head[b]
+        dvec = dvec - n * dvec.dot(n)
+        dvec /= max(np.linalg.norm(dvec), 1e-6)
+        wv = np.cross(n, dvec)
+        span = co[vi] - c
+        nails_out.append({"bone": b, "p": gl(c), "n": gl(n), "dir": gl(dvec), "width": round(float(np.ptp(span @ wv)), 5), "length": round(float(np.ptp(span @ dvec)), 5)})
+
+
+def ring(z, mask_, around=None):
+    """Centre and mean radius of the body cross-section at height z (Blender), within mask_."""
+    sel = np.nonzero(mask_ & (np.abs(co[:, 2] - z) < 0.006))[0]
+    if not len(sel):
+        return None
+    c = co[sel].mean(axis=0)
+    r = float(np.linalg.norm((co[sel] - c)[:, :2], axis=1).mean())
+    return {"p": gl(c), "r": round(r, 5)}
+
+
+neck_z = float((rig.matrix_world @ rig.data.bones["Neck"].head_local).z)
+jewel = {"neckBase": ring(neck_z + 0.012, np.abs(co[:, 0]) < 0.09)}
+for side_ in ("Left", "Right"):
+    # wrist: the forearm cross-section 1.5 cm above the hand bone
+    hb = np.array(rig.matrix_world @ rig.data.bones[f"{side_}Hand"].head_local)
+    sel = np.nonzero(np.linalg.norm(co - hb, axis=1) < 0.05)[0]
+    fa_dir = np.array(rig.data.bones[f"{side_}Hand"].head_local - rig.data.bones[f"{side_}ForeArm"].head_local)
+    fa_dir /= np.linalg.norm(fa_dir)
+    sec = sel[np.abs((co[sel] - hb) @ fa_dir + 0.015) < 0.006]
+    if len(sec):
+        c = co[sec].mean(axis=0)
+        jewel[f"wrist{side_[0]}"] = {"p": gl(c), "r": round(float(np.linalg.norm((co[sec] - c) - np.outer((co[sec] - c) @ fa_dir, fa_dir), axis=1).mean()), 5), "dir": gl(fa_dir), "bone": f"{side_}Hand"}
+    rb = f"{side_}HandRing1"
+    if rb in rig.data.bones:
+        h0 = np.array(rig.matrix_world @ rig.data.bones[rb].head_local)
+        t0 = np.array(rig.matrix_world @ rig.data.bones[rb].tail_local)
+        mid = h0 + (t0 - h0) * 0.45
+        fd_ = (t0 - h0) / max(np.linalg.norm(t0 - h0), 1e-6)
+        sec = np.nonzero((np.linalg.norm(co - mid, axis=1) < 0.02) & (np.abs((co - mid) @ fd_) < 0.003))[0]
+        if len(sec):
+            c = co[sec].mean(axis=0)
+            jewel[f"ring{side_[0]}"] = {"p": gl(c), "r": round(float(np.linalg.norm((co[sec] - c) - np.outer((co[sec] - c) @ fd_, fd_), axis=1).mean()), 5), "dir": gl(fd_), "bone": rb}
+log("landmarks", len(landmarks), "spots", len(spots), "nails", len(nails_out), "jewellery anchors", [k for k, v in jewel.items() if v])
+care_data = {
+    "landmarks": {k: mark(i) for k, i in landmarks.items()},
+    "strokes": strokes,
+    "spots": spots,
+    "nails": nails_out,
+    "jewellery": {k: v for k, v in jewel.items() if v},
+}
 nails = raster(np.maximum(flag("fingernails"), flag("toenails")), 1024)[..., 0]
 save_px(np.dstack([nails, np.zeros_like(nails), np.zeros_like(nails), np.ones_like(nails)]), os.path.join(OUT, "masks", "body.png"))
 
 # body-hide masks: skin faces fully inside an outfit's delete group are discarded at runtime
 hide_files = {}
+_final_index = np.cumsum(keep) - 1
+for oid, meta in store_meta.items():
+    m_ = np.zeros(len(co), dtype=np.float32)
+    idx_ = np.array([i for i in meta["hide"] if keep[i]], dtype=np.int64)
+    if len(idx_):
+        m_[_final_index[idx_]] = 1.0
+        m = raster(m_[:, None], 1024, mode="all")[..., 0]
+        hide_files[f"Outfit_{oid}"] = save_px(m, os.path.join(OUT, "masks", f"hide_{oid}.png"))
 for key in [f"Outfit_{c}" for c in OUTFITS] + [f"Shoes_{s}" for s in SHOES]:
     asset = key.split("_", 1)[1]
     g = "Delete." + asset
@@ -677,13 +1265,25 @@ for b in BROWS:
 for l in LASHES:
     p = save_px(tint_ready(mhmat_textures(os.path.join(ASSETS, "eyelashes", l))["diffuseTexture"], 256), os.path.join(OUT, "tex", f"{l}.png"))
     assign(assets[f"Lashes_{l}"], material("Lashes", p, alpha=True))
-for h in HAIR:
-    t = mhmat_textures(os.path.join(ASSETS, "hair", h))
+for h, (source, _name) in HAIR.items():
+    if source == "blend":
+        # Hand-built: textures are already tint-ready (art/hair_tex). Swap the Blender preview shaders
+        # for plain exportable ones; "Accent"/"Bead" slots (cuffs, beads) keep their own colour.
+        o = hair_objs[h]
+        for i, m in enumerate(o.data.materials):
+            if m.name.startswith("HairFuzz"):
+                o.data.materials[i] = material("HairFuzz", os.path.join(HAIR_TEX, f"{h}_fuzz.png"), alpha=True)
+            elif m.name.startswith("Hair"):
+                nrm = os.path.join(HAIR_TEX, f"{h}_n.png")
+                o.data.materials[i] = material("Hair", os.path.join(HAIR_TEX, f"{h}.png"), nrm if os.path.exists(nrm) else None, alpha=True)
+        continue
+    src = source.split(":", 1)[1]
+    t = mhmat_textures(os.path.join(ASSETS, "hair", src))
     p = save_px(tint_ready(t["diffuseTexture"], 1024), os.path.join(OUT, "tex", f"{h}.png"))
     nrm = None
     if "normalmapTexture" in t:
         nrm = save_px(resize(load_px(t["normalmapTexture"])[..., :3], 1024), os.path.join(OUT, "tex", f"{h}_n.png"))
-    assign(assets[f"Hair_{h}"], material("Hair", p, nrm, alpha=True))
+    assign(hair_objs[h], material("Hair", p, nrm, alpha=True))
 for c in list(OUTFITS) + list(SHOES):
     key = f"Outfit_{c}" if c in OUTFITS else f"Shoes_{c}"
     t = mhmat_textures(os.path.join(ASSETS, "clothes", c))
@@ -717,17 +1317,45 @@ def export(path, objs):
         export_image_format="AUTO",
         export_texcoords=True,
         export_normals=True,
+        export_attributes=True,  # "_tip" for the hair ombre
     )
     log("exported", path, "%.1f MB" % (os.path.getsize(path) / 1e6))
 
 
 export(os.path.join(OUT, "body.glb"), [human, assets["Eyes"], *[assets[f"Brows_{b}"] for b in BROWS], *[assets[f"Lashes_{l}"] for l in LASHES]])
 for h in HAIR:
-    export(os.path.join(OUT, "hair", f"{h}.glb"), [assets[f"Hair_{h}"]])
+    export(os.path.join(OUT, "hair", f"{h}.glb"), [hair_objs[h]])
 for c in OUTFITS:
     export(os.path.join(OUT, "outfits", f"{c}.glb"), [assets[f"Outfit_{c}"]])
+for oid in STORE_OUTFITS:
+    export(os.path.join(OUT, "outfits", f"{oid}.glb"), [custom[f"Outfit_{oid}"]])
 for s in SHOES:
     export(os.path.join(OUT, "shoes", f"{s}.glb"), [assets[f"Shoes_{s}"]])
+
+# Loader silhouettes: a light copy of the body (no shape keys, decimated) and a few hair shapes, on the
+# same rig, so the boot screen can walk three dolls before the full 3 MB character has downloaded.
+sil_mat = bpy.data.materials.new("Silhouette")
+sil = []
+for src_obj, ratio, nm in [(human, 0.22, "Sil_Body")] + [(hair_objs[h], 0.35, f"Sil_{h}") for h in ("ponytail01", "bob02", "afro_big", "afro") if h in hair_objs][:3]:
+    o = src_obj.copy()
+    o.data = src_obj.data.copy()
+    bpy.context.scene.collection.objects.link(o)
+    o.shape_key_clear()
+    o.name = o.data.name = nm
+    for m in list(o.modifiers):
+        if m.type != "ARMATURE":
+            o.modifiers.remove(m)
+    activate(o)
+    dec = o.modifiers.new("Decimate", "DECIMATE")
+    dec.ratio = ratio
+    bpy.ops.object.modifier_move_to_index(modifier="Decimate", index=0)
+    bpy.ops.object.modifier_apply(modifier="Decimate")
+    o.data.materials.clear()
+    o.data.materials.append(sil_mat)
+    for a in [a.name for a in o.data.attributes if a.name.startswith("_")]:
+        o.data.attributes.remove(o.data.attributes[a])
+    sil.append(o)
+export(os.path.join(OUT, "silhouette.glb"), sil)
 
 
 def morph_entry(name, group):
@@ -746,14 +1374,19 @@ manifest = {
         "faceA": ["lips", "linerUpper", "eyelid", "blush"],
         "faceB": ["contour", "highlight", "underEye", "browFill"],
         "faceC": ["face", "lipLiner", "scalpHair", "linerLower"],
+        "faceD": ["forehead", "cheekL", "cheekR", "nose"],
+        "faceE": ["chin", "perimeter", "innerCorner", "browBone"],
         "body": ["nails"],
     },
     "eyes": EYES,
     "brows": BROWS,
     "lashes": LASHES,
-    "hair": [{"id": k, "name": v, "morphs": asset_keys[f"Hair_{k}"]} for k, v in HAIR.items()],
-    "outfits": [{"id": k, "name": v, "hideMask": f"Outfit_{k}" in hide_files} for k, v in OUTFITS.items()],
+    "hair": [{"id": k, "name": v, "morphs": asset_keys[f"Hair_{k}"]} for k, (_src, v) in HAIR.items()],
+    "outfits": [{"id": k, "name": v, "store": OUTFIT_STORES.get(k), "ease": 0.0, "hideMask": f"Outfit_{k}" in hide_files} for k, v in OUTFITS.items()]
+    + [{"id": k, "name": v["name"], "store": v["store"], "ease": round(store_meta[k]["ease"], 4), "hideMask": f"Outfit_{k}" in hide_files} for k, v in STORE_OUTFITS.items()],
     "shoes": [{"id": k, "name": v, "hideMask": f"Shoes_{k}" in hide_files} for k, v in SHOES.items()],
+    "expressions": [n for n in EXPRESSIONS if n in body_keys],
+    "care": care_data,
 }
 with open(os.path.join(OUT, "character.json"), "w") as f:
     json.dump(manifest, f, indent=2)

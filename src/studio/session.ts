@@ -25,15 +25,38 @@ function persistLocal(dirty: boolean) {
   writeCache(cacheId(), { current: s.look, looks: s.saved, dirty })
 }
 
+let warned = false
+
 async function pushCurrent() {
   const s = useStudio.getState()
   if (!online()) return persistLocal(s.connection === 'offline')
   try {
     await api.saveCurrent(s.look)
     persistLocal(false)
+    warned = false
   } catch (e) {
     persistLocal(true)
     if (e instanceof ApiError && e.code === 'offline') useStudio.setState({ connection: 'offline' })
+    // say it once, not on every autosave
+    if (!warned) s.notify('Couldn’t save your look to your profile. It’s kept on this device and we’ll retry.', 'error')
+    warned = true
+  }
+}
+
+/** Save the working look now (e.g. right after creating the doll), not on the debounce. */
+export async function flushSave() {
+  window.clearTimeout(saveTimer)
+  await pushCurrent()
+}
+
+/** Keep the last valid look on this device (crash screen, page hide). Never throws. */
+export function rescueLook() {
+  try {
+    const s = useStudio.getState()
+    // an uncommitted preview is not the player's look: keep the one it started from
+    writeCache(cacheId(), { current: s.editBase ?? s.look, looks: s.saved, dirty: s.connection === 'offline' })
+  } catch {
+    /* best effort */
   }
 }
 
@@ -123,14 +146,14 @@ export async function saveLook(name: string) {
   const item: SavedLook = { id: newId(), name: name.trim() || `Look ${s.saved.length + 1}`, look: structuredClone(s.look), savedAt: Date.now() }
   useStudio.setState({ saved: [item, ...s.saved] })
   persistLocal(false)
-  if (!online()) return s.notify(s.connection === 'preview' ? 'Saved on this device (preview).' : 'Saved on this device. It syncs when you’re back online.')
+  if (!online()) return s.notify(s.connection === 'preview' ? 'Look saved! ✨ (on this device, preview)' : 'Look saved! ✨ It syncs when you’re back online.', 'success')
   try {
     const { looks } = await api.saveLook(item)
     useStudio.setState({ saved: looks })
     persistLocal(false)
-    s.notify('Saved to your lookbook.')
+    s.notify('Look saved! ✨', 'success')
   } catch {
-    s.notify('Saved on this device. We’ll sync it later.')
+    s.notify('Couldn’t save your look to your profile. It’s kept on this device, try again later.', 'error')
   }
 }
 
