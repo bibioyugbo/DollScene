@@ -1,4 +1,4 @@
-import type { OutfitId, StudioLook } from './look'
+import type { StudioLook } from './look'
 
 /**
  * Daily makeover briefs. Scoring only reads styling choices (colours, finish, outfit,
@@ -47,7 +47,8 @@ const hueIn = (hex: string, lo: number, hi: number) => {
   const inRange = lo <= hi ? h >= lo && h <= hi : h >= lo || h <= hi
   return inRange ? 1 : 0.2
 }
-const outfitIn = (l: StudioLook, ids: OutfitId[]) => (ids.includes(l.outfit.id) ? 1 : 0)
+const wearing = (l: StudioLook) => [l.wear.top?.id, l.wear.bottom?.id, l.wear.dress?.id].filter(Boolean) as string[]
+const outfitIn = (l: StudioLook, ids: string[]) => (wearing(l).some((id) => ids.includes(id)) ? 1 : 0)
 const totalMakeup = (l: StudioLook) => {
   const m = l.makeup
   return (m.foundation.amount + m.contour.amount + m.blush.amount + m.highlight.amount + m.eyeshadow.amount + m.liner.amount + m.lipstick.amount) / 7
@@ -63,7 +64,7 @@ const BRIEFS: Brief[] = [
       { id: 'gold', label: 'Gold or bronze eyes', weight: 1, test: (l) => hueIn(l.makeup.eyeshadow.color, 25, 55) },
       { id: 'sculpt', label: 'Sculpted cheeks', weight: 1, test: (l) => atLeast(l.makeup.contour.amount, 0.4) * atLeast(l.makeup.highlight.amount, 0.4) },
       { id: 'lip', label: 'A statement lip', weight: 1, test: (l) => atLeast(l.makeup.lipstick.amount, 0.7) },
-      { id: 'dress', label: 'Dressed up', weight: 1, test: (l) => outfitIn(l, ['female_elegantsuit01']) },
+      { id: 'dress', label: 'Dressed up', weight: 1, test: (l) => outfitIn(l, ['female_elegantsuit01', 'dress_sequin_mini', 'dress_velvet_mini', 'dress_slip']) },
     ],
   },
   {
@@ -74,7 +75,7 @@ const BRIEFS: Brief[] = [
       { id: 'light', label: 'Light touch', weight: 2, test: (l) => atMost(totalMakeup(l), 0.35) * atLeast(totalMakeup(l) + 0.01, 0.12) },
       { id: 'glow', label: 'Glowing skin', weight: 1, test: (l) => atLeast(l.makeup.highlight.amount + l.skin.glow * 0.5, 0.45) },
       { id: 'gloss', label: 'Glossy lips', weight: 1, test: (l) => atLeast(l.makeup.gloss, 0.6) },
-      { id: 'casual', label: 'Easy outfit', weight: 1, test: (l) => outfitIn(l, ['female_casualsuit01', 'female_casualsuit02']) },
+      { id: 'casual', label: 'Easy outfit', weight: 1, test: (l) => outfitIn(l, ['female_casualsuit01', 'female_casualsuit02', 'top_tank', 'top_baby_tee', 'top_oversized_tee', 'bottom_baggy_jeans', 'bottom_skinny_jeans']) },
     ],
   },
   {
@@ -85,7 +86,7 @@ const BRIEFS: Brief[] = [
       { id: 'graphic', label: 'Graphic eye', weight: 2, test: (l) => atLeast(l.makeup.liner.amount, 0.8) * atLeast(l.makeup.eyeshadow.amount, 0.6) },
       { id: 'colour', label: 'Bold colour', weight: 1, test: (l) => atLeast(hsl(l.makeup.eyeshadow.color).s, 0.5) },
       { id: 'matte', label: 'Matte lip', weight: 1, test: (l) => atMost(l.makeup.gloss, 0.25) * atLeast(l.makeup.lipstick.amount, 0.6) },
-      { id: 'styled', label: 'Styled outfit', weight: 1, test: (l) => (l.outfit.dyeAmount > 0.3 || l.outfit.id === 'female_elegantsuit01' ? 1 : 0.3) },
+      { id: 'styled', label: 'Styled outfit', weight: 1, test: (l) => (l.wear.dress || outfitIn(l, ['top_corset', 'top_bandeau', 'top_lace_bralette', 'bottom_satin_mini', 'bottom_pencil_skirt']) ? 1 : 0.3) },
     ],
   },
   {
@@ -116,8 +117,8 @@ const BRIEFS: Brief[] = [
     story: 'Sweat-proof and effortless. Brows done, nothing else.',
     criteria: [
       { id: 'minimal', label: 'Barely-there makeup', weight: 2, test: (l) => atMost(totalMakeup(l), 0.18) },
-      { id: 'sport', label: 'Sportswear', weight: 2, test: (l) => outfitIn(l, ['female_sportsuit01']) },
-      { id: 'sneakers', label: 'Sneakers', weight: 1, test: (l) => (l.shoes.id === 'shoes01' ? 1 : 0) },
+      { id: 'sport', label: 'Sportswear', weight: 2, test: (l) => outfitIn(l, ['female_sportsuit01', 'top_sports_bra', 'bottom_leggings']) },
+      { id: 'sneakers', label: 'Sneakers', weight: 1, test: (l) => (['shoes02', 'shoes05', 'shoes06'].includes(l.wear.shoes?.id ?? '') ? 1 : 0) },
       { id: 'hair', label: 'Hair off the face', weight: 1, test: (l) => (['ponytail01', 'braid01', 'short02', 'none'].includes(l.hair.style) ? 1 : 0.4) },
     ],
   },
@@ -129,7 +130,7 @@ const BRIEFS: Brief[] = [
       { id: 'neutral', label: 'Neutral eyes', weight: 1, test: (l) => (hsl(l.makeup.eyeshadow.color).s < 0.45 ? 1 : 0.3) * near(l.makeup.eyeshadow.amount, 0.35, 0.4) },
       { id: 'polish', label: 'Polished base', weight: 1, test: (l) => atLeast(l.makeup.foundation.amount, 0.4) },
       { id: 'lip', label: 'Soft lip colour', weight: 1, test: (l) => near(l.makeup.lipstick.amount, 0.5, 0.35) },
-      { id: 'smart', label: 'Smart outfit', weight: 2, test: (l) => outfitIn(l, ['female_elegantsuit01', 'female_casualsuit01']) },
+      { id: 'smart', label: 'Smart outfit', weight: 2, test: (l) => outfitIn(l, ['female_elegantsuit01', 'female_casualsuit01', 'bottom_pencil_skirt', 'top_peplum']) },
     ],
   },
 ]

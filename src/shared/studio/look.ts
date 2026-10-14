@@ -35,7 +35,7 @@ export const FACE_MORPHS = [
  * Every body morph changes shape relative to one shared skeleton (the build removes the joint drift
  * MakeHuman's macros carry), so limb lengths and proportions follow `height` only, never weight.
  */
-export const BODY_MORPHS = ['Shoulders', 'Bust', 'BustLift', 'Waist', 'Belly', 'Hips', 'Glutes', 'Thighs', 'Arms', 'Calves', 'NeckFull', 'Softness', 'Muscle', 'Masc'] as const
+export const BODY_MORPHS = ['Shoulders', 'Bust', 'BustLift', 'Waist', 'Belly', 'Hips', 'Glutes', 'Thighs', 'Arms', 'Calves', 'NeckFull', 'Softness', 'Muscle', 'Masc', 'Pregnant', 'ChestFlat', 'BackStraight'] as const
 export type FaceMorph = (typeof FACE_MORPHS)[number]
 export type BodyMorph = (typeof BODY_MORPHS)[number]
 export type MorphId = FaceMorph | BodyMorph
@@ -56,8 +56,11 @@ export const HAIR_IDS = [
   'afro_short',
   'afro_big',
   'afro_puffs',
+  'afro_fringe',
   'two_braids',
   'fulani_braids',
+  'goddess_braids',
+  'long_curls',
   'box_braids',
   'knotless_braids',
   'cornrows',
@@ -82,6 +85,7 @@ export const HAIR_IDS = [
 ] as const
 /** Renamed hair ids: old saves still load. */
 const HAIR_RENAMES: Record<string, (typeof HAIR_IDS)[number]> = { afro01: 'afro_big', afro: 'afro_big' }
+/** The shipped MakeHuman outfits: "classic sets" (dress slot, one colour). */
 export const OUTFIT_IDS = [
   'female_sportsuit01',
   'female_casualsuit01',
@@ -95,20 +99,87 @@ export const OUTFIT_IDS = [
   'male_casualsuit06',
   'male_elegantsuit01',
   'male_worksuit01',
-  // store collections (scripts/character/outfit/build_outfits.py)
-  'kai_butterfly_red',
-  'kai_butterfly_blue',
-  'kai_garden_set',
-  'mc_corset_mini',
-  'mc_slip_dress',
-  'dbf_sequin_mini',
-  'dbf_flare_set',
-  'deeji_iro_buba',
-  'deeji_ankara_set',
-  'bola_distressed',
-  'bola_rock_set',
 ] as const
+/** The shipped MakeHuman shoes: "classic" flats and trainers (shoes slot, one colour). */
 export const SHOE_IDS = ['shoes01', 'shoes02', 'shoes03', 'shoes04', 'shoes05', 'shoes06'] as const
+/**
+ * Wardrobe pieces (scripts/character/outfit/build_pieces.py + shoes.py): each one asset, shared by
+ * every doll, recoloured through three colour slots (primary, secondary, accent).
+ */
+export const PIECE_IDS = [
+  'top_crop_tank',
+  'top_tank',
+  'top_cami',
+  'top_corset',
+  'top_bandeau',
+  'top_baby_tee',
+  'top_oversized_tee',
+  'top_crop_tee',
+  'top_flame_tee',
+  'top_buba',
+  'top_peplum',
+  'top_mesh',
+  'top_sports_bra',
+  'top_lace_bralette',
+  'top_square_crop',
+  'top_everyday_tee',
+  'top_track_jacket',
+  'top_suit_jacket',
+  'bottom_baggy_jeans',
+  'bottom_skinny_jeans',
+  'bottom_ripped_jeans',
+  'bottom_cargo',
+  'bottom_flare_pants',
+  'bottom_leggings',
+  'bottom_lace_briefs',
+  'bottom_mini_skirt',
+  'bottom_pleated_mini',
+  'bottom_satin_mini',
+  'bottom_midi_skirt',
+  'bottom_pencil_skirt',
+  'bottom_iro',
+  'bottom_micro_skirt',
+  'bottom_overalls',
+  'bottom_wide_trousers',
+  'bottom_track_pants',
+  'bottom_suit_trousers',
+  'dress_slip',
+  'dress_sequin_mini',
+  'dress_velvet_mini',
+  'dress_lace_bodysuit',
+  'dress_maxi',
+  'shoes_pumps',
+  'shoes_block_heels',
+  'shoes_mules',
+  'shoes_strappy',
+  'shoes_ankle_strap',
+  'shoes_heel_boots',
+  'shoes_platforms',
+  'shoes_kitten',
+  'shoes_beaded_sandals',
+] as const
+export const PIECE_SLOTS = ['top', 'bottom', 'dress', 'shoes'] as const
+export type PieceSlot = (typeof PIECE_SLOTS)[number]
+export type PieceId = (typeof PIECE_IDS)[number]
+/** Which slot a piece (or classic set / classic shoe) fills. */
+export function slotOf(id: string): PieceSlot | null {
+  if ((OUTFIT_IDS as readonly string[]).includes(id)) return 'dress'
+  if ((SHOE_IDS as readonly string[]).includes(id)) return 'shoes'
+  if (!(PIECE_IDS as readonly string[]).includes(id)) return null
+  return id.split('_')[0] as PieceSlot
+}
+/** Skirts and dresses: the doll wears heels with them. */
+export const SKIRTS: readonly string[] = ['bottom_mini_skirt', 'bottom_pleated_mini', 'bottom_satin_mini', 'bottom_midi_skirt', 'bottom_pencil_skirt', 'bottom_iro', 'bottom_micro_skirt']
+/** One worn piece and its three colours (primary, secondary, accent). */
+export interface Worn {
+  id: string
+  colors: [string, string, string]
+}
+export type Wear = Record<PieceSlot, Worn | null>
+/** Heeled shoes (pieces built with a foot arch, plus the classic heels). */
+export const HEELS: readonly string[] = ['shoes_pumps', 'shoes_block_heels', 'shoes_mules', 'shoes_strappy', 'shoes_ankle_strap', 'shoes_heel_boots', 'shoes_platforms', 'shoes_kitten', 'shoes_beaded_sandals']
+/** A dress or a skirt: she wears heels with it. */
+export const needsHeels = (w: Wear) => (!!w.dress && (w.dress.id.startsWith('dress_') || w.dress.id === 'female_elegantsuit01')) || SKIRTS.includes(w.bottom?.id ?? '')
 export const UNDERTONES = ['cool', 'neutral', 'warm', 'olive'] as const
 
 export type EyeId = (typeof EYE_IDS)[number]
@@ -118,6 +189,60 @@ export type LashId = (typeof LASH_IDS)[number]
 export type HairId = (typeof HAIR_IDS)[number] | 'none'
 export type OutfitId = (typeof OUTFIT_IDS)[number]
 export type ShoeId = (typeof SHOE_IDS)[number]
+/** Old save outfit ids (the first store collection), dressed in today's pieces. */
+const OLD_OUTFITS: Record<string, Partial<Wear>> = {
+  kai_butterfly_red: { top: { id: 'top_crop_tank', colors: ['#C8102E', '#FFC72C', '#2A1200'] }, bottom: { id: 'bottom_baggy_jeans', colors: ['#7FA3C9', '#D8A04A', '#B8B8B8'] } },
+  kai_butterfly_blue: { top: { id: 'top_crop_tank', colors: ['#1F4FA8', '#F28C28', '#0E1A33'] }, bottom: { id: 'bottom_skinny_jeans', colors: ['#2E3D5C', '#D8A04A', '#B8B8B8'] } },
+  kai_garden_set: { top: { id: 'top_cami', colors: ['#F6D7E3', '#6FA36B', '#FFFFFF'] }, bottom: { id: 'bottom_midi_skirt', colors: ['#F6D7E3', '#6FA36B', '#FFFFFF'] } },
+  mc_corset_mini: { top: { id: 'top_corset', colors: ['#111111', '#D9B35B', '#B0124A'] }, bottom: { id: 'bottom_satin_mini', colors: ['#111111', '#D9B35B', '#FFFFFF'] } },
+  mc_slip_dress: { dress: { id: 'dress_slip', colors: ['#B0124A', '#E8C7A0', '#FFFFFF'] } },
+  dbf_sequin_mini: { dress: { id: 'dress_sequin_mini', colors: ['#D9B35B', '#F2D98A', '#FFFFFF'] } },
+  dbf_flare_set: { top: { id: 'top_bandeau', colors: ['#E07AA6', '#FFFFFF', '#D9B35B'] }, bottom: { id: 'bottom_flare_pants', colors: ['#E07AA6', '#FFFFFF', '#D9B35B'] } },
+  deeji_iro_buba: { top: { id: 'top_buba', colors: ['#F2C14E', '#2A5DB0', '#FFFFFF'] }, bottom: { id: 'bottom_iro', colors: ['#2A5DB0', '#F2C14E', '#FFFFFF'] } },
+  deeji_ankara_set: { top: { id: 'top_peplum', colors: ['#E4572E', '#2A9D8F', '#F2C14E'] }, bottom: { id: 'bottom_pencil_skirt', colors: ['#E4572E', '#2A9D8F', '#F2C14E'] } },
+  bola_distressed: { top: { id: 'top_oversized_tee', colors: ['#232323', '#EDE8DD', '#E63946'] }, bottom: { id: 'bottom_ripped_jeans', colors: ['#7FA3C9', '#D8A04A', '#B8B8B8'] } },
+  bola_rock_set: { top: { id: 'top_crop_tee', colors: ['#6E6E72', '#141414', '#F2C14E'] }, bottom: { id: 'bottom_skinny_jeans', colors: ['#141414', '#D8A04A', '#B8B8B8'] } },
+}
+
+/* ------------------------------------------------------------------ accessories and tattoos */
+
+/** Something held in the left hand (the right is free for waves, peace signs and selfies). */
+export const HELD = ['none', 'whip', 'joint', 'clutch', 'fan', 'matcha', 'phone'] as const
+export const HEADPIECES = ['none', 'coralBand', 'satinBand', 'headscarf'] as const
+export interface Extras {
+  held: (typeof HELD)[number]
+  head: (typeof HEADPIECES)[number]
+  /** Stacked coral bead necklaces (traditional). */
+  coralBeads: boolean
+  /** Coral beads on the wrists. */
+  coralWrists: boolean
+  /** Coral anklets. */
+  anklets: boolean
+  /** Waist beads over the hips. */
+  waistBeads: boolean
+  /** Rainbow pride pins on the top. */
+  pins: boolean
+  /** A chain hanging from the glasses. */
+  glassesChain: boolean
+  /** Layered chunky chains. */
+  chains: boolean
+  /** Colour of the headpiece / clutch / fan. */
+  color: string
+}
+export const TATTOO_DESIGNS = ['rose', 'butterfly', 'heart', 'star', 'moon', 'snake', 'script', 'vine', 'dagger', 'sun', 'swallow', 'band'] as const
+export const TATTOO_SPOTS = ['forearmL', 'forearmR', 'upperArmL', 'upperArmR', 'shoulderBackL', 'shoulderBackR', 'ankleL', 'ankleR', 'calfL', 'calfR', 'thighL', 'thighR', 'hipL', 'hipR', 'ribsL', 'ribsR', 'chestL', 'chestR', 'wristL', 'wristR', 'nape', 'lowerBack', 'sternum'] as const
+export type TattooDesign = (typeof TATTOO_DESIGNS)[number]
+export type TattooSpot = (typeof TATTOO_SPOTS)[number]
+export interface Tattoo {
+  design: TattooDesign
+  at: TattooSpot
+  /** Ink colour. */
+  ink: string
+  /** Size, about 0.6 (dainty) .. 1.6 (statement). */
+  size: number
+}
+export const MAX_TATTOOS = 8
+export const DEFAULT_EXTRAS: Extras = { held: 'none', head: 'none', coralBeads: false, coralWrists: false, anklets: false, waistBeads: false, pins: false, glassesChain: false, chains: false, color: '#E4572E' }
 export type Undertone = (typeof UNDERTONES)[number]
 
 /** Braids that can be taken down into a braid-out, and locs that can be retwisted. */
@@ -207,7 +332,7 @@ export type SpotId = (typeof SPOT_IDS)[number]
  */
 export const SPOT_STATES = ['pimple', 'popped', 'treated', 'flat', 'boil', 'drained'] as const
 export type SpotState = (typeof SPOT_STATES)[number]
-export const CARE_STEPS = ['patches', 'pop', 'cleanse', 'spot', 'toner', 'serum', 'eyeCream', 'moisturiser', 'sunscreen', 'lipBalm', 'exfoliate', 'soothe', 'brighten', 'compress', 'wash'] as const
+export const CARE_STEPS = ['patches', 'eyePatches', 'pop', 'cleanse', 'spot', 'toner', 'serum', 'eyeCream', 'moisturiser', 'sunscreen', 'lipBalm', 'exfoliate', 'soothe', 'brighten', 'compress', 'wash'] as const
 export type CareStep = (typeof CARE_STEPS)[number]
 
 export interface SkinCare {
@@ -215,6 +340,8 @@ export interface SkinCare {
   morning: boolean
   /** Hydrocolloid pimple patches still on. */
   patches: SpotId[]
+  /** Hydrogel under-eye patches still on (worn overnight; peeled off in the morning). */
+  eyePatches: boolean
   spots: Partial<Record<SpotId, SpotState>>
   /** Under-eye darkness 0..1. */
   underEye: number
@@ -267,10 +394,13 @@ export const METALS = ['gold', 'silver', 'rose'] as const
 export type Metal = (typeof METALS)[number]
 export const EARRINGS = ['none', 'studs', 'hoops', 'huggies', 'drops'] as const
 export const NOSE_RINGS = ['none', 'stud', 'ring'] as const
-export const LIP_RINGS = ['none', 'stud', 'ring'] as const
+/** Lip piercings: a labret stud (centred under the lower lip), a Monroe (above the upper lip, off
+ * centre), snake bites (two rings at the lower lip, near each corner). */
+export const LIP_RINGS = ['none', 'labret', 'monroe', 'snakebites'] as const
 export const NECKLACES = ['none', 'chain', 'pendant', 'choker', 'pearls'] as const
 export const BRACELETS = ['none', 'bangle', 'chain', 'stack'] as const
-export const GLASSES = ['none', 'round', 'square', 'cateye', 'sunnies'] as const
+/** Frames: round or rectangular ('square'), plus sunnies. (Old cat-eye saves become rectangular.) */
+export const GLASSES = ['none', 'round', 'square', 'sunnies'] as const
 
 export interface Jewellery {
   metal: Metal
@@ -287,6 +417,8 @@ export interface Jewellery {
   glasses: (typeof GLASSES)[number]
   /** Frame colour. */
   frame: string
+  /** Industrial bar across the top of the ear. */
+  industrial: boolean
 }
 
 /** Skin features that are part of who she is: birthmarks, moles, freckles, vitiligo. */
@@ -339,8 +471,10 @@ export interface StudioLook {
   hair: HairLook
   nails: NailLook
   jewellery: Jewellery
-  outfit: { id: OutfitId; dye: string; dyeAmount: number }
-  shoes: { id: ShoeId }
+  /** What she wears: one piece per slot (a dress replaces top and bottom), each in three colours. */
+  wear: Wear
+  extras: Extras
+  tattoos: Tattoo[]
   /** Transformation-studio presets applied (for the lookbook caption only). */
   transforms: string[]
   profile: Profile
@@ -377,7 +511,7 @@ export const DEFAULT_MAKEUP: Makeup = {
   setting: 0,
 }
 
-export const CLEAR_SKIN: SkinCare = { morning: false, patches: [], spots: {}, underEye: 0.15, texture: 0.1, rash: 0, pigment: 0, dry: 0, dew: 0, hydration: 0.5, glow: 0.3, spf: false, lips: 0.4, done: [] }
+export const CLEAR_SKIN: SkinCare = { morning: false, patches: [], eyePatches: false, spots: {}, underEye: 0.15, texture: 0.1, rash: 0, pigment: 0, dry: 0, dew: 0, hydration: 0.5, glow: 0.3, spf: false, lips: 0.4, done: [] }
 
 export const DEFAULT_LOOK: StudioLook = {
   v: 2,
@@ -392,9 +526,15 @@ export const DEFAULT_LOOK: StudioLook = {
   makeup: DEFAULT_MAKEUP,
   hair: { style: 'afro_big', color: '#0A0A0C', tip: '#0A0A0C', blend: 0, roughness: 0.6, shine: 0.35, preset: 'jet_black', crop: 0.6, care: { wet: 0, bonnet: false, change: null } },
   nails: { color: '#7A1F2B', amount: 0, shape: 'natural', length: 0, finish: 'cream', art: 'none', artColor: '#FFFFFF', gems: false, toes: false },
-  jewellery: { metal: 'gold', ears: 'none', helix: false, nose: 'none', septum: false, lip: 'none', brow: false, navel: false, necklace: 'none', wrist: 'none', rings: false, glasses: 'none', frame: '#1A1416' },
-  outfit: { id: 'female_sportsuit01', dye: '#FFFFFF', dyeAmount: 0 },
-  shoes: { id: 'shoes01' },
+  jewellery: { metal: 'gold', ears: 'none', helix: false, nose: 'none', septum: false, lip: 'none', brow: false, navel: false, necklace: 'none', wrist: 'none', rings: false, glasses: 'none', frame: '#1A1416', industrial: false },
+  wear: {
+    top: { id: 'top_tank', colors: ['#F4EFE6', '#2A2A2A', '#2A2A2A'] },
+    bottom: { id: 'bottom_skinny_jeans', colors: ['#2E3D5C', '#D8A04A', '#B8B8B8'] },
+    dress: null,
+    shoes: { id: 'shoes05', colors: ['#FFFFFF', '#FFFFFF', '#FFFFFF'] },
+  },
+  extras: DEFAULT_EXTRAS,
+  tattoos: [],
   transforms: [],
   profile: { name: '', starter: '', onboarded: false },
   scene: { id: 'rooftop', time: 'night', weather: 'clear', spot: '' },
@@ -460,6 +600,7 @@ function sanitizeCare(c: Record<string, unknown>): SkinCare {
   return {
     morning: bool(c.morning, d.morning),
     patches: ids(c.patches),
+    eyePatches: bool(c.eyePatches, false),
     spots,
     underEye: clamp01(c.underEye, d.underEye),
     texture: clamp01(c.texture, d.texture),
@@ -485,6 +626,68 @@ function sanitizeHairCare(c: Record<string, unknown>): HairCare {
   return { wet: clamp01(c.wet, 0), bonnet: bool(c.bonnet, false), change: change && change.from !== 'none' && change.to !== 'none' ? change : null }
 }
 
+const WHITE3: [string, string, string] = ['#FFFFFF', '#FFFFFF', '#FFFFFF']
+
+function worn(o: unknown, slot: PieceSlot): Worn | null {
+  const x = obj(o)
+  if (typeof x.id !== 'string' || slotOf(x.id) !== slot) return null
+  const c = Array.isArray(x.colors) ? x.colors : []
+  return { id: x.id, colors: [hex(c[0], '#FFFFFF'), hex(c[1], hex(c[0], '#FFFFFF')), hex(c[2], hex(c[0], '#FFFFFF'))] }
+}
+
+/** Today's wear, or the one outfit + shoes of an older save dressed in it. */
+function sanitizeWear(x: Record<string, unknown>): Wear {
+  const d = DEFAULT_LOOK.wear
+  if (x.wear && typeof x.wear === 'object') {
+    const w = obj(x.wear)
+    const out: Wear = { top: worn(w.top, 'top'), bottom: worn(w.bottom, 'bottom'), dress: worn(w.dress, 'dress'), shoes: worn(w.shoes, 'shoes') }
+    // a dress replaces the top and bottom
+    if (out.dress) out.top = out.bottom = null
+    return out
+  }
+  if (!x.outfit && !x.shoes) return d
+  const o = obj(x.outfit)
+  const out: Wear = { top: null, bottom: null, dress: null, shoes: d.shoes }
+  const old = typeof o.id === 'string' ? OLD_OUTFITS[o.id] : undefined
+  if (old) Object.assign(out, old)
+  else if (typeof o.id === 'string' && (OUTFIT_IDS as readonly string[]).includes(o.id)) {
+    const dye = hex(o.dye, '#FFFFFF')
+    out.dress = { id: o.id, colors: clamp01(o.dyeAmount, 0) > 0.05 ? [dye, dye, dye] : WHITE3 }
+  } else Object.assign(out, { top: d.top, bottom: d.bottom })
+  const sh = obj(x.shoes).id
+  if (typeof sh === 'string' && (SHOE_IDS as readonly string[]).includes(sh)) out.shoes = { id: sh, colors: WHITE3 }
+  return out
+}
+
+function sanitizeExtras(e: Record<string, unknown>): Extras {
+  const d = DEFAULT_EXTRAS
+  return {
+    held: oneOf(e.held, HELD, 'none'),
+    head: oneOf(e.head, HEADPIECES, 'none'),
+    coralBeads: bool(e.coralBeads, false),
+    coralWrists: bool(e.coralWrists, false),
+    anklets: bool(e.anklets, false),
+    waistBeads: bool(e.waistBeads, false),
+    pins: bool(e.pins, false),
+    glassesChain: bool(e.glassesChain, false),
+    chains: bool(e.chains, false),
+    color: hex(e.color, d.color),
+  }
+}
+
+function sanitizeTattoos(t: unknown): Tattoo[] {
+  if (!Array.isArray(t)) return []
+  const out: Tattoo[] = []
+  for (const it of t.slice(0, MAX_TATTOOS)) {
+    const x = obj(it)
+    if (!(TATTOO_DESIGNS as readonly string[]).includes(x.design as string) || !(TATTOO_SPOTS as readonly string[]).includes(x.at as string)) continue
+    if (out.some((o) => o.at === x.at)) continue
+    const size = typeof x.size === 'number' && Number.isFinite(x.size) ? Math.min(1.6, Math.max(0.6, x.size)) : 1
+    out.push({ design: x.design as TattooDesign, at: x.at as TattooSpot, ink: hex(x.ink, '#1A1A22'), size })
+  }
+  return out
+}
+
 /** Accepts anything (a save from the network, old local data) and returns a valid look. */
 export function sanitizeLook(input: unknown): StudioLook {
   const d = DEFAULT_LOOK
@@ -500,7 +703,6 @@ export function sanitizeLook(input: unknown): StudioLook {
   }
   const skin = obj(x.skin)
   const hair = obj(x.hair)
-  const outfit = obj(x.outfit)
   const nails = obj(x.nails)
   const jw = obj(x.jewellery)
   const brows = obj(x.brows)
@@ -528,7 +730,7 @@ export function sanitizeLook(input: unknown): StudioLook {
       blend: clamp01(hair.blend, 0),
       roughness: clamp01(hair.roughness, d.hair.roughness),
       shine: clamp01(hair.shine, d.hair.shine),
-      preset: typeof hair.preset === 'string' && /^[a-z_]{1,24}$/.test(hair.preset) ? hair.preset : 'custom',
+      preset: typeof hair.preset === 'string' && /^[a-z0-9_]{1,24}$/.test(hair.preset) ? hair.preset : 'custom',
       crop: clamp01(hair.crop, d.hair.crop),
       care: sanitizeHairCare(obj(hair.care)),
     },
@@ -549,22 +751,40 @@ export function sanitizeLook(input: unknown): StudioLook {
       helix: bool(jw.helix, false),
       nose: oneOf(jw.nose, NOSE_RINGS, 'none'),
       septum: bool(jw.septum, false),
-      lip: oneOf(jw.lip, LIP_RINGS, 'none'),
+      // (older saves: 'stud' was the labret, 'ring' a lip ring: now snake bites)
+      lip: jw.lip === 'stud' ? 'labret' : jw.lip === 'ring' ? 'snakebites' : oneOf(jw.lip, LIP_RINGS, 'none'),
       brow: bool(jw.brow, false),
       navel: bool(jw.navel, false),
       necklace: oneOf(jw.necklace, NECKLACES, 'none'),
       wrist: oneOf(jw.wrist, BRACELETS, 'none'),
       rings: bool(jw.rings, false),
-      glasses: oneOf(jw.glasses, GLASSES, 'none'),
+      glasses: jw.glasses === 'cateye' ? 'square' : oneOf(jw.glasses, GLASSES, 'none'),
       frame: hex(jw.frame, d.jewellery.frame),
+      industrial: bool(jw.industrial, false),
     },
-    outfit: { id: oneOf(outfit.id, OUTFIT_IDS, d.outfit.id), dye: hex(outfit.dye, d.outfit.dye), dyeAmount: clamp01(outfit.dyeAmount, 0) },
-    shoes: { id: oneOf(obj(x.shoes).id, SHOE_IDS, d.shoes.id) },
+    wear: sanitizeWear(x),
+    extras: sanitizeExtras(obj(x.extras)),
+    tattoos: sanitizeTattoos(x.tattoos),
     transforms,
     // A v1 save already belongs to a player who has a character: don't send them through creation again.
     profile: { name: cleanText(profile.name, 24), starter: ident(profile.starter, ''), onboarded: bool(profile.onboarded, legacyV1 && Object.keys(x).length > 0) },
     scene: { id: ident(scene.id, d.scene.id), time: ident(scene.time, d.scene.time), weather: ident(scene.weather, d.scene.weather), spot: ident(scene.spot, '') },
   }
+}
+
+/* ------------------------------------------------------------------ names */
+
+/**
+ * The key two doll names collide on: case, accents, spacing and punctuation don't make a name
+ * different ("Bibi", "bibi", "B.i.b.i" and "Bíbí" are one name).
+ */
+export function nameKey(name: string): string {
+  return name
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, '')
+    .slice(0, 24)
 }
 
 /* ------------------------------------------------------------------ saved looks */

@@ -2,14 +2,15 @@ import { create } from 'zustand'
 import { sanitizeLook, type StudioLook } from '../../shared/studio/look'
 import { isFramed, vatar } from '../vatar/sdk'
 import { sfx } from '../ui/sound'
+import { accessToken } from './auth'
 
 /**
  * Client for the realtime server (server/realtime): presence and live headcounts, the other players
  * at a scene (their dolls, positions and poses), and public chat with @mentions. Optimistic: your
  * own message shows at once and is confirmed by the server's echo. Blocks and mutes live here too.
  *
- * URL: VITE_REALTIME_URL (wss://…/realtime). In dev it defaults to ws://localhost:8787/realtime
- * (run `npm --prefix server/realtime run dev`). With no server the game plays on: counts show "–".
+ * URL: VITE_REALTIME_URL (wss://…/realtime), else the game's own origin at /realtime (the dev and
+ * preview servers run the realtime service in-process). With no server the game plays on: counts show "–".
  */
 
 export interface PeerState {
@@ -77,7 +78,9 @@ export const useRealtime = create<RealtimeState>(() => ({
   pings: [],
 }))
 
-const URL_ = (import.meta.env?.VITE_REALTIME_URL as string | undefined) || (import.meta.env?.DEV ? 'ws://localhost:8787/realtime' : '')
+// the realtime service: VITE_REALTIME_URL, else the game's own origin (the dev and preview servers
+// run it at /realtime; see vite.studio.config.ts)
+const URL_ = (import.meta.env?.VITE_REALTIME_URL as string | undefined) || (typeof location !== 'undefined' ? `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/realtime` : '')
 
 let ws: WebSocket | null = null
 let hello: { name: string; look: StudioLook; channel: string } | null = null
@@ -169,9 +172,10 @@ async function connect() {
   useRealtime.setState({ status: 'connecting' })
   let session: string | undefined
   if (isFramed()) session = await vatar.session().catch(() => undefined)
+  const access = await accessToken().catch(() => null)
   const sock = new WebSocket(URL_)
   ws = sock
-  sock.onopen = () => sock.send(JSON.stringify({ t: 'hello', session, adult: true, name: hello!.name, look: wireLook(hello!.look), channel: hello!.channel }))
+  sock.onopen = () => sock.send(JSON.stringify({ t: 'hello', session, access, adult: true, name: hello!.name, look: wireLook(hello!.look), channel: hello!.channel }))
   sock.onmessage = (e) => onMsg(String(e.data))
   sock.onclose = (e) => {
     if (ws !== sock) return

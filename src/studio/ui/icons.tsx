@@ -49,7 +49,8 @@ export const PATHS = {
   base: 'M8 9h8v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9Z M10 4h4v5h-4z M8 13h8',
   sculpt: 'M11 13a7 7 0 1 0 0 .01Z M11 9.5a3.5 3.5 0 1 0 0 .01Z M15.5 8.5 20 4',
   eyes: 'M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
-  shoes: 'M3 16v-4l4-1 3 3 8 1.5a3 3 0 0 1 3 3V19H3v-3Z M3 16h18',
+  // a pointed pump in profile: toe, the dipping topline up to the heel counter, the stiletto
+  shoes: 'M2.5 19.5c0-1.7.8-2.9 2.2-3.1 2.8-.4 5-.8 7-2.2L18 8.2c.7-.6 1.8-.5 2.3.3.4.7.4 1.6-.1 2.2L18.6 13 M18.6 13l.4 7.5h1l.3-8 M18.6 13c-2.8 2.4-5.6 6.5-9.6 6.5H2.5',
   clinicFace: 'M12 3c4 0 7 3.5 7 8.5S16 21 12 21s-7-4.5-7-9.5S8 3 12 3Z M9.5 10.5h.01M14.5 10.5h.01 M10 15q2 1.5 4 0',
   clinicBody: 'M12 3.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z M8 9h8l-1 6 1 6h-3l-1-4-1 4H8l1-6-1-6Z',
   hub: 'M3 21V8l9-5 9 5v13 M9 21v-7h6v7',
@@ -60,6 +61,12 @@ export const PATHS = {
   flag: 'M5 21V4h11l-2 4 2 4H5',
   block: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M5.6 5.6l12.8 12.8',
   mute: 'M4 9h4l5-4v14l-5-4H4V9Z M17 9l4 6M21 9l-4 6',
+  tops: 'M8 4 4.5 6.5 6 10l2-1v11h8V9l2 1 1.5-3.5L16 4c-.5 1.5-2 2.5-4 2.5S8.5 5.5 8 4Z',
+  bottoms: 'M7 3.5h10l1.5 17h-4.2L12 10l-2.3 10.5H5.5L7 3.5Z M7 6.5h10',
+  dresses: 'M9 3.5h6l-1 4 5 13H5l5-13-1-4Z M9.5 7.5h5',
+  accessories: 'M6.5 9a5.5 5.5 0 0 0 11 0 M6.5 9 5 6M17.5 9 19 6 M12 14.5v3 M10 19.5a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z',
+  tattoos: 'M12 20s-7-4.2-7-9.5A4.2 4.2 0 0 1 12 8a4.2 4.2 0 0 1 7 2.5c0 5.3-7 9.5-7 9.5Z M4 4l3 3M20 4l-3 3',
+  piercings: 'M14 4a6 6 0 1 1-8.5 8.5 M14 4l-2 2 M8 18.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z M16.5 15.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z',
   dice: 'M4 4h16v16H4z M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01',
 } as const
 
@@ -91,8 +98,13 @@ export const CATEGORY_ICON: Record<Category, IconName> = {
   hairstyles: 'hairstyles',
   haircolour: 'haircolour',
   haircare: 'haircare',
-  outfits: 'outfits',
+  tops: 'tops',
+  bottoms: 'bottoms',
+  dresses: 'dresses',
   shoes: 'shoes',
+  accessories: 'accessories',
+  tattoos: 'tattoos',
+  piercings: 'piercings',
   clinicFace: 'clinicFace',
   clinicBody: 'clinicBody',
 }

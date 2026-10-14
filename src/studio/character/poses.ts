@@ -18,8 +18,30 @@ type Goal = (c: Character, t: number) => HandGoal | null
 
 const S = (side: Side) => (side === 'Left' ? 1 : -1)
 
-const POSE_GOALS: Record<PoseId | 'present', Partial<Record<Side, Goal>>> = {
+export type PoseKey = PoseId | 'present' | 'mirror'
+
+const POSE_GOALS: Record<PoseKey, Partial<Record<Side, Goal>>> = {
   relaxed: {},
+  mirror: {
+    // a mirror selfie: the phone upright in front of her chest, gripped by its sides, its back
+    // camera toward the mirror, screen toward her; elbow down by her side; the other hand on her hip
+    Right: (c) => {
+      const neck = landmark(c, 'neck')
+      const sh = bonePos(c, 'RightArm')
+      if (!neck || !sh) return null
+      const target = neck.add(localVec(c, new Vector3(-0.05, -0.1, 0.26)))
+      return {
+        target,
+        fingers: localDir(c, new Vector3(1, 0.05, 0.05)).normalize(),
+        palm: localDir(c, new Vector3(0, 0, -1)),
+        effector: 'palm',
+        grip: 'hold',
+        weight: 1,
+        pole: target.clone().add(localVec(c, new Vector3(-0.35, -0.6, -0.2))),
+      }
+    },
+    Left: (c) => onHip(c, 'Left'),
+  },
   'hand-on-hip': {
     Left: (c) => {
       const hip = bonePos(c, 'LeftUpLeg')
@@ -187,17 +209,23 @@ function crossTo(c: Character, side: Side): HandGoal | null {
   }
 }
 
+/**
+ * Hands loosely clasped in front at the lower belly: both palms toward her, the right hand resting
+ * over the back of the left, each hand's fingers angled down across the other (never pointing up).
+ */
 function clasp(c: Character, side: Side): HandGoal | null {
   const s = S(side)
   const hips = bonePos(c, 'Hips')
   if (!hips) return null
+  const over = side === 'Right'
   return {
-    target: hips.add(localVec(c, new Vector3(s * 0.025, 0.04, 0.17))),
-    fingers: localDir(c, new Vector3(-s, -0.4, 0.3)).normalize(),
-    palm: localDir(c, new Vector3(-s, 0, 0.2)).normalize(),
+    target: hips.add(localVec(c, new Vector3(s * 0.035, 0.05 + (over ? 0.012 : 0), over ? 0.19 : 0.168))),
+    fingers: localDir(c, new Vector3(-0.8 * s, -0.55, 0.05)).normalize(),
+    palm: localDir(c, new Vector3(0.1 * s, 0.05, -1)).normalize(),
     effector: 'palm',
-    grip: 'cup',
+    grip: 'relaxed',
     weight: 1,
+    pole: hips.clone().add(localVec(c, new Vector3(s * 0.45, 0.1, -0.2))),
   }
 }
 
@@ -215,8 +243,40 @@ function presentHand(c: Character, side: Side): HandGoal | null {
   }
 }
 
+/**
+ * What she carries changes how the free arm hangs:
+ *  - cup: a drink at the waist, elbow by her side, forearm forward, thumb on top (the cup upright)
+ *  - phone: her phone on the open palm at chest height, screen toward her face
+ *  - joint: the hand turned palm-back at the hip, so the joint between her fingers points out to
+ *    the side and reads clearly from the front
+ */
+export type Carry = 'cup' | 'phone' | 'joint'
+
+export function carryGoal(c: Character, side: Side, carry: Carry): HandGoal | null {
+  const s = S(side)
+  const hips = bonePos(c, 'Spine')
+  const arm = bonePos(c, `${side}Arm`)
+  if (!hips || !arm) return null
+  if (carry === 'cup') {
+    const target = hips.add(localVec(c, new Vector3(s * 0.15, 0.06, 0.2)))
+    return { target, fingers: localDir(c, new Vector3(-0.3 * s, 0.12, 1)).normalize(), palm: localDir(c, new Vector3(-s, 0, 0.3)).normalize(), effector: 'palm', grip: 'wrap', weight: 1, pole: target.clone().add(localVec(c, new Vector3(s * 0.25, -0.6, -0.45))) }
+  }
+  if (carry === 'phone') {
+    // the phone held upright in her hand at chest height, a little out in front, screen toward her
+    // (the selfie grip, lowered: fingers round its back, thumb on its side)
+    const neck = landmark(c, 'neck')
+    if (!neck) return null
+    const target = neck.add(localVec(c, new Vector3(s * 0.08, -0.06, 0.3)))
+    return { target, fingers: localDir(c, new Vector3(-0.2 * s, 0.85, 0.3)).normalize(), palm: localDir(c, new Vector3(-0.25 * s, 0.25, 1)).normalize(), effector: 'palm', grip: 'hold', weight: 1, pole: target.clone().add(localVec(c, new Vector3(s * 0.4, -0.6, -0.1))) }
+  }
+  const hip = bonePos(c, `${side}UpLeg`)
+  if (!hip) return null
+  const target = hip.add(localVec(c, new Vector3(s * 0.17, 0.05, 0.1)))
+  return { target, fingers: localDir(c, new Vector3(0.15 * s, -0.55, 0.82)).normalize(), palm: localDir(c, new Vector3(0, -0.83, -0.55)).normalize(), effector: 'palm', grip: 'peace', weight: 1, pole: target.clone().add(localVec(c, new Vector3(s * 0.35, 0.1, -0.45))) }
+}
+
 /** Apply a pose this frame (call only when no routine is running). Blends in once (eased) per change. */
-export function applyPose(c: Character, pose: PoseId | 'present', t: number, dt: number) {
+export function applyPose(c: Character, pose: PoseKey, t: number, dt: number, carry: Carry | null = null) {
   const blend = (c.poseBlend ??= { pose, k: 1, from: 'relaxed' })
   if (blend.pose !== pose) {
     blend.from = blend.pose
@@ -228,7 +288,7 @@ export function applyPose(c: Character, pose: PoseId | 'present', t: number, dt:
   const goals = POSE_GOALS[pose]
   for (const side of ['Left', 'Right'] as Side[]) {
     const h = c.hands[side]
-    const g = goals[side]?.(c, t)
+    const g = goals[side]?.(c, t) ?? (carry && side === 'Left' ? carryGoal(c, side, carry) : null)
     if (!g) {
       resetHand(h)
       setGrip(h, 'relaxed')
@@ -246,7 +306,6 @@ export const EXPRESSION_WEIGHTS: Record<ExpressionPreset, Partial<Record<Express
   neutral: {},
   smile: { Expr_Smile: 0.8 },
   laugh: { Expr_Smile: 1, Expr_Open: 0.4, Expr_Squint: 0.35, Expr_BrowsUp: 0.2 },
-  kiss: { Expr_Pout: 0.9, Expr_Sleepy: 0.35 },
   pout: { Expr_Pout: 0.85 },
   wink: { Expr_BlinkR: 1, Expr_Smile: 0.55 },
   surprised: { Expr_BrowsUp: 1, Expr_Open: 0.45 },
@@ -255,16 +314,23 @@ export const EXPRESSION_WEIGHTS: Record<ExpressionPreset, Partial<Record<Express
 }
 
 /** Faces a pose brings with it (a blown kiss puckers the lips). */
-export const POSE_FACE: Partial<Record<PoseId | 'present', (t: number) => Partial<Record<ExpressionId, number>>>> = {
+export const POSE_FACE: Partial<Record<PoseKey, (t: number) => Partial<Record<ExpressionId, number>>>> = {
   'blow-kiss': (t) => {
     const k = (Math.sin(t * 1.6) + 1) / 2
     return { Expr_Pout: k < 0.5 ? 0.9 : 0.9 * (1 - (k - 0.5) * 2), Expr_Smile: k > 0.5 ? (k - 0.5) * 1.2 : 0, Expr_Sleepy: 0.25 }
   },
   thinking: () => ({ Expr_Worried: 0.25, Expr_Pout: 0.15 }),
   selfie: () => ({ Expr_Smile: 0.7 }),
+  mirror: () => ({ Expr_Pout: 0.35, Expr_Smile: 0.25 }),
 }
 
 /** Props a held pose shows (the selfie phone). */
-export const POSE_PROPS: Partial<Record<PoseId | 'present', { Left?: PropState; Right?: PropState }>> = {
+export const POSE_PROPS: Partial<Record<PoseKey, { Left?: PropState; Right?: PropState }>> = {
   selfie: { Right: { id: 'phone', hold: 'grip' } },
+  mirror: { Right: { id: 'phone', hold: 'grip' } },
+}
+
+/** Whether a pose uses this hand (a carried accessory steps aside while it does). */
+export function poseUsesHand(pose: PoseKey | null, side: Side) {
+  return !!pose && !!POSE_GOALS[pose]?.[side]
 }

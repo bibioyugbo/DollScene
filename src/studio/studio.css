@@ -252,6 +252,15 @@
   box-shadow: inset 0 2px 0 rgb(255 255 255 / 0.9), inset 0 -3px 6px rgb(40 60 120 / 0.25), 0 6px 0 #8f9cc4;
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
+.ds-arrow3d__face--flow {
+  /* labelled buttons size to their text: the face is in the flow, the base shows 6px under it */
+  position: relative;
+  inset: auto;
+  display: flex;
+  height: calc(100% - 6px);
+  padding: 0 clamp(16px, 4vw, 26px);
+  white-space: nowrap;
+}
 .ds-arrow3d:hover .ds-arrow3d__face {
   transform: translateY(-1px);
 }
@@ -478,4 +487,66 @@
 }
 .ds-wash {
   animation: ds-wash 0.7s ease-out both;
+}
+
+/* ---- loader icons ---- */
+.ds-medallion {
+  background: radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.08) 45%, rgb(255 140 190 / 0.18) 70%, rgb(80 20 70 / 0.35));
+  box-shadow: 0 0 60px 10px rgb(255 160 210 / 0.35), inset 0 0 40px rgb(255 255 255 / 0.25);
+  animation: ds-medal 3.4s ease-in-out infinite;
+}
+@keyframes ds-medal {
+  50% { box-shadow: 0 0 80px 18px rgb(255 200 140 / 0.45), inset 0 0 50px rgb(255 255 255 / 0.3); }
+}
+.ds-icon {
+  opacity: 0;
+  transform: scale(0.72) rotate(-8deg);
+  filter: drop-shadow(0 8px 18px rgb(60 10 50 / 0.45));
+  transition: opacity 0.55s ease, transform 0.7s cubic-bezier(0.2, 0.9, 0.25, 1.25);
+}
+.ds-icon--on {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+.ds-ico-tilt { animation: ds-ico-tilt 1.6s ease-in-out infinite; }
+@keyframes ds-ico-tilt { 50% { transform: rotate(-7deg); } }
+.ds-air { animation: ds-air 0.9s linear infinite; stroke-dasharray: 10 30; }
+@keyframes ds-air { to { stroke-dashoffset: -40; opacity: 0.2; } }
+.ds-spin { animation: ds-spin 0.6s linear infinite; }
+@keyframes ds-spin { to { transform: rotate(360deg); } }
+.ds-swing { animation: ds-swing 1.8s ease-in-out infinite; }
+@keyframes ds-swing { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+.ds-float { animation: ds-float 2.2s ease-in-out infinite; }
+@keyframes ds-float { 50% { transform: translateY(-8px); } }
+.ds-glint { animation: ds-glint 1.6s ease-in-out infinite; }
+@keyframes ds-glint { 0% { transform: translateX(-60px) rotate(25deg); opacity: 0; } 30% { opacity: 0.8; } 70% { transform: translateX(140px) rotate(25deg); opacity: 0; } 100% { opacity: 0; } }
+.ds-twinkle-s { transform-box: fill-box; transform-origin: center; animation: ds-tw 1.4s ease-in-out infinite; }
+@keyframes ds-tw { 0%, 100% { transform: scale(0.4); opacity: 0.3; } 50% { transform: scale(1.15); opacity: 1; } }
+.ds-lipstick { animation: ds-lip 2.2s ease-in-out infinite; }
+@keyframes ds-lip { 0%, 100% { transform: translateY(30px); } 45%, 70% { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .ds-medallion, .ds-ico-tilt, .ds-air, .ds-spin, .ds-swing, .ds-float, .ds-glint, .ds-twinkle-s, .ds-lipstick { animation: none; }
+}
+
+.ds-boot-line { animation: ds-boot-line 0.45s ease both; }
+@keyframes ds-boot-line { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ds-boot-line { animation: none; } }
+
+/* "tap the pimple": a soft pulse that says "here" */
+.ds-spot {
+  animation: ds-spot-pulse 1.1s ease-in-out infinite;
+}
+@keyframes ds-spot-pulse {
+  0%,
+  100% {
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-spot {
+    animation: none;
+  }
 }

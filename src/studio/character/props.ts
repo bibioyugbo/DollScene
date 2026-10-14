@@ -1,5 +1,6 @@
 import {
   BoxGeometry,
+  DoubleSide,
   Color,
   ConeGeometry,
   CylinderGeometry,
@@ -54,8 +55,14 @@ export type PropId =
   | 'dollop'
   | 'tweezers'
   | 'phone'
+  // carried accessories (look.extras.held), in the left hand
+  | 'whip'
+  | 'joint'
+  | 'clutch'
+  | 'fan'
+  | 'matcha'
 
-export type Hold = 'pinch' | 'grip' | 'palm'
+export type Hold = 'pinch' | 'grip' | 'palm' | 'fingers' | 'cup' | 'flatPhone'
 
 export interface PropState {
   id: PropId
@@ -105,14 +112,143 @@ function mesh(g: BufferGeometry, m: Material, pos: [number, number, number] = [0
 const cyl = (r: number, h: number, seg = 14) => new CylinderGeometry(r, r, h, seg)
 
 /** Builds a prop. `tint` meshes recolour from PropState.color; `load` meshes scale with product. */
-function build(id: PropId): { g: Group; tint: Mesh[]; load: Mesh[]; tip: number; dirt?: Mesh } {
+type Anim = (t: number, upLocal: Vector3) => void
+
+function build(id: PropId): { g: Group; tint: Mesh[]; load: Mesh[]; tip: number; dirt?: Mesh; anim?: Anim } {
   const g = new Group()
   const tint: Mesh[] = []
   const load: Mesh[] = []
   let dirt: Mesh | undefined
+  let anim: Anim | undefined
   let tip = 0.02
   const add = (m: Mesh) => (g.add(m), m)
   switch (id) {
+    case 'whip': {
+      // an Igbo horsehair fly whisk: a beaded leather handle and a long white tail that hangs down
+      add(mesh(cyl(0.0085, 0.2, 12), std('#3a2216', 0.55), [0, 0.02, 0]))
+      for (let i = 0; i < 6; i++) add(mesh(new TorusGeometry(0.0095, 0.0022, 6, 14), std(i % 2 ? '#c9a04a' : '#d9452b', 0.35, i % 2 ? 0.9 : 0), [0, 0.085 - i * 0.012, 0], [Math.PI / 2, 0, 0]))
+      add(mesh(new SphereGeometry(0.012, 12, 10), std('#c9a04a', 0.3, 0.9), [0, -0.085, 0]))
+      const tassel = new Group()
+      tassel.position.set(0, -0.09, 0)
+      const hair = std('#f4f1ea', 0.75)
+      for (let i = 0; i < 40; i++) {
+        const a = (i / 40) * Math.PI * 2 * 3.7
+        const r = 0.002 + ((i * 37) % 11) * 0.0011
+        const len = 0.3 + ((i * 53) % 9) * 0.012
+        const strand = mesh(new CylinderGeometry(0.0016, 0.0006, len, 4), hair, [Math.cos(a) * r, -len / 2, Math.sin(a) * r], [Math.sin(a) * 0.06, 0, Math.cos(a) * 0.06])
+        tassel.add(strand)
+      }
+      g.add(tassel)
+      const q = new Quaternion()
+      anim = (t, upLocal) => {
+        // the tail hangs toward the floor whatever the hand does, swaying a little
+        q.setFromUnitVectors(new Vector3(0, 1, 0), upLocal)
+        tassel.quaternion.copy(q)
+        tassel.rotateX(Math.sin(t * 1.3) * 0.06)
+        tassel.rotateZ(Math.sin(t * 0.9 + 1) * 0.05)
+      }
+      tip = 0.12
+      break
+    }
+    case 'joint': {
+      // a fat hand-rolled joint (a cone, not a cigarette): a rolled card crutch at the mouth end,
+      // the paper widening to a thick, slightly twisted lit end with a charred ring, ember and ash
+      const paper = std('#f1ebdd', 0.85)
+      add(mesh(new CylinderGeometry(0.0068, 0.0042, 0.09, 14), paper, [0, 0.045, 0]))
+      // the paper's rolled seam, a slightly darker line along the cone
+      add(mesh(new BoxGeometry(0.0012, 0.088, 0.0006), std('#ddd2bb', 0.9), [0, 0.045, 0.0056], [0.028, 0, 0]))
+      add(mesh(cyl(0.0042, 0.016, 12), std('#c8b48c', 0.8), [0, -0.006, 0]))
+      add(mesh(new CylinderGeometry(0.0069, 0.0069, 0.005, 14), std('#2a2420', 0.9), [0, 0.0915, 0]))
+      const ember = add(mesh(new SphereGeometry(0.0066, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), new MeshStandardMaterial({ color: '#ff5a1a', emissive: '#ff4a10', emissiveIntensity: 2.2, roughness: 0.6 }), [0, 0.094, 0]))
+      const ash = std('#9a948c', 1)
+      add(mesh(new CylinderGeometry(0.006, 0.0066, 0.004, 14), ash, [0, 0.0965, 0]))
+      const puffs: Mesh[] = []
+      const smoke = new Group()
+      smoke.position.set(0, 0.098, 0)
+      for (let i = 0; i < 9; i++) {
+        const m = mesh(new SphereGeometry(0.006, 8, 6), new MeshStandardMaterial({ color: '#d8d8dc', transparent: true, opacity: 0.0, depthWrite: false, roughness: 1 }))
+        puffs.push(m)
+        smoke.add(m)
+      }
+      g.add(smoke)
+      anim = (t, upLocal) => {
+        ;(ember.material as MeshStandardMaterial).emissiveIntensity = 1.8 + Math.sin(t * 5.3) * 0.5 + Math.sin(t * 13.1) * 0.25
+        puffs.forEach((m, i) => {
+          const k = (t * 0.32 + i / puffs.length) % 1
+          const drift = Math.sin(t * 1.7 + i * 2.1) * 0.012 * k
+          m.position.copy(upLocal).multiplyScalar(k * 0.2)
+          m.position.x += drift
+          m.position.z += Math.cos(t * 1.3 + i) * 0.008 * k
+          m.scale.setScalar(0.35 + k * 2.4)
+          ;(m.material as MeshStandardMaterial).opacity = 0.2 * Math.sin(Math.PI * Math.min(1, k * 1.15)) * (1 - k * 0.5)
+        })
+      }
+      tip = 0.095
+      break
+    }
+    case 'matcha': {
+      // an iced matcha latte in a clear 16 oz cup: milk at the bottom, the matcha poured on top
+      // (a soft blended band between), ice, and a green straw. It always stands upright.
+      const cup = new Group()
+      const H = 0.13
+      const rB = 0.031
+      const rT = 0.041
+      const rAt = (y: number) => rB + ((y + H / 2) / H) * (rT - rB)
+      const layer = (y0: number, y1: number, color: string, inset = 0.0018) => {
+        const m = mesh(new CylinderGeometry(rAt(y1) - inset, rAt(y0) - inset, y1 - y0, 28), std(color, 0.35), [0, (y0 + y1) / 2, 0])
+        cup.add(m)
+        return m
+      }
+      layer(-H / 2 + 0.002, -0.012, '#efeadc')
+      layer(-0.012, -0.002, '#b9cf8e')
+      layer(-0.002, 0.036, '#6f9e3c')
+      const ice = new MeshPhysicalMaterial({ color: '#f4fbf6', roughness: 0.12, transparent: true, opacity: 0.55, depthWrite: false })
+      for (const [x, y, z, a] of [
+        [0.012, 0.038, 0.008, 0.4],
+        [-0.014, 0.036, 0.006, 1.1],
+        [0.002, 0.04, -0.015, 0.7],
+        [-0.006, 0.026, 0.016, 1.9],
+        [0.016, 0.024, -0.01, 2.4],
+      ])
+        cup.add(mesh(new BoxGeometry(0.017, 0.016, 0.017), ice, [x, y, z], [a, a * 0.7, a * 0.4]))
+      // the clear plastic cup, its rolled rim and a faint base
+      const plastic = new MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.04, transparent: true, opacity: 0.22, depthWrite: false, side: DoubleSide })
+      const shell = mesh(new CylinderGeometry(rT, rB, H, 32, 1, true), plastic)
+      shell.renderOrder = 2
+      cup.add(shell)
+      cup.add(mesh(new TorusGeometry(rT, 0.0016, 6, 32), new MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.1, transparent: true, opacity: 0.5 }), [0, H / 2, 0], [Math.PI / 2, 0, 0]))
+      cup.add(mesh(cyl(rB, 0.002, 28), plastic, [0, -H / 2, 0]))
+      // a wide green straw, tilted, standing well above the rim
+      cup.add(mesh(cyl(0.0042, 0.21, 10), std('#2f8a52', 0.45), [0.008, 0.035, 0.004], [0.08, 0, -0.16]))
+      g.add(cup)
+      const q = new Quaternion()
+      anim = (_t, upLocal) => {
+        // a drink never tips: the cup stands upright whatever the hand's angle
+        q.setFromUnitVectors(new Vector3(0, 1, 0), upLocal)
+        cup.quaternion.copy(q)
+      }
+      tip = 0.07
+      break
+    }
+    case 'clutch': {
+      tint.push(add(mesh(new BoxGeometry(0.17, 0.09, 0.03), std('#e4572e', 0.35), [0, 0, 0.0], [0, 0, Math.PI / 2])))
+      add(mesh(new BoxGeometry(0.004, 0.17, 0.032), MAT.gold, [0, 0, 0.002]))
+      tip = 0.05
+      break
+    }
+    case 'fan': {
+      // a folding hand fan, open
+      const fan = new Group()
+      for (let i = 0; i < 13; i++) {
+        const a = -0.95 + (i / 12) * 1.9
+        const blade = mesh(new BoxGeometry(0.026, 0.16, 0.0015), std(i % 2 ? '#e4572e' : '#c9a04a', 0.5), [Math.sin(a) * 0.08, Math.cos(a) * 0.08, i * 0.0004], [0, 0, -a])
+        tint.push(blade)
+        fan.add(blade)
+      }
+      g.add(fan)
+      tip = 0.16
+      break
+    }
     case 'phone': {
       // a phone held up for a selfie: screen toward her, a soft glow on it
       add(mesh(new BoxGeometry(0.072, 0.15, 0.008), MAT.black, [0, 0.03, 0]))
@@ -244,7 +380,7 @@ function build(id: PropId): { g: Group; tint: Mesh[]; load: Mesh[]; tip: number;
       tip = 0.064
       break
   }
-  return { g, tint, load, tip, dirt }
+  return { g, tint, load, tip, dirt, anim }
 }
 
 export interface PropSlot {
@@ -272,6 +408,12 @@ function holdFrame(h: HandRig, hold: Hold): [Vector3, Vector3, Vector3] {
   const p = h.palm
   if (hold === 'grip') return [p.clone().multiplyScalar(0.035).addScaledVector(f, 0.045), new Vector3().crossVectors(f, p).normalize().multiplyScalar(h.side === 'Left' ? -1 : 1), p.clone()]
   if (hold === 'palm') return [p.clone().multiplyScalar(0.022).addScaledVector(f, 0.05), f.clone(), p.clone()]
+  // a cup in a wide wrap: its centre a cup's radius off the palm, its axis through the curled fist
+  if (hold === 'cup') return [p.clone().multiplyScalar(0.05).addScaledVector(f, 0.04), new Vector3().crossVectors(f, p).normalize().multiplyScalar(h.side === 'Left' ? -1 : 1), p.clone()]
+  // a phone lying on the open palm, its length along the fingers, screen up (away from the palm)
+  if (hold === 'flatPhone') return [p.clone().multiplyScalar(0.02).addScaledVector(f, 0.035), f.clone(), p.clone().negate()]
+  // between the first two fingers, pointing forward out of the hand (a cigarette, a joint)
+  if (hold === 'fingers') return [p.clone().multiplyScalar(0.012).addScaledVector(f, 0.072), new Vector3().crossVectors(f, p).normalize().multiplyScalar(h.side === 'Left' ? 1 : -1).addScaledVector(f, 0.35).normalize(), p.clone()]
   return [new Vector3(), f.clone(), p.clone().negate()]
 }
 
@@ -285,7 +427,10 @@ export function propTipLocal(h: HandRig, prop: PropState | null): Vector3 | unde
 const TIPS = new Map<PropId, number>()
 
 /** Show `prop` in this hand (or nothing) and place it for this frame. `parentInv` = inverse world matrix of the slot's parent. */
-export function updateProp(slot: PropSlot, h: HandRig, prop: PropState | null, parentInv: Matrix4) {
+const upW = new Vector3()
+const invQ = new Quaternion()
+
+export function updateProp(slot: PropSlot, h: HandRig, prop: PropState | null, parentInv: Matrix4, t = 0) {
   if (!prop) {
     slot.group.visible = false
     return
@@ -322,4 +467,9 @@ export function updateProp(slot: PropSlot, h: HandRig, prop: PropState | null, p
   m4.makeBasis(x, yv, zv).setPosition(origin)
   slot.group.matrix.multiplyMatrices(parentInv, m4)
   slot.group.matrixWorldNeedsUpdate = true
+  if (parts.anim) {
+    // world up in the prop's own frame (smoke rises, a whisk's tail hangs)
+    invQ.setFromRotationMatrix(m4).invert()
+    parts.anim(t, upW.set(0, 1, 0).applyQuaternion(invQ))
+  }
 }

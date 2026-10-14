@@ -11,7 +11,7 @@ import numpy as np  # noqa: E402
 
 STYLE = "freeform_locs"
 head = hairkit.open_base()
-strands = lockit.layout(head, spacing=13.0, jitter=0.4, seed=57, radius=0.0058, r_var=0.35, stop_z=1.10, stop_var=0.09, step=0.032, layer=0.011, sweep_el=50.0, wavy=0.006)
+strands = lockit.fall_layout(head, spacing=13.0, jitter=0.4, seed=57, radius=0.0058, r_var=0.35, stop_z=1.10, stop_var=0.09, step=0.032, layer=0.011, wavy=0.006)
 merges = lockit.pick_merges(strands, frac=0.14)
 partners = set(merges.values())
 rng = np.random.default_rng(8)

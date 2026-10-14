@@ -10,7 +10,7 @@ import lockit  # noqa: E402
 
 STYLE = "locs"
 head = hairkit.open_base()
-strands = lockit.layout(head, **lockit.LOCS)
+strands = lockit.fall_layout(head, **{k: v for k, v in lockit.LOCS.items() if k != "sweep_el"})
 b = hairkit.Builder(head)
 lockit.build_strands(head, b, strands, root="fuzzy", sides=lockit.LOCS_SIDES)
 lockit.scalp_layer(head, b)

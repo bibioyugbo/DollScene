@@ -95,7 +95,17 @@ BODY_MORPHS = {
     "Muscle": ([("macro:muscle", 0.2)], [("macro:muscle", 0.85)]),
     # Presentation: MakeHuman's gender macro from the base (0, feminine) to 1 (masculine). Only the
     # positive side differs from the base, so 0.5..1 in the app goes feminine -> masculine.
-    "Masc": ([("macro:gender", 0.0)], [("macro:gender", 1.0)]),
+    # The masculine end follows the user's male base (~/Downloads/base_male.blend: gender 1, muscle
+    # 0.3, proportions 0.9, cup 0.4, firmness 1, toned stomach and pelvis, pectorals), with leaner
+    # thighs (no upperleg fat, thigh girth down) and weight left to the Softness slider.
+    "Masc": (
+        [("macro:gender", 0.0)],
+        [("macro:gender", 1.0), ("macro:muscle", 0.42), ("macro:proportions", 0.9), ("macro:cupsize", 0.0), ("macro:firmness", 1.0),
+         ("torso-muscle-pectoral-incr", 0.8), ("stomach-tone-incr", 1.0), ("pelvis-tone-decr", 0.99), ("hip-waist-down", 0.33), ("stomach-navel-in", 0.21),
+         ("measure-thigh-circ-decr", 0.5), ("buttocks-volume-decr", 0.25)] + lr("upperleg-fat-decr", 0.45),
+    ),
+    # A pregnancy bump (only on a doll that asks for it): one-sided, 0.5 = none .. 1 = full term.
+    "Pregnant": ([], [("stomach-pregnant-incr", 1.5)]),
 }
 
 EYES = ["brown", "brownlight", "green", "grey", "bluegreen"]
@@ -110,8 +120,11 @@ HAIR = {
     "afro_short": ("blend", "Short wide afro"),
     "afro_big": ("blend", "Big puffy afro"),
     "afro_puffs": ("blend", "Two afro puffs"),
+    "afro_fringe": ("blend", "Cute fringe afro"),
     "two_braids": ("blend", "Two braided ponytails"),
     "fulani_braids": ("blend", "Fulani braids"),
+    "goddess_braids": ("blend", "Boho Fulani braids"),
+    "long_curls": ("blend", "Long curly wig"),
     "box_braids": ("blend", "Box braids"),
     "knotless_braids": ("blend", "Knotless braids"),
     "cornrows": ("blend", "Cornrows"),
@@ -151,7 +164,7 @@ OUTFITS = {
     "male_elegantsuit01": "Tailored suit",
     "male_worksuit01": "Workwear",
 }
-SHOES = {"shoes01": "Sneakers", "shoes02": "Loafers", "shoes03": "Flats", "shoes04": "Boots", "shoes05": "Trainers", "shoes06": "Heels"}
+SHOES = {"shoes01": "Brown brogues", "shoes02": "Grey trainers", "shoes03": "Black loafers", "shoes04": "Black lace-ups", "shoes05": "White trainers", "shoes06": "Navy sneakers"}
 MORPH_EPS = 0.0008  # metres; a mesh only gets a morph that moves it more than this
 
 # Facial expressions from MakeHuman's expression units (FACS-style), mixed by her ethnicity weights so
@@ -254,7 +267,7 @@ for o in list(bpy.data.objects):
 # Start from empty module folders so a removed or renamed asset doesn't linger and get shipped.
 import shutil  # noqa: E402
 
-for _d in ("hair", "outfits", "shoes"):
+for _d in ("hair", "outfits", "shoes", "pieces"):
     shutil.rmtree(os.path.join(OUT, _d), ignore_errors=True)
 
 log("creating human")
@@ -313,23 +326,27 @@ for s in SHOES:
 # vertex each shell vertex came from, "hide_src" = covered body vertices, "ease" = skirt width at
 # the hands). They join `custom` (shape keys, weight cleanup, export) but take their morph deltas
 # from the body below, not from the head like the hand-built hair.
-OUTFIT_BLENDS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "blender", "outfits")
+OUTFIT_BLENDS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "blender", "pieces")
+# Wardrobe pieces (scripts/character/outfit/build_pieces.py): one slot each (top, bottom, dress,
+# shoes), recoloured in the app through three colour slots. Saved as piece_<id>.blend, object
+# "Piece_<id>"; here they are renamed Outfit_<id> so they ride the store-outfit path below.
 with open(os.path.join(OUTFIT_BLENDS, "catalog.json")) as _f:
-    STORE_OUTFITS = {k: v for k, v in json.load(_f).items() if os.path.exists(os.path.join(OUTFIT_BLENDS, f"outfit_{k}.blend"))}
-# the shipped MakeHuman outfits, shelved in the stores too
+    STORE_OUTFITS = {k: v for k, v in json.load(_f).items() if os.path.exists(os.path.join(OUTFIT_BLENDS, f"piece_{k}.blend"))}
+# the shipped MakeHuman outfits: classic sets at the thrift store (and a few elsewhere)
 OUTFIT_STORES = {
-    "female_casualsuit01": "kai", "female_casualsuit02": "kai", "male_casualsuit01": "kai", "male_casualsuit04": "kai",
-    "female_elegantsuit01": "moncherrie", "male_casualsuit05": "moncherrie",
-    "male_elegantsuit01": "dopebyfabby", "female_sportsuit01": "dopebyfabby", "male_casualsuit06": "dopebyfabby",
-    "male_casualsuit02": "deeji",
-    "male_worksuit01": "bolaptsd", "male_casualsuit03": "bolaptsd",
+    "female_casualsuit01": "okrika", "female_casualsuit02": "okrika", "male_casualsuit01": "okrika", "male_casualsuit04": "okrika",
+    "female_elegantsuit01": "moncherie", "male_casualsuit05": "okrika",
+    "male_elegantsuit01": "dopebyfabby", "female_sportsuit01": "novasport", "male_casualsuit06": "novasport",
+    "male_casualsuit02": "okrika",
+    "male_worksuit01": "tolaptsd", "male_casualsuit03": "tolaptsd",
 }
 store_meta = {}
 for oid in STORE_OUTFITS:
-    path = os.path.join(OUTFIT_BLENDS, f"outfit_{oid}.blend")
+    path = os.path.join(OUTFIT_BLENDS, f"piece_{oid}.blend")
     with bpy.data.libraries.load(path, link=False) as (src, dst):
-        dst.objects = [f"Outfit_{oid}"]
+        dst.objects = [f"Piece_{oid}"]
     obj = dst.objects[0]
+    obj.name = f"Outfit_{oid}"
     bpy.context.scene.collection.objects.link(obj)
     obj.parent = rig
     for m in obj.modifiers:
@@ -454,6 +471,103 @@ for name, recipe in EXPRESSIONS.items():
     log("expression", name, "max body delta %.4f m" % np.abs(d["__body__"]).max())
 
 refit_assets()
+
+# ChestFlat: a male chest. MakeHuman's masculine end keeps (even pushes forward) the base's breast
+# mound and nipple point, so men read as having breasts. This key smooths the mound away on the
+# masculine body (Masc_Pos + Bust_Neg): a Laplacian relax of the front of the chest around each
+# nipple, strongest at the point, fading to nothing by the armpit, sternum and ribs. Masculine
+# dolls wear it at 1 (shared/studio/presets.ts).
+from mathutils.kdtree import KDTree  # noqa: E402
+
+_E = np.empty(len(human.data.edges) * 2, dtype=np.int64)
+human.data.edges.foreach_get("vertices", _E)
+_E = _E.reshape(-1, 2)
+_P = neutral_body + deltas["Masc_Pos"]["__body__"] + deltas["Bust_Neg"]["__body__"]
+_gi = human.vertex_groups["nipple"].index
+_nip = np.array([any(g.group == _gi and g.weight > 0.5 for g in v.groups) for v in human.data.vertices])
+_w = np.zeros(len(_P))
+for _s in (1, -1):
+    _sel = _nip & (neutral_body[:, 0] * _s > 0)
+    if not _sel.any():
+        continue
+    _c = _P[_sel].mean(axis=0)
+    _d = np.linalg.norm((_P - _c) * np.array([1.0, 0.6, 1.0]), axis=1)
+    _front = _P[:, 1] < _c[1] + 0.05
+    _w = np.maximum(_w, np.clip((0.115 - _d) / (0.115 - 0.035), 0, 1) ** 1.5 * _front)
+# the nipple itself and its ring relax fully (a man's nipple sits flat on the pec, no point)
+_nring = _nip.copy()
+for _ in range(3):  # the nipple and three rings around it relax fully
+    _r2 = _nring.copy()
+    _r2[_E[_nring[_E[:, 0]], 1]] = True
+    _r2[_E[_nring[_E[:, 1]], 0]] = True
+    _nring = _r2
+_w = np.where(_nring, 1.0, _w)
+_Ps = _P.copy()
+_deg = np.bincount(_E.ravel(), minlength=len(_P)).astype(np.float64)
+for _ in range(320):
+    _acc = np.zeros_like(_Ps)
+    np.add.at(_acc, _E[:, 0], _Ps[_E[:, 1]])
+    np.add.at(_acc, _E[:, 1], _Ps[_E[:, 0]])
+    _avg = _acc / np.maximum(_deg, 1)[:, None]
+    _Ps += (_avg - _Ps) * (0.5 * _w)[:, None]
+_dchest = _Ps - _P
+_kd_all = KDTree(len(neutral_body))
+for _j, _p in enumerate(neutral_body):
+    _kd_all.insert(_p, _j)
+_kd_all.balance()
+deltas["ChestFlat_Pos"] = {"__body__": _dchest}
+for k, o in assets.items():
+    _near = np.array([_kd_all.find(p)[1] for p in neutral_assets[k]], dtype=np.int64)
+    deltas["ChestFlat_Pos"][k] = _dchest[_near]
+log("morph ChestFlat_Pos", "max body delta %.4f m" % np.abs(_dchest).max())
+
+# BackStraight: men stand with a straight back. The base keeps a woman's lumbar sway (the back
+# curves in hard between the shoulder blades and the seat), which reads as a concave back on a male
+# body. On the masculine body, the hollow of the lower back is filled towards the straight line
+# from the shoulder blades to the seat, fading out across the back and at the sides. Masculine dolls
+# wear it at 1 (shared/studio/presets.ts).
+_Pm = neutral_body + deltas["Masc_Pos"]["__body__"]
+_zb = _Pm[:, 2]
+_H = _zb.max() - _zb.min()
+_z0 = _zb.min()
+_mid = np.abs(_Pm[:, 0]) < 0.03
+_back_of = lambda f: float(_Pm[_mid & (np.abs(_zb - (_z0 + f * _H)) < 0.008 * _H)][:, 1].max())
+_f_hi, _f_lo = 0.735, 0.505
+_y_hi, _y_lo = _back_of(_f_hi), _back_of(_f_lo)
+_dback = np.zeros_like(_Pm)
+_bgi = human.vertex_groups["body"].index
+_bodyv = np.array([any(g.group == _bgi and g.weight > 0.5 for g in v.groups) for v in human.data.vertices])
+for _f in np.arange(_f_lo + 0.01, _f_hi, 0.005):
+    _band = (np.abs(_zb - (_z0 + _f * _H)) < 0.0026 * _H) & _bodyv
+    if not _band.any():
+        continue
+    _sel = _band & _mid
+    if not _sel.any():
+        continue
+    _ycur = float(_Pm[_sel][:, 1].max())
+    _t = (_f - _f_lo) / (_f_hi - _f_lo)
+    _yline = _y_lo + (_y_hi - _y_lo) * _t
+    _fill = max(0.0, _yline - _ycur - 0.004)  # leave a natural little curve
+    if _fill <= 0:
+        continue
+    _ys = _Pm[_band][:, 1]
+    _xs = _Pm[_band][:, 0]
+    _half = max(0.06, float(np.abs(_xs).max()) * 0.85)
+    _w_x = np.clip(np.cos(np.clip(np.abs(_xs) / _half, 0, 1) * math.pi / 2), 0, 1) ** 1.5
+    _ymid = float(np.median(_ys))
+    _w_y = np.clip((_ys - _ymid) / max(_ycur - _ymid, 1e-4), 0, 1) ** 1.5
+    _dback[np.nonzero(_band)[0], 1] = _fill * _w_x * _w_y
+# smooth it over the surface so it never makes a ridge
+for _ in range(25):
+    _acc = np.zeros_like(_dback)
+    np.add.at(_acc, _E[:, 0], _dback[_E[:, 1]])
+    np.add.at(_acc, _E[:, 1], _dback[_E[:, 0]])
+    _dback = _dback * 0.5 + 0.5 * _acc / np.maximum(_deg, 1)[:, None]
+deltas["BackStraight_Pos"] = {"__body__": _dback}
+for k, o in assets.items():
+    _near = np.array([_kd_all.find(p)[1] for p in neutral_assets[k]], dtype=np.int64)
+    deltas["BackStraight_Pos"][k] = _dback[_near]
+log("morph BackStraight_Pos", "max body delta %.4f m" % np.abs(_dback).max(), "lumbar hollow line %.3f -> %.3f" % (_y_lo, _y_hi))
 
 # Hand-built hair has no MPFB fitting data: each vertex follows the nearest head/neck skin (inverse
 # distance over 4 neighbours), so face sliders reshape the hair with the skull. Hanging lengths
@@ -1175,13 +1289,97 @@ for side_ in ("Left", "Right"):
         if len(sec):
             c = co[sec].mean(axis=0)
             jewel[f"ring{side_[0]}"] = {"p": gl(c), "r": round(float(np.linalg.norm((co[sec] - c) - np.outer((co[sec] - c) @ fd_, fd_), axis=1).mean()), 5), "dir": gl(fd_), "bone": rb}
-log("landmarks", len(landmarks), "spots", len(spots), "nails", len(nails_out), "jewellery anchors", [k for k, v in jewel.items() if v])
+# industrial piercing: a bar across the top of the ear, from the forward helix to the back of the rim
+for s, nm in ((1, "L"), (-1, "R")):
+    idx = np.nonzero(ears & (co[:, 0] * s > 0))[0]
+    if len(idx):
+        top = idx[co[idx, 2] > np.percentile(co[idx, 2], 72)]
+        jewel["industrialA" + nm] = {"p": gl(co[top[np.argmin(co[top, 1])]]), "r": 0.0}
+        jewel["industrialB" + nm] = {"p": gl(co[top[np.argmax(co[top, 1])]]), "r": 0.0}
+
+# tattoo anchors: where on the body UV a tattoo sits, how many UV units a metre of skin is there,
+# and which UV direction is "up" on the skin (along the limb / up the body), glTF UV convention.
+_body_ok = final_flags["body"] if "body" in final_flags else np.ones(len(co), dtype=bool)
+
+
+def bone_pt(name, t=0.0):
+    b = rig.data.bones[name]
+    h, tl = np.array(rig.matrix_world @ b.head_local), np.array(rig.matrix_world @ b.tail_local)
+    return h + (tl - h) * t, (tl - h) / max(np.linalg.norm(tl - h), 1e-6)
+
+
+def uv_jacobian(i):
+    nb = np.concatenate([_ed[_ed[:, 0] == i, 1], _ed[_ed[:, 1] == i, 0]])
+    dP = co[nb] - co[i]
+    dU = vert_uv[nb] - vert_uv[i]
+    J, *_ = np.linalg.lstsq(dP, dU, rcond=None)  # dU = dP @ J  (3x2)
+    return J
+
+
+# UV seams: a vertex whose loops carry different UVs (and its neighbours) has no single place in the
+# texture, and its UV-per-metre is meaningless across the cut: tattoos never anchor there
+_uvmin = np.full((nv, 2), np.inf)
+_uvmax = np.full((nv, 2), -np.inf)
+np.minimum.at(_uvmin, _lv, _lp)
+np.maximum.at(_uvmax, _lv, _lp)
+_seam = (np.abs(_uvmax - _uvmin).max(axis=1) > 1e-4)
+_near_seam = _seam.copy()
+_near_seam[_ed[_seam[_ed[:, 0]], 1]] = True
+_near_seam[_ed[_seam[_ed[:, 1]], 0]] = True
+
+
+def tattoo(p, r, pick, up):
+    sel = np.nonzero(_body_ok & ~_near_seam & (np.linalg.norm(co - p, axis=1) < r))[0]
+    if not len(sel):
+        sel = np.nonzero(_body_ok & ~_seam & (np.linalg.norm(co - p, axis=1) < r * 1.6))[0]
+    i = int(sel[np.argmax(pick(co[sel]))])
+    up = np.asarray(up, dtype=float)
+    up = up - vnorm[i] * up.dot(vnorm[i])
+    J = uv_jacobian(i)
+    d = up @ J
+    d = d / max(np.linalg.norm(d), 1e-9)
+    # the skin's right (seen from outside) in UV: tells the app whether this UV island is mirrored
+    rt = np.cross(up / max(np.linalg.norm(up), 1e-9), vnorm[i]) @ J
+    rt = rt / max(np.linalg.norm(rt), 1e-9)
+    return {"uv": [round(float(vert_uv[i][0]), 5), round(float(1 - vert_uv[i][1]), 5)], "s": round(uv_per_m(i), 4), "up": [round(float(d[0]), 4), round(float(-d[1]), 4)], "right": [round(float(rt[0]), 4), round(float(-rt[1]), 4)], "p": gl(co[i]), "n": gl(vnorm[i])}
+
+
+Z = np.array([0, 0, 1.0])
+tattoos = {}
+for side_, sg in (("Left", 1), ("Right", -1)):
+    S_ = side_[0]
+    fa, fa_d = bone_pt(f"{side_}ForeArm", 0.55)
+    tattoos["forearm" + S_] = tattoo(fa, 0.05, lambda P: -P[:, 1], -fa_d)
+    ua, ua_d = bone_pt(f"{side_}Arm", 0.35)
+    tattoos["upperArm" + S_] = tattoo(ua, 0.06, lambda P, sg=sg: P[:, 0] * sg, -ua_d)
+    sh, _ = bone_pt(f"{side_}Arm", 0.05)
+    tattoos["shoulderBack" + S_] = tattoo(sh, 0.07, lambda P: P[:, 1], Z)
+    ft, ft_d = bone_pt(f"{side_}Foot", 0.0)
+    tattoos["ankle" + S_] = tattoo(ft + np.array([0, 0, 0.03]), 0.045, lambda P, sg=sg: P[:, 0] * sg, Z)
+    lg, lg_d = bone_pt(f"{side_}Leg", 0.5)
+    tattoos["calf" + S_] = tattoo(lg, 0.07, lambda P: P[:, 1], -lg_d)
+    th, th_d = bone_pt(f"{side_}UpLeg", 0.4)
+    tattoos["thigh" + S_] = tattoo(th, 0.1, lambda P, sg=sg: P[:, 0] * sg - P[:, 1] * 0.5, -th_d)
+    hp, _ = bone_pt(f"{side_}UpLeg", 0.0)
+    tattoos["hip" + S_] = tattoo(hp + np.array([0, 0, 0.03]), 0.09, lambda P, sg=sg: -P[:, 1] + P[:, 0] * sg * 0.6, Z)
+    sp2, _ = bone_pt("Spine2", 0.2)
+    tattoos["ribs" + S_] = tattoo(sp2 + np.array([0.0, 0, -0.06]), 0.16, lambda P, sg=sg: P[:, 0] * sg, Z)
+    tattoos["chest" + S_] = tattoo(np.array([0.065 * sg, -0.08, neck_z - 0.075]), 0.06, lambda P: -P[:, 1], Z)
+    wr, wr_d = bone_pt(f"{side_}Hand", 0.0)
+    tattoos["wrist" + S_] = tattoo(wr - wr_d * 0.02, 0.035, lambda P: -P[:, 1], -wr_d)
+nk, _ = bone_pt("Neck", 0.3)
+tattoos["nape"] = tattoo(nk, 0.06, lambda P: P[:, 1], Z)
+sp0, _ = bone_pt("Spine", 0.2)
+tattoos["lowerBack"] = tattoo(sp0, 0.12, lambda P: P[:, 1] - np.abs(P[:, 0]) * 2, Z)
+tattoos["sternum"] = tattoo(np.array([0, -0.1, neck_z - 0.2]), 0.08, lambda P: -P[:, 1] - np.abs(P[:, 0]) * 2, Z)
+log("landmarks", len(landmarks), "spots", len(spots), "nails", len(nails_out), "jewellery anchors", [k for k, v in jewel.items() if v], "tattoo anchors", len(tattoos))
 care_data = {
     "landmarks": {k: mark(i) for k, i in landmarks.items()},
     "strokes": strokes,
     "spots": spots,
     "nails": nails_out,
     "jewellery": {k: v for k, v in jewel.items() if v},
+    "tattoos": tattoos,
 }
 nails = raster(np.maximum(flag("fingernails"), flag("toenails")), 1024)[..., 0]
 save_px(np.dstack([nails, np.zeros_like(nails), np.zeros_like(nails), np.ones_like(nails)]), os.path.join(OUT, "masks", "body.png"))
@@ -1328,7 +1526,7 @@ for h in HAIR:
 for c in OUTFITS:
     export(os.path.join(OUT, "outfits", f"{c}.glb"), [assets[f"Outfit_{c}"]])
 for oid in STORE_OUTFITS:
-    export(os.path.join(OUT, "outfits", f"{oid}.glb"), [custom[f"Outfit_{oid}"]])
+    export(os.path.join(OUT, "pieces", f"{oid}.glb"), [custom[f"Outfit_{oid}"]])
 for s in SHOES:
     export(os.path.join(OUT, "shoes", f"{s}.glb"), [assets[f"Shoes_{s}"]])
 
@@ -1368,7 +1566,7 @@ manifest = {
     "generator": "scripts/character/build_character.py",
     "macros": MACROS,
     "heightM": float(co[:, 2].max() - co[:, 2].min()),
-    "morphs": [morph_entry(n, "face") for n in FACE_MORPHS] + [morph_entry(n, "body") for n in BODY_MORPHS],
+    "morphs": [morph_entry(n, "face") for n in FACE_MORPHS] + [morph_entry(n, "body") for n in BODY_MORPHS] + [morph_entry("ChestFlat", "body"), morph_entry("BackStraight", "body")],
     "faceRect": face_rect,
     "masks": {
         "faceA": ["lips", "linerUpper", "eyelid", "blush"],
@@ -1383,8 +1581,14 @@ manifest = {
     "lashes": LASHES,
     "hair": [{"id": k, "name": v, "morphs": asset_keys[f"Hair_{k}"]} for k, (_src, v) in HAIR.items()],
     "outfits": [{"id": k, "name": v, "store": OUTFIT_STORES.get(k), "ease": 0.0, "hideMask": f"Outfit_{k}" in hide_files} for k, v in OUTFITS.items()]
-    + [{"id": k, "name": v["name"], "store": v["store"], "ease": round(store_meta[k]["ease"], 4), "hideMask": f"Outfit_{k}" in hide_files} for k, v in STORE_OUTFITS.items()],
+,
     "shoes": [{"id": k, "name": v, "hideMask": f"Shoes_{k}" in hide_files} for k, v in SHOES.items()],
+    # wardrobe pieces: slot, store, default colours (primary, secondary, accent), finish, and for
+    # shoes the foot arch (radians) and how far they lift the doll (m)
+    "pieces": [
+        {"id": k, "name": v["name"], "slot": v["slot"], "store": v["store"], "colors": v["colors"], "finish": v.get("finish", "cotton"), "ease": round(store_meta[k]["ease"], 4), "hideMask": f"Outfit_{k}" in hide_files, **({"arch": v["arch"], "lift": v["lift"]} if "arch" in v else {})}
+        for k, v in STORE_OUTFITS.items()
+    ],
     "expressions": [n for n in EXPRESSIONS if n in body_keys],
     "care": care_data,
 }

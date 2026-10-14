@@ -11,6 +11,8 @@ import {
   MeshPhysicalMaterial,
   NoColorSpace,
   Quaternion,
+  Shape,
+  ShapeGeometry,
   SphereGeometry,
   SRGBColorSpace,
   TextureLoader,
@@ -20,24 +22,26 @@ import {
   type MeshStandardMaterial,
   type Object3D,
   type SkinnedMesh,
+  CanvasTexture,
   type Texture,
 } from 'three'
 import { SkeletonUtils } from 'three-stdlib'
 import { clinicEffect, effectiveMorphs } from '../../shared/studio/clinic'
-import { ALL_MORPHS, EXPRESSIONS, SPOT_IDS, type ClinicId, type ExpressionId, type HairId, type MorphId, type SpotId, type StudioLook } from '../../shared/studio/look'
-import { actionProps, getCharacter, headNormal, headUp, isRunning, setCharacter, stepActions, type Character } from '../actions/engine'
+import { ALL_MORPHS, EXPRESSIONS, PIECE_SLOTS, SPOT_IDS, TATTOO_SPOTS, type ClinicId, type ExpressionId, type HairId, type MorphId, type PieceSlot, type SpotId, type StudioLook, type Worn } from '../../shared/studio/look'
+import { actionProps, getCharacter, headNormal, headUp, isRunning, landmarkNormal, setCharacter, stepActions, type Character } from '../actions/engine'
 import { fx } from '../state/fx'
-import { useStudio, type ExpressionPreset, type PoseId } from '../state/store'
+import { useStudio, type ExpressionPreset } from '../state/store'
 import { attachModule } from '../../three/doll/attachModule'
-import { url, type CharacterCatalog } from './catalog'
-import { applyHairFrame, applyHairLook, isHairMaterial, setupHairMaterial, wetResponse, type HairUniforms } from './hairMaterial'
-import { buildJewellery } from './jewellery'
+import { url, wearables, type CharacterCatalog, type Wearable } from './catalog'
+import { applyHairFrame, applyHairLook, isHairMaterial, PARTED, setupHairMaterial, wetResponse, type HairUniforms } from './hairMaterial'
+import { buildExtras, buildJewellery } from './jewellery'
 import { applyNailFx, applyNailLook, buildNails, nailPoints, type NailSet } from './nails'
 import { idleRig, idleTick, relaxPose } from './pose'
-import { applyPose, EXPRESSION_WEIGHTS, POSE_FACE, POSE_PROPS } from './poses'
-import { propSlot, updateProp, type PropSlot } from './props'
-import { bindLandmarks, buildHandRig, landmarkWorld, type HandRig, type LandmarkSource, type Side } from './rig'
-import { applyLookToSkin, createSkinMaterial, type SkinUniforms } from './skinMaterial'
+import { applyPose, EXPRESSION_WEIGHTS, POSE_FACE, POSE_PROPS, poseUsesHand, type Carry, type PoseKey } from './poses'
+import { propSlot, updateProp, type PropSlot, type PropState } from './props'
+import { bindLandmarks, buildHandRig, landmarkWorld, setGrip, type Grip, type HandRig, type LandmarkSource, type Side } from './rig'
+import { applyLookToSkin, createSkinMaterial, HidePack, skinColor, type SkinUniforms } from './skinMaterial'
+import { TattooLayer } from './tattoos'
 import { boneLocalToMeshSpace, eyeCentres } from './space'
 
 /**
@@ -85,6 +89,72 @@ const maskTex = (t: Texture) => {
 }
 
 const eyeTextures = new Map<string, Promise<Texture>>()
+/**
+ * The same eyes, bloodshot: a pink wash over the whites and fine red veins running in from the
+ * corners toward the iris (the iris itself untouched). The texture holds two eyeballs; their
+ * centres and sizes are fixed by the MakeHuman eye map.
+ */
+const redEyes = new Map<string, Promise<Texture>>()
+export function bloodshotTexture(id: string) {
+  let p = redEyes.get(id)
+  if (!p) {
+    p = eyeTexture(id).then((t) => {
+      const img = t.image as HTMLImageElement | ImageBitmap
+      const W = img.width
+      const cv = document.createElement('canvas')
+      cv.width = cv.height = W
+      const g = cv.getContext('2d')!
+      g.drawImage(img, 0, 0)
+      let seed = 7
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647)
+      for (const [cx, cy] of [
+        [0.703, 0.297],
+        [0.289, 0.711],
+      ]) {
+        const x0 = cx * W
+        const y0 = cy * W
+        const iris = 0.118 * W
+        const ball = 0.29 * W
+        // the whites flush pink, strongest toward the corners
+        const wash = g.createRadialGradient(x0, y0, iris * 1.05, x0, y0, ball)
+        wash.addColorStop(0, 'rgba(232,110,112,0.22)')
+        wash.addColorStop(0.55, 'rgba(214,70,76,0.42)')
+        wash.addColorStop(1, 'rgba(190,40,50,0.58)')
+        g.fillStyle = wash
+        g.beginPath()
+        g.arc(x0, y0, ball, 0, Math.PI * 2)
+        g.arc(x0, y0, iris * 1.05, 0, Math.PI * 2, true)
+        g.fill()
+        // veins: branching, wiggly, thinning toward the iris
+        g.lineCap = 'round'
+        for (let v = 0; v < 40; v++) {
+          let a = rnd() * Math.PI * 2
+          let r = ball * (0.92 + rnd() * 0.06)
+          const w = W * (0.0045 + rnd() * 0.003)
+          g.strokeStyle = `rgba(${170 + Math.floor(rnd() * 40)},${20 + Math.floor(rnd() * 25)},${30 + Math.floor(rnd() * 20)},${0.55 + rnd() * 0.3})`
+          g.beginPath()
+          g.moveTo(x0 + Math.cos(a) * r, y0 + Math.sin(a) * r)
+          const stop = iris * (1.25 + rnd() * 0.6)
+          while (r > stop) {
+            r -= W * 0.012
+            a += (rnd() - 0.5) * 0.18
+            g.lineTo(x0 + Math.cos(a) * r, y0 + Math.sin(a) * r)
+          }
+          g.lineWidth = w
+          g.stroke()
+        }
+      }
+      const out = new CanvasTexture(cv)
+      out.flipY = false
+      out.colorSpace = SRGBColorSpace
+      return out
+    })
+    p.catch(() => redEyes.delete(id))
+    redEyes.set(id, p)
+  }
+  return p
+}
+
 export function eyeTexture(id: string) {
   let p = eyeTextures.get(id)
   if (!p) {
@@ -210,9 +280,18 @@ interface HairModuleProps {
   onLoaded?: (id: string) => void
 }
 
+/** Her colour on a hair module's materials, and the part line in her own scalp tone (skin renders
+ * at ~0.72 x the tone: the body map is a 0.72 detail map; the scalp a touch deeper). */
+function tintHair(mat: MeshStandardMaterial, u: HairUniforms, l: StudioLook) {
+  applyHairLook(mat, u, l.hair)
+  skinColor(l.skin.tone, l.skin.undertone, u.uPartColor.value).multiplyScalar(0.68)
+}
+
 function HairModule({ id, base, registry, look, head, headLocalC, mode = 0, dir = 0, wetAs, clinic, onLoaded }: HairModuleProps) {
   const tinted = useRef<{ mat: MeshStandardMaterial; u: HairUniforms }[]>([])
   const meshes = useRef<Mesh[]>([])
+  const lookRef = useRef(look)
+  lookRef.current = look
   useModule(url.hair(id), base, registry, (m) => {
     tinted.current = []
     meshes.current = m
@@ -223,7 +302,17 @@ function HairModule({ id, base, registry, look, head, headLocalC, mode = 0, dir 
         // the skull centre in this module's own (quantised) geometry space
         const sm = mesh as SkinnedMesh
         const c = (sm.isSkinnedMesh && head && boneLocalToMeshSpace(sm, head, headLocalC)) || new Vector3(0, 1.5, 0)
-        tinted.current.push({ mat, u: setupHairMaterial(mat, c) })
+        const u = setupHairMaterial(mat, c)
+        if (PARTED.includes(id) && sm.isSkinnedMesh && head) {
+          // mesh units per metre (the module's geometry is quantised)
+          const a = boneLocalToMeshSpace(sm, head, headLocalC)
+          const b = boneLocalToMeshSpace(sm, head, headLocalC.clone().add(new Vector3(0.1, 0, 0)))
+          if (a && b) u.uPart.value = [1, 0.0012, a.distanceTo(b) / 0.1, 0]
+        }
+        tinted.current.push({ mat, u })
+        // modules are pooled between dolls: colour it for THIS doll now (the effect below may
+        // already have run before the module attached, and would leave the last wearer's colour)
+        tintHair(mat, u, lookRef.current)
       }
       else {
         // accents (beads, cuffs, the satin bonnet) stay opaque, write depth and keep their colour
@@ -235,8 +324,8 @@ function HairModule({ id, base, registry, look, head, headLocalC, mode = 0, dir 
     onLoaded?.(id)
   })
   useLayoutEffect(() => {
-    for (const { mat, u } of tinted.current) applyHairLook(mat, u, look.hair)
-  }, [look.hair, id])
+    for (const { mat, u } of tinted.current) tintHair(mat, u, look)
+  }, [look.hair, look.skin.tone, look.skin.undertone, id])
   const response = useMemo(() => wetResponse(wetAs), [wetAs])
   useFrame(() => {
     const change = look.hair.care.change
@@ -256,37 +345,86 @@ function HairModule({ id, base, registry, look, head, headLocalC, mode = 0, dir 
   return null
 }
 
-function OutfitModule({ src, mask, base, registry, onMask, dye, onLoaded }: { src: string; mask: string | null; base: Object3D; registry: Registry; onMask: (t: Texture | null) => void; dye?: StudioLook['outfit']; onLoaded?: () => void }) {
-  const hide = useTexture(mask ?? url.mask('body'))
-  const uniforms = useRef({ uDye: { value: new Color() }, uDyeAmount: { value: 0 } })
+const ROUGH: Record<string, number> = { cotton: 0.8, satin: 0.36, denim: 0.9, sequin: 0.3, velvet: 0.7, lace: 0.7, net: 0.7, leather: 0.42, patent: 0.16 }
+
+/**
+ * One worn piece. Pieces (material "Piece_<finish>") are recoloured through three colour slots:
+ * their texture holds R = detail (0.72 = the colour itself), G = where the secondary colour goes,
+ * B = the accent, A = holes, so one asset is every colourway. Classic MakeHuman sets ("Fabric")
+ * take one tint over their own print.
+ */
+function WearModule({ item, colors, base, registry, onMask, onLoaded }: { item: Wearable; colors: Worn['colors']; base: Object3D; registry: Registry; onMask: (t: Texture | null) => void; onLoaded?: () => void }) {
+  const hide = useTexture(item.mask ?? url.mask('body'))
+  const mats = useRef<MeshStandardMaterial[]>([])
+  const colorsRef = useRef(colors)
+  colorsRef.current = colors
   useModule(
-    src,
+    item.src,
     base,
     registry,
     (meshes) => {
+      mats.current = []
+      if (item.slot === 'bottom') setBottom(base, meshes)
       for (const mesh of meshes) {
         const mat = mesh.material as MeshStandardMaterial
-        // the fabric's finish travels in its material name (scripts/character/outfit/build_outfits.py)
-        const finish = mat.name.replace(/\.\d+$/, '')
-        mat.alphaTest = finish === 'Fabric_net' ? 0.5 : 0.4
+        mats.current.push(mat)
+        // the colour uniforms live on the material (modules are pooled and reused by every doll
+        // that wears this piece: per-component uniforms would keep the first wearer's colours)
+        const uniforms = (mat.userData.dsU ??= { uP: { value: new Color() }, uS: { value: new Color() }, uA: { value: new Color() }, uDye: { value: new Color() }, uDyeAmount: { value: 0 } }) as WearUniforms
+        setWearColors(uniforms, colorsRef.current)
+        const name = mat.name.replace(/\.\d+$/, '')
+        const piece = name.startsWith('Piece_')
+        const finish = piece ? name.slice(6) : name.replace(/^Fabric_?/, '')
+        const holes = finish === 'net' || finish === 'lace'
+        mat.alphaTest = finish === 'net' ? 0.5 : 0.4
         mat.transparent = false
         // The glTF loader turns depth writes off for alpha-blend materials; as an opaque cutout the
         // garment must write depth, or later transparent passes (the studio floor, a scene's water
         // or shadows) draw straight over it and the legs look see-through.
         mat.depthWrite = true
-        // Front faces only: garments are closed shells, and double-sided drawing let the inside of
-        // the fabric win the depth test at the shoulders (dark torn-looking shards).
-        mat.side = finish === 'Fabric_net' ? DoubleSide : FrontSide
-        mat.roughness = { Fabric_satin: 0.36, Fabric_sequin: 0.3, Fabric_denim: 0.9, Fabric_leather: 0.45, Fabric_net: 0.7 }[finish] ?? 0.75
-        mat.metalness = finish === 'Fabric_sequin' ? 0.35 : 0
+        // Front faces only for closed shells (double-sided drawing let the inside of the fabric win
+        // the depth test at the shoulders); lace, mesh and shoes (open uppers) show both sides.
+        mat.side = holes || item.slot === 'shoes' ? DoubleSide : FrontSide
+        mat.roughness = ROUGH[finish] ?? 0.75
+        mat.metalness = finish === 'sequin' ? 0.35 : 0
+        if (piece && mat.map) {
+          // the slot masks are data, not colour
+          mat.map.colorSpace = NoColorSpace
+          mat.map.needsUpdate = true
+          mat.color.setRGB(1, 1, 1)
+        }
+        const tucked = item.slot === 'top' && TUCKED.has(item.id)
         mat.onBeforeCompile = (shader) => {
-          Object.assign(shader.uniforms, uniforms.current)
+          Object.assign(shader.uniforms, uniforms)
+          if (tucked) {
+            // tucked in: below the trousers' or skirt's waistband this top is inside them
+            shader.uniforms.uTuck = tuckOf(base)
+            shader.vertexShader = shader.vertexShader
+              .replace('#include <common>', '#include <common>\nvarying float vDsWy;')
+              .replace('#include <project_vertex>', '#include <project_vertex>\nvDsWy = (modelMatrix * vec4(transformed, 1.0)).y;')
+            shader.fragmentShader = shader.fragmentShader
+              .replace('#include <common>', '#include <common>\nvarying float vDsWy;\nuniform float uTuck;')
+              .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (vDsWy < uTuck) discard;')
+          }
           // Cloth offset: the garment rides ~3.5 mm off the skin (along its skinned normal, in
           // metres, after skinning: the geometry itself is quantised), so small skinning
           // differences between body and fabric at the shoulders and armpits stay under the
-          // fabric instead of poking through it.
-          shader.vertexShader = shader.vertexShader.replace('#include <skinning_vertex>', '#include <skinning_vertex>\ntransformed += normalize(objectNormal) * 0.0035;')
-          if (dye)
+          // fabric instead of poking through it. Shoes are rigid and sit where they were built.
+          if (item.slot !== 'shoes') shader.vertexShader = shader.vertexShader.replace('#include <skinning_vertex>', '#include <skinning_vertex>\ntransformed += normalize(objectNormal) * 0.0035;')
+          if (piece)
+            shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uP, uS, uA;').replace(
+              '#include <map_fragment>',
+              `#ifdef USE_MAP
+vec4 dsEnc = texture2D(map, vMapUv);
+float dsSec = clamp(dsEnc.g, 0.0, 1.0);
+float dsAcc = clamp(dsEnc.b, 0.0, 1.0);
+float dsPri = clamp(1.0 - dsSec - dsAcc, 0.0, 1.0);
+vec3 dsSlot = (uP * dsPri + uS * dsSec + uA * dsAcc) / max(dsPri + dsSec + dsAcc, 0.001);
+diffuseColor.rgb *= dsSlot * (dsEnc.r / 0.72);
+diffuseColor.a *= dsEnc.a;
+#endif`,
+            )
+          else
             shader.fragmentShader = shader.fragmentShader
               .replace('#include <common>', '#include <common>\nuniform vec3 uDye;\nuniform float uDyeAmount;')
               .replace(
@@ -294,29 +432,141 @@ function OutfitModule({ src, mask, base, registry, onMask, dye, onLoaded }: { sr
                 '#include <map_fragment>\nfloat dsL = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));\ndiffuseColor.rgb = mix(diffuseColor.rgb, uDye * (0.25 + dsL * 1.6), uDyeAmount);',
               )
         }
-        mat.customProgramCacheKey = () => (dye ? 'dollscene-fabric-dye' : 'dollscene-fabric')
+        mat.customProgramCacheKey = () => (piece ? (tucked ? 'dollscene-piece-tuck' : 'dollscene-piece') : 'dollscene-fabric-dye')
         mat.needsUpdate = true
       }
     },
     () => {
       onLoaded?.()
-      if (!mask) return () => {}
+      const meshesNow = base.userData.dsBottom
+      const clearBottom = () => {
+        if (item.slot === 'bottom') setBottom(base, null, meshesNow)
+      }
+      if (!item.mask) return clearBottom
       onMask(maskTex(hide))
-      return () => onMask(null)
+      return () => (onMask(null), clearBottom())
     },
   )
   useLayoutEffect(() => {
-    if (!dye) return
-    uniforms.current.uDye.value.set(dye.dye)
-    uniforms.current.uDyeAmount.value = dye.dyeAmount
-  }, [dye])
+    for (const m of mats.current) if (m.userData.dsU) setWearColors(m.userData.dsU as WearUniforms, colors)
+  }, [colors])
   return null
 }
+
+/** Fitted tops worn tucked into whatever bottom she wears. */
+const TUCKED = new Set(['top_tank', 'top_cami', 'top_corset', 'top_mesh', 'top_sports_bra', 'top_lace_bralette', 'top_crop_tank', 'top_baby_tee', 'top_bandeau', 'top_crop_tee'])
+/** The bottom a doll wears right now (its meshes), for the tuck line. `only`: clear only if still these. */
+function setBottom(base: Object3D, meshes: Mesh[] | null, only?: unknown) {
+  if (only !== undefined && base.userData.dsBottom !== only) return
+  base.userData.dsBottom = meshes
+}
+/** The shared tuck line (world y; far below = off) of one doll. */
+function tuckOf(base: Object3D): { value: number } {
+  return (base.userData.dsTuck ??= { value: -1e6 })
+}
+const tv = new Vector3()
+/** Lowest point of the bottom's waistband (model space), from its live, skinned vertices. */
+function waistbandY(model: Object3D, meshes: Mesh[]) {
+  const toModel = new Matrix4().copy(model.matrixWorld).invert()
+  const top = new Array(12).fill(-Infinity)
+  for (const m of meshes) {
+    const sm = m as SkinnedMesh
+    const pos = sm.geometry.attributes.position
+    for (let i = 0; i < pos.count; i += 2) {
+      sm.getVertexPosition(i, tv)
+      tv.applyMatrix4(sm.matrixWorld).applyMatrix4(toModel)
+      if (tv.y < 0.7) continue
+      const k = Math.floor(((Math.atan2(tv.x, tv.z) + Math.PI) / (Math.PI * 2)) * 12) % 12
+      if (tv.y > top[k]) top[k] = tv.y
+    }
+  }
+  const ok = top.filter((y) => Number.isFinite(y))
+  return ok.length ? Math.min(...ok) : null
+}
+
+type WearUniforms = { uP: { value: Color }; uS: { value: Color }; uA: { value: Color }; uDye: { value: Color }; uDyeAmount: { value: number } }
+function setWearColors(u: WearUniforms, colors: Worn['colors']) {
+  u.uP.value.set(colors[0])
+  u.uS.value.set(colors[1])
+  u.uA.value.set(colors[2])
+  // classics: white means "as made"; any other colour dyes it
+  u.uDye.value.set(colors[0])
+  u.uDyeAmount.value = colors[0].toUpperCase() === '#FFFFFF' ? 0 : 0.75
+}
+
+/** Hide-mask slot on the skin shader for each wardrobe slot. */
+const HIDE_SLOT: Record<PieceSlot, 0 | 1 | 2 | 3> = { top: 0, bottom: 1, dress: 2, shoes: 3 }
+
+/**
+ * Pitch the feet for heeled shoes: the foot bones toes-down by `arch` about the ankle, the toe
+ * bones back by the same so the toes stay flat (exactly as the shoe was modelled: shoes.py).
+ */
+const qa = new Quaternion()
+const qw = new Quaternion()
+const axX = new Vector3(1, 0, 0)
+function archFeet(model: Object3D, rest: Map<string, Quaternion>, arch: number) {
+  for (const side of ['Left', 'Right'] as const) {
+    for (const [name, ang] of [
+      [`${side}Foot`, arch],
+      [`${side}ToeBase`, -arch],
+    ] as const) {
+      const b = model.getObjectByName(name) as Bone | undefined
+      const r = rest.get(name)
+      if (!b || !r) continue
+      b.quaternion.copy(r)
+      if (!ang) continue
+      b.updateWorldMatrix(true, false)
+      // a rotation about the model's X axis (her left-right) through the joint, in world space
+      const parentQ = b.parent!.getWorldQuaternion(new Quaternion())
+      const worldQ = b.getWorldQuaternion(qw)
+      const rootQ = model.getWorldQuaternion(new Quaternion())
+      qa.setFromAxisAngle(axX.clone().applyQuaternion(rootQ), ang)
+      b.quaternion.copy(parentQ.invert().multiply(qa).multiply(worldQ))
+      b.updateWorldMatrix(false, true)
+    }
+  }
+}
+
+/** What she carries in her left hand, and how it's held. */
+const HELD_PROP: Record<string, PropState> = {
+  whip: { id: 'whip', hold: 'grip' },
+  joint: { id: 'joint', hold: 'fingers' },
+  clutch: { id: 'clutch', hold: 'grip' },
+  fan: { id: 'fan', hold: 'grip' },
+  matcha: { id: 'matcha', hold: 'cup' },
+  phone: { id: 'phone', hold: 'grip' },
+}
+/** How the free arm carries each item (poses.ts carryGoal). */
+const HELD_CARRY: Partial<Record<string, Carry>> = { matcha: 'cup', phone: 'phone', joint: 'joint' }
+const HELD_GRIP: Record<PropState['hold'], Grip> = { fingers: 'peace', cup: 'wrap', flatPhone: 'flat', grip: 'hold', palm: 'hold', pinch: 'pinch' }
 
 /* ------------------------------------------------------------------ patches */
 
 const patchGeo = new SphereGeometry(0.012, 18, 4, 0, Math.PI * 2, 0, 0.47).translate(0, -0.012 * Math.cos(0.47), 0)
 const patchMat = new MeshPhysicalMaterial({ color: '#e3cdb4', roughness: 0.28, transparent: true, opacity: 0.6, depthWrite: false, sheen: 0.4, sheenColor: '#ffffff', polygonOffset: true, polygonOffsetFactor: -2 })
+
+/**
+ * A hydrogel under-eye patch: a crescent ~3.4 cm across, its top edge following the lower lash
+ * line and rising a touch toward the outer corner (+x), bent to the cheek's curve.
+ */
+const eyePatchGeo = (() => {
+  const s = new Shape()
+  s.moveTo(-0.0165, 0.0015)
+  s.quadraticCurveTo(0, -0.0035, 0.0165, 0.0045)
+  s.quadraticCurveTo(0.0125, -0.0115, 0, -0.0128)
+  s.quadraticCurveTo(-0.012, -0.0118, -0.0165, 0.0015)
+  const g = new ShapeGeometry(s, 14)
+  const p = g.attributes.position
+  for (let k = 0; k < p.count; k++) p.setZ(k, -(p.getX(k) ** 2) / (2 * 0.045) - (p.getY(k) ** 2) / (2 * 0.09))
+  g.computeVertexNormals()
+  return g
+})()
+const eyePatchMat = new MeshPhysicalMaterial({ color: '#f5b3c3', roughness: 0.2, transparent: true, opacity: 0.74, depthWrite: false, side: DoubleSide, clearcoat: 0.6, sheen: 0.5, sheenColor: '#fff2d6', polygonOffset: true, polygonOffsetFactor: -2 })
+const ex = new Vector3()
+const ey = new Vector3()
+const ez = new Vector3()
+const em = new Matrix4()
+const eq = new Quaternion()
 
 const pv = new Vector3()
 const pn = new Vector3()
@@ -327,6 +577,9 @@ const yAxis = new Vector3(0, 1, 0)
 /* ------------------------------------------------------------------ per frame */
 
 interface FrameState {
+  tuckKey: string
+  tuckWait: number
+  tuckY: number | null
   blink: { next: number; t: number }
   exprW: Record<ExpressionId, number>
   inv: Matrix4
@@ -337,6 +590,7 @@ interface RigParts {
   landmarks: LandmarkSource
   nails: NailSet | null
   patches: Map<SpotId, Mesh>
+  eyePatches: Record<'L' | 'R', Mesh>
   props: Record<Side, PropSlot>
   propRoot: Group
 }
@@ -345,11 +599,11 @@ interface FrameInput {
   t: number
   dt: number
   animate: boolean
-  setup: { idle: ReturnType<typeof idleRig>; model: Object3D; skin: SkinUniforms | null }
+  setup: { idle: ReturnType<typeof idleRig>; model: Object3D; skin: SkinUniforms | null; tattoo: TattooLayer | null }
   rig: RigParts | null
   look: StudioLook
   clinic: Partial<Record<ClinicId, number>>
-  pose: PoseId | 'present' | null
+  pose: PoseKey | null
   expression: ExpressionPreset | null
   morphMeshes: Set<Mesh>
   care: CharacterCatalog['care']
@@ -358,6 +612,8 @@ interface FrameInput {
   remote: boolean
   /** Every layer (body, hair, outfit, shoes) attached: until then the doll isn't drawn. */
   complete: boolean
+  /** Changes whenever her shape changes (re-measure anything fitted to it). */
+  morphKey: string
 }
 
 /** One frame of the character, in order: idle → routine (or held pose) → face → skin → attachments. */
@@ -373,7 +629,7 @@ function frameUpdate(f: FrameState, i: FrameInput) {
   const l = i.look
   const c = i.char
   const mine = !!c && (i.remote || getCharacter()?.root === setup.model)
-  if (!running && mine) applyPose(c!, i.pose ?? 'relaxed', t, dt)
+  if (!running && mine) applyPose(c!, i.pose ?? 'relaxed', t, dt, HELD_CARRY[l.extras.held] ?? null)
 
   // expressions: the routine/photo-mode weights, the morning face and a natural blink
   const want = i.remote ? {} : useStudio.getState().expression
@@ -383,6 +639,8 @@ function frameUpdate(f: FrameState, i: FrameInput) {
   const poseFace = !running && i.pose ? POSE_FACE[i.pose]?.(t) : null
   if (poseFace) for (const [e, v] of Object.entries(poseFace) as [ExpressionId, number][]) w[e] = Math.max(w[e], v)
   if (l.care.morning) w.Expr_Sleepy = Math.max(w.Expr_Sleepy, 0.75)
+  // a joint in hand: low, heavy lids (the red eyes are in the eye texture)
+  if (l.extras.held === 'joint') w.Expr_Sleepy = Math.max(w.Expr_Sleepy, 0.62)
   const b = f.blink
   if (i.animate) {
     if (b.t < 0 && t > b.next) b.t = 0
@@ -400,6 +658,22 @@ function frameUpdate(f: FrameState, i: FrameInput) {
   for (const m of i.morphMeshes) applyExpression(m, w)
 
   if (setup.skin) applyLookToSkin(setup.skin, l, i.remote ? { clinic: i.clinic, care: i.care } : { reveal: fx.makeup.reveal, clinic: i.clinic, fx: fx.skin, care: i.care })
+  // tucked tops: the line is the bottom's waistband (re-measured when what she wears or her shape changes)
+  const tuck = tuckOf(setup.model)
+  const bottomMeshes = setup.model.userData.dsBottom as Mesh[] | null | undefined
+  const tKey = l.wear.top && TUCKED.has(l.wear.top.id) && bottomMeshes ? `${l.wear.bottom?.id}:${i.morphKey}` : ''
+  if (tKey !== f.tuckKey) {
+    f.tuckKey = tKey
+    f.tuckWait = 3
+    tuck.value = -1e6
+  }
+  if (tKey && f.tuckWait > 0 && --f.tuckWait === 0) f.tuckY = waistbandY(setup.model, bottomMeshes!)
+  if (tKey && f.tuckWait === 0 && f.tuckY !== null) tuck.value = tv.set(0, f.tuckY - 0.006, 0).applyMatrix4(setup.model.matrixWorld).y
+  if (setup.skin && setup.tattoo) {
+    const inked = setup.tattoo.update(l.tattoos, i.care, i.remote ? {} : fx.tattoo.fade)
+    setup.skin.uTattoo.value = setup.tattoo.texture
+    setup.skin.uTattooFx.value.set(inked ? 1 : 0, 0, i.remote ? 0 : fx.tattoo.fresh, 0)
+  }
 
   const r = i.rig
   if (!r) return
@@ -430,14 +704,55 @@ function frameUpdate(f: FrameState, i: FrameInput) {
     mesh.matrix.premultiply(f.inv)
     mesh.matrixWorldNeedsUpdate = true
   }
+  // under-eye patches: on the under-eye hollow, shaped to it, until peeled (from the inner corner,
+  // the outer edge lifting away first)
+  for (const side of ['L', 'R'] as const) {
+    const mesh = r.eyePatches[side]
+    const peel = fx.skin.eyePeel[side]
+    mesh.visible = mine && !!l.care.eyePatches && peel < 0.999 && !!c
+    if (!mesh.visible || !c) continue
+    const key = `underEye${side}` as const
+    const pts = c.care.strokes[key]
+    const mid = pts?.length ? landmarkWorld(c.landmarks, `stroke:${key}:${pts.length >> 1}`, pv) : null
+    if (!mid) {
+      mesh.visible = false
+      continue
+    }
+    ez.copy(landmarkNormal(c, key))
+    ey.copy(headUp(c)).addScaledVector(ez, -headUp(c).dot(ez)).normalize()
+    // ex points to her left; her right eye's patch is mirrored (scale x -1), so its outer corner
+    // (+x) points out toward that temple too
+    ex.crossVectors(ey, ez).normalize()
+    const outward = side === 'R' ? -1 : 1
+    pv.addScaledVector(ez, 0.0013).addScaledVector(ey, 0.0015)
+    em.makeBasis(ex, ey, ez)
+    eq.setFromRotationMatrix(em)
+    if (peel > 0) {
+      const hinge = pv.clone().addScaledVector(ex, -0.016 * outward)
+      const rot = new Quaternion().setFromAxisAngle(ey, (side === 'R' ? 1 : -1) * Math.min(1, peel / 0.7) * 1.7)
+      pv.sub(hinge).applyQuaternion(rot).add(hinge)
+      eq.premultiply(rot)
+    }
+    em.compose(pv, eq, side === 'R' ? flipX : one)
+    mesh.matrix.multiplyMatrices(f.inv, em)
+    mesh.matrixWorldNeedsUpdate = true
+  }
   if (r.hands) {
     const held = running ? actionProps : (i.pose && POSE_PROPS[i.pose]) || NO_PROPS
-    updateProp(r.props.Left, r.hands.Left, held.Left ?? null, f.inv)
-    updateProp(r.props.Right, r.hands.Right, held.Right ?? null, f.inv)
+    let left = held.Left ?? null
+    // what she carries (a whisk, a joint...) stays in her left hand unless a routine or the pose needs it
+    const carry = l.extras.held !== 'none' ? HELD_PROP[l.extras.held] : null
+    if (carry && !running && !left && !poseUsesHand(i.pose, 'Left')) {
+      left = carry
+      setGrip(r.hands.Left, HELD_GRIP[carry.hold], 1)
+    }
+    updateProp(r.props.Left, r.hands.Left, left, f.inv, t)
+    updateProp(r.props.Right, r.hands.Right, held.Right ?? null, f.inv, t)
   }
 }
 
 const one = new Vector3(1, 1, 1)
+const flipX = new Vector3(-1, 1, 1)
 const NO_PROPS = { Left: null, Right: null }
 
 /* ------------------------------------------------------------------ arm clearance */
@@ -522,7 +837,7 @@ export interface StudioCharacterProps {
   /** Called once the body, hands and anchors are ready for routines. */
   onReady?: () => void
   /** Held pose when no routine is running (photo mode, showing the nails). */
-  pose?: PoseId | 'present' | null
+  pose?: PoseKey | null
   /** Photo-mode expression. */
   expression?: ExpressionPreset | null
   /**
@@ -599,6 +914,14 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
       for (const [k, list] of Object.entries(care.strokes)) list.forEach((p, i) => (points[`stroke:${k}:${i}`] = p))
       for (const sp of care.spots) points[`spot:${sp.id}`] = sp.p
       Object.assign(points, nailPoints(care))
+      for (const k of TATTOO_SPOTS) {
+        const a = care.tattoos?.[k]
+        if (a) points[`tat:${k}`] = a.p
+      }
+      for (const k of ['industrialAL', 'industrialBL', 'industrialAR', 'industrialBR']) {
+        const a = care.jewellery[k]
+        if (a) points[`jw:${k}`] = a.p
+      }
       // The build's under-eye anchors lean toward the nose; place them from the real eyeballs.
       const eyes = eyeCentres(model)
       if (eyes) {
@@ -616,6 +939,13 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
     // Dev screenshots can keep the rest A-pose (?pose=a) to tell skinning issues from asset ones.
     if (!(import.meta.env.DEV && new URLSearchParams(location.search).get('pose') === 'a')) relaxPose(model)
     const headBone = (model.getObjectByName('Head') as Bone | undefined) ?? null
+    // the feet's rest rotations (heels pitch them from here)
+    const footRest = new Map<string, Quaternion>()
+    for (const n of ['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase']) {
+      const b = model.getObjectByName(n)
+      if (b) footRest.set(n, b.quaternion.clone())
+    }
+    const tattoo = skin ? new TattooLayer() : null
     // The skull centre in head-bone space (for wet-hair shrinkage and hair-surface paths): a
     // little above and in front of the head joint, measured on the posed bones (not boneInverses,
     // which carry each module's quantisation).
@@ -639,6 +969,8 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
       landmarks,
       base,
       idle: idleRig(model),
+      footRest,
+      tattoo,
     }
   }, [scene, faceA, faceB, faceC, bodyMask, faceD, faceE, hasRegions, catalog.faceRect, catalog.care])
 
@@ -680,7 +1012,7 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
     let live = true
     const eyes = setup.eyes
     if (!eyes) return
-    eyeTexture(look.eyes.iris).then(
+    ;(look.extras.held === 'joint' ? bloodshotTexture(look.eyes.iris) : eyeTexture(look.eyes.iris)).then(
       (t) => {
         if (!live) return
         const mat = eyes.material as MeshStandardMaterial
@@ -692,7 +1024,7 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
     return () => {
       live = false
     }
-  }, [look.eyes.iris, setup])
+  }, [look.eyes.iris, look.extras.held === 'joint', setup])
 
   /* ---- hands, landmarks, nails, patches, props: everything that needs the bound body ---- */
   const rigRef = useRef<RigParts | null>(null)
@@ -700,7 +1032,7 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
   const [rigVersion, setRigVersion] = useState(0)
   const hairMeshes = useRef<() => Mesh[]>(() => [])
   // the last modules that really loaded (to fall back to if a new one fails)
-  const good = useRef<{ hair: string | null; outfit: string | null; shoes: string | null }>({ hair: null, outfit: null, shoes: null })
+  const good = useRef<{ hair: string | null; wear: Partial<Record<PieceSlot, Worn | null>> }>({ hair: null, wear: {} })
   hairMeshes.current = () => [...morphMeshes].filter((m) => m.userData.hairModule)
 
   useEffect(() => {
@@ -731,11 +1063,18 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
       propRoot.add(m)
       patches.set(id, m)
     }
+    const eyeMesh = () => {
+      const m = new Mesh(eyePatchGeo, eyePatchMat)
+      Object.assign(m, { visible: false, frustumCulled: false, matrixAutoUpdate: false, renderOrder: 2 })
+      propRoot.add(m)
+      return m
+    }
+    const eyePatches = { L: eyeMesh(), R: eyeMesh() }
     const props = { Left: propSlot(), Right: propSlot() }
     propRoot.add(props.Left.group, props.Right.group)
     model.add(propRoot)
     const headRestQ = head.getWorldQuaternion(new Quaternion())
-    rigRef.current = { hands: left && right ? { Left: left, Right: right } : null, nails, patches, props, propRoot, landmarks }
+    rigRef.current = { hands: left && right ? { Left: left, Right: right } : null, nails, patches, eyePatches, props, propRoot, landmarks }
     setRigVersion((n) => n + 1)
     if (left && right) {
       const c: Character = { root: model, body, head, headLocalC: setup.headLocalC, hands: { Left: left, Right: right }, landmarks, care, headRestQ, hair: () => hairMeshes.current(), nails }
@@ -761,22 +1100,61 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
   }, [look.nails, look.skin.tone, setup, catalog.care, rigVersion])
 
   // Jewellery is rebuilt when it changes (a handful of tiny meshes), once the skin is bound.
+  // Necklaces and chains drape over a top or dress (always on the outside of clothing).
+  const dressed = !!(look.wear.top || look.wear.dress)
   useEffect(() => {
     const r = rigRef.current
     const care = catalog.care
     if (!r || !care) return
     // fit on the next frame, once the renderer has posed and scaled the new doll
     let set: ReturnType<typeof buildJewellery> | null = null
-    const id = requestAnimationFrame(() => (set = buildJewellery(setup.model, care, r.landmarks, look.jewellery)))
+    const id = requestAnimationFrame(() => (set = buildJewellery(setup.model, care, r.landmarks, look.jewellery, dressed)))
     return () => {
       cancelAnimationFrame(id)
       set?.dispose()
     }
     // refit when her face, height or the clinic changes the shape the pieces sit on
-  }, [look.jewellery, morphs, look.height, setup, catalog.care, rigVersion])
+  }, [look.jewellery, morphs, look.height, setup, catalog.care, rigVersion, dressed])
+
+  // Accessories (headband, coral, waist beads, pins, chains) likewise, sized from her live body.
+  const items = useMemo(() => wearables(catalog), [catalog])
+  const shoeItem = look.wear.shoes ? items.get(look.wear.shoes.id) : undefined
+  const arch = shoeItem?.arch ?? 0
+  const lift = shoeItem?.lift ?? 0
+  useEffect(() => {
+    const r = rigRef.current
+    const care = catalog.care
+    if (!r || !care) return
+    let set: ReturnType<typeof buildExtras> | null = null
+    const id = requestAnimationFrame(() => (set = buildExtras(setup.model, care, r.landmarks, look.extras, look.jewellery, dressed)))
+    return () => {
+      cancelAnimationFrame(id)
+      set?.dispose()
+    }
+  }, [look.extras, look.jewellery, morphs, look.height, arch, setup, catalog.care, rigVersion, dressed])
+
+  // Heels: feet pitched to the shoe's arch, the whole doll raised by its heel height.
+  // Long, slender legs: the thighs (and the shins with them) lengthen along the bone, and the whole
+  // doll rises so her feet stay on the floor. Men most (their base is a tall, long-legged man),
+  // slender women a little, fat bodies not at all. Clothes are skinned to the same bones.
+  const legK = (look.morphs.Softness ?? 0.5) >= 0.75 ? 1 : (look.morphs.Masc ?? 0.5) >= 1 ? 1.07 : 1.04
+  useLayoutEffect(() => {
+    const model = setup.model
+    archFeet(model, setup.footRest, arch)
+    model.position.setY(0)
+    model.updateMatrixWorld(true)
+    const foot = model.getObjectByName('LeftFoot')
+    const before = foot ? foot.getWorldPosition(new Vector3()).y : 0
+    for (const n of ['LeftUpLeg', 'RightUpLeg']) model.getObjectByName(n)?.scale.set(1, legK, 1)
+    model.updateMatrixWorld(true)
+    const after = foot ? foot.getWorldPosition(new Vector3()).y : 0
+    model.position.setY(lift + (before - after) / Math.max(1e-6, model.parent ? model.parent.getWorldScale(new Vector3()).y : 1))
+    model.updateMatrixWorld(true)
+  }, [arch, lift, setup, legK])
 
   /* ---- relaxed arms rest outside her hips (and skirt), however full her figure ---- */
-  const outfitEase = catalog.outfits.find((o) => o.id === look.outfit.id)?.ease ?? 0
+  // a skirt's flare at the hands, capped: arms rest on the fabric, they don't hover a hand's width out
+  const outfitEase = Math.min(0.035, Math.max(0, ...(['top', 'bottom', 'dress'] as const).map((k) => (look.wear[k] ? (items.get(look.wear[k]!.id)?.ease ?? 0) * 0.5 : 0))))
   const candidates = useMemo(() => (setup.body ? clearanceCandidates(setup.body) : []), [setup])
   useEffect(() => {
     const r = rigRef.current
@@ -810,20 +1188,22 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
     if (look.hair.care.bonnet && hasHair('bonnet')) want.push(url.hair('bonnet'))
     else if (ch && hasHair(ch.from) && hasHair(ch.to)) want.push(url.hair(ch.from), url.hair(ch.to))
     else if (look.hair.style !== 'none' && hasHair(look.hair.style)) want.push(url.hair(look.hair.style))
-    const o = catalog.outfits.find((x) => x.id === look.outfit.id) ?? catalog.outfits[0]
-    const sh = catalog.shoes.find((x) => x.id === look.shoes.id) ?? catalog.shoes[0]
-    if (o) want.push(url.outfit(o.id))
-    if (sh) want.push(url.shoes(sh.id))
+    for (const slot of PIECE_SLOTS) {
+      const it = look.wear[slot] ? items.get(look.wear[slot]!.id) : undefined
+      if (it) want.push(it.src)
+    }
     return want
-  }, [catalog, look.hair.care.bonnet, look.hair.care.change, look.hair.style, look.outfit.id, look.shoes.id])
+  }, [catalog, items, look.hair.care.bonnet, look.hair.care.change, look.hair.style, look.wear])
   useLayoutEffect(() => void (expectedRef.current = expected), [expected])
 
   /* ---- per frame: idle → routine → expressions → skin/nails/patches/props ---- */
-  const frame = useRef<FrameState>({ blink: { next: 2.5, t: -1 }, exprW: Object.fromEntries(EXPRESSIONS.map((e) => [e, 0])) as Record<ExpressionId, number>, inv: new Matrix4() })
+  const frame = useRef<FrameState>({ tuckKey: '', tuckWait: 0, tuckY: null, blink: { next: 2.5, t: -1 }, exprW: Object.fromEntries(EXPRESSIONS.map((e) => [e, 0])) as Record<ExpressionId, number>, inv: new Matrix4() })
   const lookRef = useRef(look)
   lookRef.current = look
   const clinicRef = useRef(clinic)
   clinicRef.current = clinic
+  const morphKeyRef = useRef('')
+  morphKeyRef.current = useMemo(() => JSON.stringify([morphs, look.height]), [morphs, look.height])
   const poseRef = useRef({ pose, expression })
   poseRef.current = { pose, expression }
 
@@ -843,38 +1223,33 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
       char: charRef.current,
       remote,
       complete: layersComplete(),
+      morphKey: morphKeyRef.current,
     }),
   )
 
   // Hide skin under clothes and shoes (masks from the build).
-  const setHide = (slot: 0 | 1) => (t: Texture | null) => {
+  const hidePack = useMemo(() => new HidePack(), [])
+  useEffect(() => () => hidePack.texture.dispose(), [hidePack])
+  const setHide = (slot: 0 | 1 | 2 | 3) => (t: Texture | null) => {
     if (!setup.skin) return
-    if (slot === 0) setup.skin.uHide0.value = t
-    else setup.skin.uHide1.value = t
+    hidePack.set(slot, t)
+    setup.skin.uHide.value = hidePack.texture
     setup.skin.uHideOn.value.setComponent(slot, t ? 1 : 0)
   }
 
   // Preloaded modules swap in the same frame; anything still downloading keeps the old one on
   // screen until it arrives (no flash of bare skin, never a half-dressed doll).
   const dHair = useDeferredValue(look.hair.style)
-  const dOutfit = useDeferredValue(look.outfit.id)
-  const dShoe = useDeferredValue(look.shoes.id)
   const hairId = look.hair.style === 'none' || loadedModules.has(url.hair(look.hair.style)) ? look.hair.style : dHair
-  const outfitId = loadedModules.has(url.outfit(look.outfit.id)) ? look.outfit.id : dOutfit
-  const shoeId = loadedModules.has(url.shoes(look.shoes.id)) ? look.shoes.id : dShoe
-  // never a half-dressed doll: an outfit or shoes this build doesn't have falls back to one it does
-  const outfit = catalog.outfits.find((o) => o.id === outfitId) ?? catalog.outfits[0]
-  const shoes = catalog.shoes.find((s) => s.id === shoeId) ?? catalog.shoes[0]
   const has = (id: string) => catalog.hair.some((h) => h.id === id)
   const change = look.hair.care.change
   const bonnet = look.hair.care.bonnet && has('bonnet')
-  const failed = (what: 'hair' | 'outfit' | 'shoes') => () => {
+  const failed = (what: 'hair' | PieceSlot) => () => {
     const s = useStudio.getState()
-    s.notify(`That ${what === 'hair' ? 'hairstyle' : what === 'outfit' ? 'outfit' : 'pair of shoes'} couldn’t load. Your current look is safe.`, 'error')
+    s.notify(`That ${what === 'hair' ? 'hairstyle' : what === 'shoes' ? 'pair of shoes' : 'piece'} couldn’t load. Your current look is safe.`, 'error')
     s.apply((l) => {
       if (what === 'hair') l.hair.style = (good.current.hair as HairId | null) ?? 'none'
-      else if (what === 'outfit' && good.current.outfit) l.outfit.id = good.current.outfit as StudioLook['outfit']['id']
-      else if (what === 'shoes' && good.current.shoes) l.shoes.id = good.current.shoes as StudioLook['shoes']['id']
+      else l.wear[what] = good.current.wear[what] ?? null
     })
   }
 
@@ -905,17 +1280,27 @@ export function StudioCharacter({ look, catalog, animate, clinicPreview, onReady
           </ModuleBoundary>
         )
       )}
-      {outfit && (
-        <ModuleBoundary key={outfit.id} src={url.outfit(outfit.id)} onFail={failed('outfit')}>
-          <OutfitModule src={url.outfit(outfit.id)} mask={outfit.hideMask ? url.mask(`hide_${outfit.id}`) : null} base={setup.model} registry={registry} onMask={setHide(0)} dye={look.outfit} onLoaded={() => (good.current.outfit = outfit.id)} />
-        </ModuleBoundary>
-      )}
-      {shoes && (
-        <ModuleBoundary key={shoes.id} src={url.shoes(shoes.id)} onFail={failed('shoes')}>
-          <OutfitModule src={url.shoes(shoes.id)} mask={shoes.hideMask ? url.mask(`hide_${shoes.id}`) : null} base={setup.model} registry={registry} onMask={setHide(1)} onLoaded={() => (good.current.shoes = shoes.id)} />
-        </ModuleBoundary>
-      )}
+      {PIECE_SLOTS.map((slot) => (
+        <WearSlot key={slot} slot={slot} worn={look.wear[slot]} items={items} base={setup.model} registry={registry} onMask={setHide(HIDE_SLOT[slot])} onFail={failed(slot)} onLoaded={(w) => (good.current.wear[slot] = w)} />
+      ))}
     </group>
+  )
+}
+
+/**
+ * One wardrobe slot. A piece already downloaded swaps in the same frame; one still downloading
+ * keeps the previous piece on screen until it arrives (never a half-dressed frame).
+ */
+function WearSlot({ slot, worn, items, base, registry, onMask, onFail, onLoaded }: { slot: PieceSlot; worn: Worn | null; items: Map<string, Wearable>; base: Object3D; registry: Registry; onMask: (t: Texture | null) => void; onFail: () => void; onLoaded: (w: Worn) => void }) {
+  const deferred = useDeferredValue(worn)
+  const now = worn ? items.get(worn.id) : undefined
+  const shown = !worn || (now && loadedModules.has(now.src)) ? worn : deferred
+  const item = shown ? items.get(shown.id) : undefined
+  if (!shown || !item || item.slot !== slot) return null
+  return (
+    <ModuleBoundary key={item.id} src={item.src} onFail={onFail}>
+      <WearModule item={item} colors={shown.colors} base={base} registry={registry} onMask={onMask} onLoaded={() => onLoaded(shown)} />
+    </ModuleBoundary>
   )
 }
 

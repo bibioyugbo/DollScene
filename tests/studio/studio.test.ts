@@ -5,14 +5,14 @@
 import assert from 'node:assert/strict'
 import { beforeEach, describe, test } from 'node:test'
 import { clinicEffect, effectiveMorphs } from '../../src/shared/studio/clinic'
-import { DEFAULT_LOOK, sanitizeLook, type StudioLook } from '../../src/shared/studio/look'
-import { BODY_TYPES, CHARACTER_PRESETS, MAKEUP_PRESETS, randomDoll } from '../../src/shared/studio/presets'
+import { DEFAULT_LOOK, HEELS, nameKey, needsHeels, PIECE_IDS, sanitizeLook, slotOf, type StudioLook } from '../../src/shared/studio/look'
+import { BODY_TYPES, CHARACTER_PRESETS, DEFAULT_PRESET, MAKEUP_PRESETS, randomDoll } from '../../src/shared/studio/presets'
 import { cancelAction, isRunning, skipAction } from '../../src/studio/actions/engine'
 import { RETWIST, TAKEDOWN, WASH } from '../../src/studio/actions/haircare'
 import { amountOf, lookStep, makeupStep, removeStep, shadeProduct } from '../../src/studio/actions/makeup'
 import { MANICURE } from '../../src/studio/actions/nailcare'
-import { BRIGHTEN, CLEANSE, COMPRESS, EXFOLIATE, FACE_WASH, hasConditions, morningLook, padDirt, PATCHES, POP, SKINCARE_STEPS, skinCheckIn, SOOTHE, TONER } from '../../src/studio/actions/skincare'
-import { MIN_AGE } from '../../src/studio/ui/onboardRules'
+import { BRIGHTEN, CLEANSE, COMPRESS, EXFOLIATE, EYE_PATCHES, FACE_WASH, hasConditions, morningLook, padDirt, PATCHES, POP, SKINCARE_STEPS, skinCheckIn, SOOTHE, TONER } from '../../src/studio/actions/skincare'
+import { ageOn, MIN_AGE, validateDob } from '../../src/studio/ui/onboardRules'
 import { runSequence, runStep } from '../../src/studio/actions/steps'
 import { fx } from '../../src/studio/state/fx'
 import { useStudio } from '../../src/studio/state/store'
@@ -22,7 +22,7 @@ import { installCharacter, play } from './fakeCharacter'
 const hand = { id: 'hands', name: 'Hands', blurb: '', color: '#ffffff' }
 const clone = (l: StudioLook) => structuredClone(l)
 
-function fresh(phase: 'studio' | 'onboard' = 'studio', look: StudioLook = clone(CHARACTER_PRESETS[0].look)) {
+function fresh(phase: 'studio' | 'onboard' = 'studio', look: StudioLook = clone(DEFAULT_PRESET.look)) {
   cancelAction()
   useStudio.setState({ look, past: [], future: [], editBase: null, phase, category: 'skincare', toasts: [], action: null, clinicPreview: null, prevScene: null, characterReady: true })
 }
@@ -50,7 +50,7 @@ describe('onboarding', () => {
     const ife = CHARACTER_PRESETS.find((c) => c.id === 'ifeoma')!
     useStudio.getState().replace(ife.look)
     assert.equal(useStudio.getState().look.morphs.Hips, ife.look.morphs.Hips)
-    assert.equal(useStudio.getState().look.hair.style, 'afro_big')
+    assert.equal(useStudio.getState().look.hair.style, 'afro_fringe')
   })
 
   test('3–4. the starting scene and the onboarded profile persist through a save', () => {
@@ -78,7 +78,17 @@ describe('skincare routine', () => {
     const care = useStudio.getState().look.care
     assert.deepEqual(care.patches, ['forehead1'])
     assert.equal(care.spots.cheekL, 'flat')
-    assert.ok(toasts().some((t) => t.startsWith('success:')))
+    assert.ok(!toasts().some((t) => t.startsWith('success:')), 'no toast: the change shows on the doll')
+  })
+
+  test('5b. the morning: she wakes in eye patches; they peel off from the outer corner', async () => {
+    useStudio.getState().apply((l) => morningLook(l, { patches: 1, spots: 1, underEye: true, bonnet: true }))
+    assert.equal(useStudio.getState().look.care.eyePatches, true)
+    let peeled = 0
+    const r = await play(runStep(EYE_PATCHES, { product: hand, target: null, option: null }), { onFrame: () => (peeled = Math.max(peeled, fx.skin.eyePeel.L, fx.skin.eyePeel.R)) })
+    assert.equal(r, 'done')
+    assert.ok(peeled > 0.9, 'the patches visibly peeled')
+    assert.equal(useStudio.getState().look.care.eyePatches, false)
   })
 
   test('6. cleansing completes, lifts makeup and wakes her up; undo restores', async () => {
@@ -306,37 +316,149 @@ describe('nails, clinic, scenes', () => {
 /* ------------------------------------------------------------------ the cast, random dolls, skin conditions */
 
 describe('the cast and random dolls', () => {
-  test('16. sixteen bare-faced starting dolls, Bibi among them, mostly average to plus-size across races', () => {
-    assert.equal(CHARACTER_PRESETS.length, 16)
-    assert.ok(CHARACTER_PRESETS.some((c) => c.name === 'Bibi'))
+  test('16. twenty-one bare-faced starting dolls, Bibi in the middle (11th), a range of builds across races', () => {
+    assert.equal(CHARACTER_PRESETS.length, 21)
+    assert.equal(CHARACTER_PRESETS[10].id, 'bibi', 'Bibi sits in the middle of the lineup')
+    assert.equal(DEFAULT_PRESET.id, 'bibi', 'the game still opens on Bibi')
     for (const c of CHARACTER_PRESETS) {
       for (const k of ['foundation', 'concealer', 'blush', 'eyeshadow', 'liner', 'lipstick', 'contour', 'highlight', 'bronzer', 'powder'] as const) assert.equal(c.look.makeup[k].amount, 0, `${c.name} wears no ${k}`)
       assert.equal(c.look.makeup.mascara, 0, `${c.name} wears no mascara`)
     }
+    // women read slimmer overall, but full-figured and plus-size dolls are still in the cast
     const fullish = CHARACTER_PRESETS.filter((c) => c.look.morphs.Softness >= 0.5)
-    assert.ok(fullish.length >= 11, `three quarters average, curvy or plus (got ${fullish.length})`)
-    const plus = CHARACTER_PRESETS.filter((c) => c.look.morphs.Softness >= 0.85)
-    assert.ok(new Set(plus.map((c) => c.look.skin.tone)).size >= 4, 'plus-size dolls across different skin tones')
+    assert.ok(fullish.length >= 6, `a range of builds incl. full-figured (got ${fullish.length})`)
+    for (const c of CHARACTER_PRESETS) if (c.look.morphs.Masc < 0.6 && c.id !== 'amaka') assert.ok(c.look.morphs.Softness <= BODY_TYPES.curvy.Softness, `${c.name} is a slimmer build`)
+    const plus = CHARACTER_PRESETS.filter((c) => c.look.morphs.Softness >= 0.8)
+    assert.ok(new Set(plus.map((c) => c.look.skin.tone)).size >= 3, 'plus-size dolls across different skin tones')
+    assert.ok(plus.some((c) => c.look.morphs.Masc >= 1) && plus.some((c) => c.look.morphs.Masc < 0.6), 'plus-size men and women')
+  })
+
+  test('16b. every doll has a short bio, and the new five are in the cast', () => {
+    for (const c of CHARACTER_PRESETS) {
+      assert.ok(c.blurb.length > 10, `${c.name} has a bio`)
+      assert.ok(c.blurb.split(/\s+/).length <= 15, `${c.name}'s bio is under ~15 words: ${c.blurb}`)
+    }
+    assert.equal(CHARACTER_PRESETS.find((c) => c.id === 'grace')!.blurb, 'Sometimes you just have to accept it.')
+    for (const id of ['bambi', 'jayden', 'elias', 'remi', 'candi']) assert.ok(CHARACTER_PRESETS.some((c) => c.id === id), id)
+  })
+
+  test('16c. men have flat chests, Grace is the only pregnant doll, dresses and skirts come with heels', () => {
+    for (const c of CHARACTER_PRESETS) {
+      if (c.look.morphs.Masc >= 1) {
+        assert.equal(c.look.morphs.Bust, 0, `${c.name}: no breasts on a man`)
+        assert.equal(c.look.morphs.ChestFlat, 1, `${c.name}: a male chest`)
+        assert.equal(c.look.morphs.BackStraight, 1, `${c.name}: a straight back`)
+        assert.ok(c.look.morphs.Thighs <= 0.5, `${c.name}: lean thighs`)
+      }
+      assert.ok(['none', 'round', 'square', 'sunnies'].includes(c.look.jewellery.glasses), `${c.name}: round or rectangular frames`)
+      if (c.look.jewellery.glasses === 'sunnies') assert.equal(c.id, 'chidi', 'only Chidi wears shades')
+      if (c.id !== 'grace') assert.equal(c.look.morphs.Pregnant, 0.5, `${c.name} is not pregnant`)
+      if (needsHeels(c.look.wear)) assert.ok(HEELS.includes(c.look.wear.shoes!.id), `${c.name} wears heels with a dress or skirt`)
+      for (const w of Object.values(c.look.wear)) if (w) assert.ok(slotOf(w.id), `${c.name}: ${w.id} is a real piece`)
+    }
+    assert.equal(CHARACTER_PRESETS.find((c) => c.id === 'grace')!.look.morphs.Pregnant, 1)
+    const bibi = CHARACTER_PRESETS.find((c) => c.id === 'bibi')!.look
+    assert.deepEqual(bibi.wear.top, { id: 'top_crop_tank', colors: ['#C8102E', '#FFC72C', '#2A1200'] })
+    assert.equal(bibi.wear.bottom!.id, 'bottom_baggy_jeans')
+    assert.equal(bibi.hair.style, 'goddess_braids')
+    // the defaults wear piercings and ink, all removable
+    assert.ok(CHARACTER_PRESETS.some((c) => c.look.jewellery.navel))
+    assert.ok(CHARACTER_PRESETS.some((c) => c.look.jewellery.industrial))
+    assert.ok(CHARACTER_PRESETS.some((c) => c.look.jewellery.nose !== 'none' || c.look.jewellery.septum || c.look.jewellery.lip !== 'none'))
+    assert.ok(CHARACTER_PRESETS.some((c) => c.look.tattoos.length > 0))
+  })
+
+  test('16d. one piece, any colourway: recolouring changes three colours, never the asset', () => {
+    const l = clone(DEFAULT_PRESET.look)
+    for (const colors of [['#C8102E', '#FFC72C', '#2A1200'], ['#1E7A3A', '#FFC72C', '#0E2A16'], ['#1F4FA8', '#F28C28', '#0E1A33'], ['#E07AA6', '#6A3FB0', '#2A1030'], ['#C8102E', '#1E7A3A', '#F4EFE6']] as [string, string, string][]) {
+      l.wear.top = { id: 'top_crop_tank', colors }
+      const s = sanitizeLook(l)
+      assert.equal(s.wear.top!.id, 'top_crop_tank')
+      assert.deepEqual(s.wear.top!.colors, colors)
+    }
+    assert.ok(PIECE_IDS.length >= 35)
+  })
+
+  test('16e. old saves (one outfit + shoes) are dressed in pieces', () => {
+    const old = sanitizeLook({ v: 2, outfit: { id: 'kai_butterfly_red', dye: '#FFFFFF', dyeAmount: 0 }, shoes: { id: 'shoes06' } })
+    assert.equal(old.wear.top!.id, 'top_crop_tank')
+    assert.equal(old.wear.bottom!.id, 'bottom_baggy_jeans')
+    assert.equal(old.wear.shoes!.id, 'shoes06')
+    const classic = sanitizeLook({ v: 2, outfit: { id: 'male_casualsuit01', dye: '#1E5A4A', dyeAmount: 0.75 } })
+    assert.deepEqual(classic.wear.dress, { id: 'male_casualsuit01', colors: ['#1E5A4A', '#1E5A4A', '#1E5A4A'] })
+    // a dress replaces a top and bottom
+    const both = sanitizeLook({ v: 2, wear: { top: { id: 'top_tank', colors: ['#FFFFFF'] }, dress: { id: 'dress_slip', colors: ['#B0124A'] } } })
+    assert.equal(both.wear.top, null)
+    assert.equal(both.wear.dress!.id, 'dress_slip')
   })
 
   test('17. random dolls are complete, adult, deterministic, and include plus-size bodies', () => {
-    const available = { hair: ['afro_big', 'locs', 'bob02', 'pixie'], outfits: ['kai_butterfly_red', 'female_casualsuit01'], shoes: ['shoes01', 'shoes03'] }
+    const available = {
+      hair: ['afro_big', 'locs', 'bob02', 'pixie'],
+      pieces: [
+        { id: 'top_crop_tank', slot: 'top', colors: ['#C8102E', '#FFC72C', '#2A1200'] },
+        { id: 'top_tank', slot: 'top', colors: ['#FFFFFF', '#000000', '#000000'] },
+        { id: 'bottom_baggy_jeans', slot: 'bottom', colors: ['#7FA3C9', '#D8A04A', '#B8B8B8'] },
+        { id: 'bottom_mini_skirt', slot: 'bottom', colors: ['#EEEBE3', '#D8D2C4', '#B8B8B8'] },
+        { id: 'dress_slip', slot: 'dress', colors: ['#B0124A', '#E8C7A0', '#FFFFFF'] },
+        { id: 'shoes01', slot: 'shoes', colors: ['#FFFFFF', '#FFFFFF', '#FFFFFF'] },
+        { id: 'shoes_pumps', slot: 'shoes', colors: ['#111111', '#2A1A14', '#111111'] },
+      ],
+    }
     assert.deepEqual(randomDoll(42, available).look, randomDoll(42, available).look)
     let plus = 0
+    let plusMen = 0
+    let plusWomen = 0
     for (let seed = 1; seed <= 60; seed++) {
       const d = randomDoll(seed, available)
       const l = sanitizeLook(d.look)
-      assert.ok(available.outfits.includes(l.outfit.id) && available.shoes.includes(l.shoes.id))
+      assert.ok(l.wear.shoes && (l.wear.dress || (l.wear.top && l.wear.bottom)), 'fully dressed')
+      if (needsHeels(l.wear)) assert.ok(HEELS.includes(l.wear.shoes.id), 'heels with a skirt or dress')
       assert.ok(l.hair.style === 'none' || available.hair.includes(l.hair.style))
       assert.ok(l.height >= 0.94 && l.height <= 1.06)
       assert.equal(l.makeup.lipstick.amount, 0)
-      if (l.morphs.Softness >= BODY_TYPES.plus.Softness) plus++
+      if (l.morphs.Softness >= BODY_TYPES.plus.Softness - 0.04) {
+        plus++
+        if (l.morphs.Masc >= 1) plusMen++
+        else plusWomen++
+      }
+      if (l.morphs.Masc >= 1) {
+        assert.equal(l.morphs.Bust, 0, 'random men: no breasts')
+        assert.equal(l.morphs.BackStraight, 1, 'random men: straight back')
+      }
+      assert.notEqual(l.jewellery.glasses, 'cateye')
+      assert.ok(d.blurb.length > 10 && !d.blurb.includes('fresh face'), 'a witty one-liner')
     }
     assert.ok(plus >= 10, `plus-size bodies come up often (got ${plus} of 60)`)
+    assert.ok(plusMen >= 2 && plusWomen >= 4, `plus-size men and women both (men ${plusMen}, women ${plusWomen})`)
   })
 
-  test('18. the game is 18+', () => {
+  test('18. the game is 18+: a date of birth is required and under-18s cannot enter', () => {
     assert.equal(MIN_AGE, 18)
+    const today = new Date(2026, 9, 13)
+    assert.equal(validateDob('', today), 'Enter your date of birth.')
+    assert.match(validateDob('2010-05-01', today) ?? '', /18 and over/)
+    assert.match(validateDob('2008-10-14', today) ?? '', /18 and over/, 'one day short of 18')
+    assert.equal(validateDob('2008-10-13', today), null, '18 today')
+    assert.equal(validateDob('1990-02-28', today), null)
+    assert.match(validateDob('2030-01-01', today) ?? '', /future/)
+    assert.match(validateDob('1999-02-30', today) ?? '', /real date/)
+    assert.equal(ageOn('2000-10-13', today), 26)
+  })
+
+  test('18a. old saves: lip stud/ring become labret/snake bites; cat-eye frames become rectangular', () => {
+    const old = { ...clone(DEFAULT_LOOK), jewellery: { ...DEFAULT_LOOK.jewellery, lip: 'stud', glasses: 'cateye' } } as unknown
+    const l = sanitizeLook(old)
+    assert.equal(l.jewellery.lip, 'labret')
+    assert.equal(l.jewellery.glasses, 'square')
+    assert.equal(sanitizeLook({ ...clone(DEFAULT_LOOK), jewellery: { ...DEFAULT_LOOK.jewellery, lip: 'ring' } }).jewellery.lip, 'snakebites')
+  })
+
+  test('18b. doll names collide regardless of case, accents and punctuation', () => {
+    assert.equal(nameKey('Bibi'), nameKey('bibi'))
+    assert.equal(nameKey('B.i.b.i'), nameKey('Bíbí'))
+    assert.notEqual(nameKey('Bibi'), nameKey('Bibie'))
+    assert.ok(nameKey('美玲').length > 0, 'non-Latin names still have a key')
   })
 })
 

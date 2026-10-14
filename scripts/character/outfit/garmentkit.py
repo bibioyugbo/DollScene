@@ -87,6 +87,26 @@ class Base:
         self.in_body = np.array([any(g.group == gi and g.weight > 0.5 for g in v.groups) for v in me.vertices])
         nv = len(self.co)
         self.nv = nv
+        # Clothes rest on a smooth bust: the nipple and three rings around it are relaxed flat for
+        # the garments' benefit only (the body itself is unchanged), so fitted tops, corsets and
+        # dresses never show points poking through the fabric.
+        if "nipple" in self.body.vertex_groups:
+            ni = self.body.vertex_groups["nipple"].index
+            ring = np.array([any(g.group == ni and g.weight > 0.3 for g in v.groups) for v in me.vertices])
+            ee = np.empty(len(me.edges) * 2, dtype=np.int64)
+            me.edges.foreach_get("vertices", ee)
+            ee = ee.reshape(-1, 2)
+            for _ in range(3):
+                r2 = ring.copy()
+                r2[ee[ring[ee[:, 0]], 1]] = True
+                r2[ee[ring[ee[:, 1]], 0]] = True
+                ring = r2
+            deg = np.bincount(ee.ravel(), minlength=nv).astype(np.float64)
+            for _ in range(60):
+                acc = np.zeros_like(self.co)
+                np.add.at(acc, ee[:, 0], self.co[ee[:, 1]])
+                np.add.at(acc, ee[:, 1], self.co[ee[:, 0]])
+                self.co[ring] += (acc[ring] / np.maximum(deg[ring], 1)[:, None] - self.co[ring]) * 0.6
         # topology + normals of the mixed rest shape (helpers dropped so normals are the skin's)
         bm = bmesh.new()
         bm.from_mesh(me)
@@ -240,7 +260,7 @@ def shell(base, face_ids, offset, inflate=0, inflate_rate=0.5, mat=0, smooth_tan
                 ec[(min(a, b), max(a, b))] += 1
         BE = np.array([e for e, n_ in ec.items() if n_ == 1])
         if len(BE):
-            for _ in range(4):
+            for _ in range(10):
                 acc = np.zeros_like(co)
                 cnt = np.zeros(len(used))
                 np.add.at(acc, BE[:, 0], co[BE[:, 1]])
@@ -265,6 +285,20 @@ def shell(base, face_ids, offset, inflate=0, inflate_rate=0.5, mat=0, smooth_tan
             tang = (d - dn[:, None] * N) * smooth_tangent
             P = P + out + tang
             # never inside the starting surface
+            below = ((P - rest) * N).sum(axis=1)
+            P = P - np.minimum(below, 0)[:, None] * N
+    if field is not None and len(BE):
+        # once more after inflating (it moves hem vertices unevenly): a smooth hem, never inward
+        rest = co + base.normal[used] * off[:, None]
+        for _ in range(8):
+            acc = np.zeros_like(P)
+            cnt = np.zeros(len(used))
+            np.add.at(acc, BE[:, 0], P[BE[:, 1]])
+            np.add.at(acc, BE[:, 1], P[BE[:, 0]])
+            np.add.at(cnt, BE[:, 0], 1)
+            np.add.at(cnt, BE[:, 1], 1)
+            on = cnt == 2
+            P[on] = P[on] * 0.5 + 0.5 * acc[on] / 2
             below = ((P - rest) * N).sum(axis=1)
             P = P - np.minimum(below, 0)[:, None] * N
     part = Part(mat)
@@ -484,11 +518,13 @@ def tube_weights(base, part, follow_legs=0.7):
 # ----------------------------------------------------------------------------- textures
 
 
-def position_map(base, face_ids, size):
-    """Rasterise the chosen body faces in UV space: per texel (x, y, z) position, normal, coverage."""
+def position_map(base, face_ids, size, scalar=None):
+    """Rasterise the chosen body faces in UV space: per texel (x, y, z) position, normal, coverage
+    (and, with `scalar` (per body vertex), that value interpolated: e.g. the cut field, for hems)."""
     P = np.zeros((size, size, 3), dtype=np.float32)
     N = np.zeros((size, size, 3), dtype=np.float32)
     C = np.zeros((size, size), dtype=np.float32)
+    Sm = np.zeros((size, size), dtype=np.float32) if scalar is not None else None
     for fi in face_ids:
         f = base.faces[fi]
         loops = base.face_loops[fi]
@@ -519,8 +555,13 @@ def position_map(base, face_ids, size):
             P[y0:y1 + 1, x0:x1 + 1][inside] = pos[inside]
             N[y0:y1 + 1, x0:x1 + 1][inside] = nrm[inside]
             C[y0:y1 + 1, x0:x1 + 1][inside] = 1
+            if Sm is not None:
+                sv = scalar[[f[t] for t in tri]]
+                Sm[y0:y1 + 1, x0:x1 + 1][inside] = (l1 * sv[0] + l2 * sv[1] + l3 * sv[2])[inside]
     n = np.linalg.norm(N, axis=2, keepdims=True)
     N = np.where(n > 0, N / np.maximum(n, 1e-9), 0)
+    if Sm is not None:
+        return P, N, C, Sm
     return P, N, C
 
 
@@ -763,9 +804,9 @@ def material(name, tex_path, nrm_path=None, alpha=False, roughness=0.75, metalli
     return mat
 
 
-def finish(base, outfit_id, parts, materials, hide_src, ease=0.0, thickness=0.0016):
+def finish(base, outfit_id, parts, materials, hide_src, ease=0.0, thickness=0.0016, folder="outfits", prefix="Outfit", props=None, even=True):
     """Join the parts into Outfit_<id>, skin it, give it cloth thickness, save the .blend."""
-    me = bpy.data.meshes.new(f"Outfit_{outfit_id}")
+    me = bpy.data.meshes.new(f"{prefix}_{outfit_id}")
     verts, faces, src, weights, mats, uvs = [], [], [], [], [], []
     for part in parts:
         o = len(verts)
@@ -788,7 +829,7 @@ def finish(base, outfit_id, parts, materials, hide_src, ease=0.0, thickness=0.00
         for k in range(p.loop_total):
             uvl.data[p.loop_start + k].uv = uv[k]
         p.material_index = mats[p.index]
-    obj = bpy.data.objects.new(f"Outfit_{outfit_id}", me)
+    obj = bpy.data.objects.new(f"{prefix}_{outfit_id}", me)
     bpy.context.scene.collection.objects.link(obj)
     for m in materials:
         me.materials.append(m)
@@ -813,7 +854,7 @@ def finish(base, outfit_id, parts, materials, hide_src, ease=0.0, thickness=0.00
     sol.thickness = thickness
     sol.offset = -1.0
     sol.use_rim = True
-    sol.use_even_offset = True
+    sol.use_even_offset = even
     bpy.context.view_layer.objects.active = obj
     for o in bpy.context.view_layer.objects:
         o.select_set(o is obj)
@@ -821,8 +862,10 @@ def finish(base, outfit_id, parts, materials, hide_src, ease=0.0, thickness=0.00
     bpy.ops.object.modifier_apply(modifier="Solidify")
     obj["hide_src"] = json.dumps(sorted(int(i) for i in hide_src))
     obj["ease"] = float(ease)
+    for k, v in (props or {}).items():
+        obj[k] = v
     # keep only the outfit (and the rig/body it fits) in the saved file
-    path = os.path.join(ART, "outfits", f"outfit_{outfit_id}.blend")
+    path = os.path.join(ART, folder, f"{prefix.lower()}_{outfit_id}.blend")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     bpy.context.preferences.filepaths.save_version = 0
     bpy.ops.wm.save_as_mainfile(filepath=path)
@@ -847,10 +890,13 @@ def pose_arms_down(rig):
             bpy.context.view_layer.update()
 
 
-def render_sheet(base, outfit_id, obj, size=420, skin=(0.36, 0.2, 0.12)):
-    """Five full-length views with the arms relaxed (Eevee), composed into one PNG."""
+def render_sheet(base, outfit_id, obj, size=420, skin=(0.36, 0.2, 0.12), center=0.86, ortho=1.85, before=None):
+    """Five full-length views with the arms relaxed (Eevee), composed into one PNG. `center`/`ortho`
+    frame a close-up (shoes); `before` poses anything else first (heeled feet)."""
     sc = bpy.context.scene
     pose_arms_down(base.rig)
+    if before:
+        before()
     if os.environ.get("OUTFIT_ENGINE") == "cycles":
         # CPU path tracing: slower, but never contends for the GPU with anything else running
         sc.render.engine = "CYCLES"
@@ -891,7 +937,7 @@ def render_sheet(base, outfit_id, obj, size=420, skin=(0.36, 0.2, 0.12)):
             o.hide_render = True
     cam_d = bpy.data.cameras.new("Cam")
     cam_d.type = "ORTHO"
-    cam_d.ortho_scale = 1.85
+    cam_d.ortho_scale = ortho
     cam = bpy.data.objects.new("Cam", cam_d)
     sc.collection.objects.link(cam)
     sc.camera = cam
@@ -900,7 +946,7 @@ def render_sheet(base, outfit_id, obj, size=420, skin=(0.36, 0.2, 0.12)):
     tiles = []
     for vi, (_name, d) in enumerate(VIEWS):
         dv = Vector(d).normalized()
-        cam.location = Vector((0, 0, 0.86)) + dv * 4
+        cam.location = Vector((0, 0, center)) + dv * 4
         cam.rotation_euler = (-dv).to_track_quat("-Z", "Y").to_euler()
         fp = os.path.join(tmp, f"{outfit_id}_{vi}.png")
         sc.render.filepath = fp

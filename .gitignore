@@ -46,3 +46,6 @@ dist-studio
 *.blend
 *.blend1
 .test-build/
+.data/
+public/models/studio.next/
+public/models/studio.old/

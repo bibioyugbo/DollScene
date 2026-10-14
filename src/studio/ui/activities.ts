@@ -28,7 +28,7 @@ export const ACTIVITIES: Record<SceneId, Activity[]> = {
   fall: [{ id: 'leaves', label: 'Leaf toss', emoji: '🍂', pose: 'wave', expr: 'laugh', sfx: 'whoosh' }, { id: 'cozy', label: 'Cosy', emoji: '☕', pose: 'hands-clasped', expr: 'soft' }, selfie],
   beach: [{ id: 'splash', label: 'Splash', emoji: '🌊', pose: 'wave', expr: 'laugh', sfx: 'splash' }, { id: 'sun', label: 'Sunbathe', emoji: '☀️', pose: 'hair-touch', expr: 'soft' }, dance('Beach dance'), selfie],
   rooftop: [toast, dance(), selfie, { id: 'skyline', label: 'Take in the view', emoji: '🌃', pose: 'thinking', expr: 'soft' }],
-  moviefest: [{ id: 'carpet', label: 'Red-carpet pose', emoji: '📸', pose: 'hand-on-hip', expr: 'smile', sfx: 'chime' }, { id: 'fans', label: 'Wave to fans', emoji: '👋', pose: 'wave', expr: 'smile' }, { id: 'kiss', label: 'Blow a kiss', emoji: '😘', pose: 'blow-kiss', expr: 'kiss' }],
-  cinema: [{ id: 'popcorn', label: 'Popcorn', emoji: '🍿', pose: 'hands-clasped', expr: 'smile' }, { id: 'plot', label: 'Plot twist!', emoji: '😱', pose: 'thinking', expr: 'surprised' }, { id: 'sad', label: 'Sad scene', emoji: '🥲', pose: 'hands-clasped', expr: 'sad' }],
+  moviefest: [{ id: 'carpet', label: 'Red-carpet pose', emoji: '📸', pose: 'hand-on-hip', expr: 'smile', sfx: 'chime' }, { id: 'fans', label: 'Wave to fans', emoji: '👋', pose: 'wave', expr: 'smile' }, { id: 'kiss', label: 'Blow a kiss', emoji: '😘', pose: 'blow-kiss', expr: 'pout' }, selfie],
+  cinema: [{ id: 'popcorn', label: 'Popcorn', emoji: '🍿', pose: 'hands-clasped', expr: 'smile' }, { id: 'plot', label: 'Plot twist!', emoji: '😱', pose: 'thinking', expr: 'surprised' }, { id: 'sad', label: 'Sad scene', emoji: '🥲', pose: 'hands-clasped', expr: 'sad' }, selfie],
   halloween: [{ id: 'spooky', label: 'Spooky', emoji: '👻', pose: 'arms-crossed', expr: 'surprised' }, { id: 'trick', label: 'Trick or treat', emoji: '🎃', pose: 'wave', expr: 'laugh' }, selfie],
 }

@@ -20,8 +20,10 @@
  *      ALLOWED_ORIGINS (comma list; empty = any), REPORT_LOG (file path, default stdout only).
  */
 import { randomUUID } from 'node:crypto'
-import { appendFile } from 'node:fs/promises'
+import { appendFile, readFile, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import { pathToFileURL } from 'node:url'
+import { authRoutes, createAuth } from './auth.mjs'
 import { WebSocketServer } from 'ws'
 import { bucket, cleanText, displayName, mentionsIn, tidy } from './moderation.mjs'
 
@@ -214,7 +216,16 @@ async function onMessage(c, data) {
       return c.ws.close(4003, 'adult_only')
     }
     let id = null
-    if (VATAR_SECRET && msg.session) id = (await verify(msg.session))?.id ?? null
+    let accountName = null
+    // a DollScene account (access token from /auth/*): its id and username
+    if (msg.access) {
+      const u = auth.verifyAccess(msg.access)
+      if (u) {
+        id = u.id
+        accountName = u.username
+      }
+    }
+    if (!id && VATAR_SECRET && msg.session) id = (await verify(msg.session))?.id ?? null
     if (!id && ALLOW_GUESTS) id = `g_${randomUUID().slice(0, 10)}`
     if (!id) {
       send(c, { t: 'error', code: 'unauthorised', text: 'Couldn’t confirm your session.' })
@@ -228,7 +239,7 @@ async function onMessage(c, data) {
       clients.delete(id)
     }
     c.id = id
-    c.name = displayName(msg.name)
+    c.name = accountName ? displayName(accountName) : displayName(msg.name)
     c.look = typeof msg.look === 'object' && JSON.stringify(msg.look).length <= MAX_LOOK ? msg.look : null
     c.ready = true
     clients.set(id, c)
@@ -283,22 +294,87 @@ async function onMessage(c, data) {
   }
 }
 
+/* ------------------------------------------------------------------ doll names */
+
+// The name register for development and preview builds (production names live in Firestore via
+// functions/src/vatar.ts). Same key as the game: case, accents and punctuation don't count.
+const NAMES_FILE = process.env.NAMES_FILE || ''
+const names = new Map()
+if (NAMES_FILE) readFile(NAMES_FILE, 'utf8').then((t) => Object.entries(JSON.parse(t)).forEach(([k, v]) => names.set(k, v)), () => {})
+const nameKey = (n) => n.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '').slice(0, 24)
+
+function claimName(name, owner) {
+  const key = nameKey(String(name || '').trim())
+  if (key.length < 2 || typeof owner !== 'string' || owner.length < 4 || owner.length > 80) return 400
+  const cur = names.get(key)
+  if (cur && cur !== owner) return 409
+  for (const [k, o] of names) if (o === owner && k !== key) names.delete(k)
+  names.set(key, owner)
+  if (NAMES_FILE) writeFile(NAMES_FILE, JSON.stringify(Object.fromEntries(names))).catch(() => {})
+  return 200
+}
+
 /* ------------------------------------------------------------------ server */
 
-const http = createServer((req, res) => {
-  if (req.url === '/healthz') {
+export const auth = createAuth()
+const authHandler = authRoutes(auth)
+
+/** Every HTTP route (also mounted by the Vite dev/preview servers under /rt). */
+export function handleHttp(req, res) {
+  // the game mounts these under /rt on its own origin
+  const url = (req.url || '/').replace(/^\/rt(?=\/)/, '')
+  req.url = url
+  const path = url.split('?')[0]
+  if (path.startsWith('/auth/')) {
+    void authHandler(req, res, path)
+    return
+  }
+  if (path === '/healthz') {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     return res.end('ok')
   }
-  if (req.url === '/counts') {
+  if (path === '/names/claim' && req.method === 'OPTIONS') {
+    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'Content-Type' })
+    return res.end()
+  }
+  if (path === '/names/claim' && req.method === 'POST') {
+    let body = ''
+    req.on('data', (d) => {
+      body += d
+      if (body.length > 2048) req.destroy()
+    })
+    req.on('end', () => {
+      let code = 400
+      try {
+        const b = JSON.parse(body)
+        code = claimName(b.name, b.owner)
+      } catch {
+        /* bad json */
+      }
+      res.writeHead(code, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' })
+      res.end(JSON.stringify(code === 200 ? { ok: true } : { error: code === 409 ? 'name_taken' : 'bad_request' }))
+    })
+    return
+  }
+  if (path === '/counts') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' })
     return res.end(JSON.stringify(counts()))
   }
   res.writeHead(404)
   res.end()
-})
+}
 
-const wss = new WebSocketServer({ server: http, path: '/realtime', maxPayload: MAX_MSG })
+const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_MSG })
+wss.on('error', (e) => console.error('realtime', e))
+
+/** Accept WebSocket upgrades on <path> from any Node HTTP server (standalone or the game's own). */
+export function attach(server, path = '/realtime') {
+  server.on('upgrade', (req, socket, head) => {
+    if ((req.url || '').split('?')[0] !== path) return
+    socket.on('error', () => socket.destroy())
+    wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req))
+  })
+}
 
 wss.on('connection', (ws, req) => {
   const origin = req.headers.origin || ''
@@ -326,6 +402,8 @@ wss.on('connection', (ws, req) => {
     reportBucket: bucket(3, 0.05),
     alive: true,
   }
+  // a dropped connection (ECONNRESET, a phone losing signal) must never take the server down
+  ws.on('error', () => ws.terminate())
   ws.on('pong', () => (c.alive = true))
   ws.on('message', (data) => void onMessage(c, data.toString()).catch((e) => console.error(e)))
   ws.on('close', () => {
@@ -353,4 +431,9 @@ setInterval(() => {
   }
 }, 25_000)
 
-http.listen(PORT, () => console.log(`dollscene realtime on :${PORT} (guests ${ALLOW_GUESTS ? 'on' : 'off'}, vatar ${VATAR_SECRET ? 'on' : 'off'})`))
+// run directly (node index.mjs): a standalone server on PORT
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
+  const http = createServer(handleHttp)
+  attach(http)
+  http.listen(PORT, () => console.log(`dollscene realtime on :${PORT} (guests ${ALLOW_GUESTS ? 'on' : 'off'}, vatar ${VATAR_SECRET ? 'on' : 'off'})`))
+}

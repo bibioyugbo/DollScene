@@ -9,7 +9,7 @@ import lockit  # noqa: E402
 
 STYLE = "microlocs"
 head = hairkit.open_base()
-strands = lockit.layout(head, spacing=9.0, jitter=0.3, seed=33, radius=0.0025, r_var=0.1, stop_z=1.14, stop_var=0.035, step=0.04, layer=0.007, sweep_el=50.0)
+strands = lockit.fall_layout(head, spacing=9.0, jitter=0.3, seed=33, radius=0.0025, r_var=0.1, stop_z=1.14, stop_var=0.035, step=0.04, layer=0.007)
 b = hairkit.Builder(head)
 lockit.build_strands(head, b, strands, root="fuzzy", sides=4, taper=0.05, tip_r=0.7)
 lockit.scalp_layer(head, b, lift=0.0018)

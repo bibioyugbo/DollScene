@@ -1,16 +1,16 @@
-import { useMemo } from 'react'
-import { BoxGeometry, BufferGeometry, ConeGeometry, CylinderGeometry, Float32BufferAttribute, MeshLambertMaterial, SphereGeometry, TorusGeometry } from 'three'
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { Component, Suspense, useMemo, type ReactNode } from 'react'
+import { CHARACTER_PRESETS, randomDoll } from '../../../shared/studio/presets'
+import type { StudioLook } from '../../../shared/studio/look'
+import { useCatalog, wearables, type CharacterCatalog } from '../../character/catalog'
+import { StudioCharacter } from '../../character/StudioCharacter'
+import { useRealtime } from '../../net/realtime'
+import { useStudio, type ExpressionPreset, type PoseId } from '../../state/store'
 import type { V3 } from '../types'
-import { mutate, Parts, pick, range, rng, useAnim, useBuilt, type Rand } from './core'
-import { GlowPoints, type GlowPoint } from './Glow'
+import { pick, range, rng, type Rand } from './core'
 
 /**
- * Party people: stylised low-poly guests in colour (not silhouettes) that make a scene feel
- * alive. Poses: standing, dancing (they bob), cheering (arms up), holding a drink, sitting, and
- * taking selfies (phone up, a screen glow and the odd flash). Accessories per scene: masquerade
- * masks, gele, fila caps, shades, sun hats, party hats, witch hats, horns, cat ears.
- * One merged mesh per crowd (+ one glow draw call); dancers bob in the vertex shader.
+ * Guests at a scene: where they stand (scattered clear of the photo spots), which way they face,
+ * and what they're doing. Drawn as real dolls (see Crowd below).
  */
 
 export type Pose = 'stand' | 'dance' | 'cheer' | 'drink' | 'selfie' | 'sit'
@@ -67,164 +67,66 @@ export function scatter(r: Rand, n: number, box: [number, number, number, number
   return out
 }
 
-/** One person, feet at the origin, facing +Z. Returns the phone position (selfies) if any. */
-function body(person: Person, parts: Parts): V3 | null {
-  const h = person.h
-  const k = h / 1.7
-  const sit = person.pose === 'sit'
-  const hipY = sit ? 0.45 * k : 0.86 * k
-  const add = (g: BufferGeometry, c: string, pos: V3, rot: V3 = [0, 0, 0], s: V3 | number = 1) => parts.add(g, c, pos, rot, s)
-  // legs (or a seated pair) and the outfit
-  if (sit) {
-    for (const x of [-0.08, 0.08]) {
-      add(new CylinderGeometry(0.06 * k, 0.055 * k, 0.42 * k, 6), person.bottom, [x * k, hipY, 0.18 * k], [Math.PI / 2, 0, 0])
-      add(new CylinderGeometry(0.05 * k, 0.045 * k, 0.45 * k, 6), person.bottom, [x * k, 0.22 * k, 0.4 * k])
-    }
-  } else if (person.dress) {
-    add(new ConeGeometry(0.26 * k, 0.62 * k, 10, 1, true), person.top, [0, 0.55 * k, 0])
-    for (const x of [-0.07, 0.07]) add(new CylinderGeometry(0.045 * k, 0.04 * k, 0.3 * k, 6), person.skin, [x * k, 0.15 * k, 0])
-  } else {
-    for (const x of [-0.08, 0.08]) add(new CylinderGeometry(0.065 * k, 0.05 * k, hipY, 6), person.bottom, [x * k, hipY / 2, 0])
-  }
-  // torso, shoulders, neck, head
-  add(new CylinderGeometry(0.15 * k, 0.13 * k, 0.5 * k, 8), person.top, [0, hipY + 0.25 * k, 0])
-  add(new SphereGeometry(0.15 * k, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2), person.top, [0, hipY + 0.5 * k, 0], [0, 0, 0], [1, 0.45, 0.8])
-  add(new CylinderGeometry(0.045 * k, 0.05 * k, 0.1 * k, 6), person.skin, [0, hipY + 0.58 * k, 0])
-  const headY = hipY + 0.73 * k
-  add(new SphereGeometry(0.105 * k, 10, 8), person.skin, [0, headY, 0], [0, 0, 0], [0.9, 1.1, 0.95])
-  // hair
-  if (person.hairStyle === 'afro') add(new SphereGeometry(0.16 * k, 10, 8), person.hair, [0, headY + 0.04 * k, -0.02 * k])
-  else if (person.hairStyle === 'bun') {
-    add(new SphereGeometry(0.11 * k, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.6), person.hair, [0, headY + 0.005 * k, -0.005 * k])
-    add(new SphereGeometry(0.06 * k, 8, 6), person.hair, [0, headY + 0.13 * k, -0.04 * k])
-  } else if (person.hairStyle === 'long') {
-    add(new SphereGeometry(0.115 * k, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.6), person.hair, [0, headY + 0.005 * k, -0.005 * k])
-    add(new BoxGeometry(0.22 * k, 0.32 * k, 0.07 * k), person.hair, [0, headY - 0.12 * k, -0.07 * k])
-  } else if (person.hairStyle === 'braids') {
-    add(new SphereGeometry(0.112 * k, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.6), person.hair, [0, headY + 0.005 * k, -0.005 * k])
-    for (const x of [-0.06, 0, 0.06]) add(new CylinderGeometry(0.018 * k, 0.012 * k, 0.4 * k, 5), person.hair, [x * k, headY - 0.2 * k, -0.08 * k])
-  } else add(new SphereGeometry(0.11 * k, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.45), person.hair, [0, headY + 0.01 * k, -0.005 * k])
-  // accessories
-  const a = person.accColor
-  switch (person.acc) {
-    case 'mask':
-      add(new BoxGeometry(0.19 * k, 0.05 * k, 0.03 * k), a, [0, headY + 0.015 * k, 0.09 * k])
-      add(new ConeGeometry(0.03 * k, 0.1 * k, 4), a, [0.07 * k, headY + 0.07 * k, 0.09 * k], [0, 0, -0.5])
-      break
-    case 'gele':
-      add(new TorusGeometry(0.11 * k, 0.045 * k, 6, 12), a, [0, headY + 0.07 * k, 0], [Math.PI / 2 - 0.3, 0, 0], [1.1, 1, 1.2])
-      add(new ConeGeometry(0.14 * k, 0.16 * k, 8), a, [0.03 * k, headY + 0.15 * k, -0.04 * k], [-0.35, 0, 0.3])
-      break
-    case 'fila':
-      add(new CylinderGeometry(0.1 * k, 0.11 * k, 0.09 * k, 10), a, [0.02 * k, headY + 0.1 * k, 0], [0, 0, 0.25])
-      break
-    case 'shades':
-      add(new BoxGeometry(0.18 * k, 0.04 * k, 0.03 * k), '#0c0c10', [0, headY + 0.015 * k, 0.095 * k])
-      break
-    case 'sunhat':
-      add(new CylinderGeometry(0.2 * k, 0.2 * k, 0.012 * k, 14), a, [0, headY + 0.08 * k, 0])
-      add(new CylinderGeometry(0.09 * k, 0.1 * k, 0.08 * k, 10), a, [0, headY + 0.12 * k, 0])
-      break
-    case 'party':
-      add(new ConeGeometry(0.06 * k, 0.17 * k, 8), a, [0, headY + 0.17 * k, 0], [0, 0, 0.15])
-      break
-    case 'witch':
-      add(new CylinderGeometry(0.19 * k, 0.19 * k, 0.012 * k, 14), '#121018', [0, headY + 0.08 * k, 0])
-      add(new ConeGeometry(0.1 * k, 0.32 * k, 10), '#121018', [0.02 * k, headY + 0.24 * k, -0.02 * k], [-0.15, 0, 0.2])
-      break
-    case 'horns':
-      for (const s of [-1, 1]) add(new ConeGeometry(0.025 * k, 0.09 * k, 6), '#c8102e', [s * 0.06 * k, headY + 0.12 * k, 0], [0, 0, -s * 0.4])
-      break
-    case 'ears':
-      for (const s of [-1, 1]) add(new ConeGeometry(0.035 * k, 0.07 * k, 3), a, [s * 0.065 * k, headY + 0.12 * k, 0], [0, 0, -s * 0.3])
-      break
-    case 'cap':
-      add(new SphereGeometry(0.115 * k, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.45), a, [0, headY + 0.015 * k, 0])
-      add(new BoxGeometry(0.16 * k, 0.012 * k, 0.1 * k), a, [0, headY + 0.04 * k, 0.12 * k])
-      break
-  }
-  // arms by pose
-  const sh = hipY + 0.47 * k
-  const arm = (side: number, rot: V3, len = 0.5) => add(new CylinderGeometry(0.035 * k, 0.03 * k, len * k, 6), person.top, [side * 0.18 * k, sh - Math.cos(rot[0]) * len * 0.5 * k, Math.sin(rot[0]) * len * 0.5 * k], rot)
-  let phone: V3 | null = null
-  if (person.pose === 'selfie') {
-    arm(-1, [0.15, 0, 0.05])
-    // right arm up and forward, phone held facing the person
-    add(new CylinderGeometry(0.035 * k, 0.03 * k, 0.55 * k, 6), person.top, [0.2 * k, sh + 0.12 * k, 0.2 * k], [-1.1, 0, -0.35])
-    phone = [0.28 * k, sh + 0.28 * k, 0.42 * k]
-    add(new BoxGeometry(0.07 * k, 0.13 * k, 0.012 * k), '#141418', phone, [0.25, Math.PI, 0])
-  } else if (person.pose === 'cheer' || person.pose === 'dance') {
-    const up = person.pose === 'cheer' ? 2.7 : 2.2
-    for (const s of [-1, 1]) add(new CylinderGeometry(0.035 * k, 0.03 * k, 0.55 * k, 6), person.top, [s * 0.24 * k, sh + 0.22 * k, 0.04 * k], [0, 0, -s * (Math.PI - up)])
-  } else if (person.pose === 'drink') {
-    arm(-1, [0.1, 0, 0.08])
-    add(new CylinderGeometry(0.035 * k, 0.03 * k, 0.32 * k, 6), person.top, [0.2 * k, sh - 0.14 * k, 0.04 * k], [0, 0, 0.1])
-    add(new CylinderGeometry(0.035 * k, 0.03 * k, 0.28 * k, 6), person.top, [0.2 * k, sh - 0.3 * k, 0.15 * k], [-1.3, 0, 0])
-    add(new CylinderGeometry(0.03 * k, 0.02 * k, 0.09 * k, 8), '#f2c14e', [0.2 * k, sh - 0.26 * k, 0.3 * k])
-  } else {
-    arm(-1, [0.05, 0, 0.12])
-    arm(1, [0.05, 0, -0.12])
-  }
-  return phone
+/** Crowd poses on the dolls' own pose set (sitting guests aren't drawn: no seat to sit on). */
+const POSE_OF: Record<Pose, PoseId> = { stand: 'relaxed', dance: 'wave', cheer: 'peace', drink: 'relaxed', selfie: 'selfie', sit: 'relaxed' }
+const FACE_OF: Record<Pose, ExpressionPreset> = { stand: 'soft', dance: 'laugh', cheer: 'laugh', drink: 'smile', selfie: 'smile', sit: 'soft' }
+
+/** A guest's doll: one of the cast (never the player's own doll), or now and then a random one. */
+function guestLook(person: Person, i: number, own: string, catalog: CharacterCatalog): StudioLook {
+  const r = rng(Math.round(person.p[0] * 97 + person.p[2] * 31) + i * 13)
+  const cast = CHARACTER_PRESETS.filter((c) => c.id !== own)
+  const base =
+    r() < 0.7
+      ? cast[Math.floor(r() * cast.length) % cast.length].look
+      : randomDoll(Math.floor(r() * 1e9), { hair: catalog.hair.map((h) => h.id), pieces: [...wearables(catalog).values()].map((w) => ({ id: w.id, slot: w.slot, colors: w.colors })) }).look
+  const look = structuredClone(base)
+  // a drink in hand for the drinkers; nothing else carried (their hands are posing)
+  look.extras.held = person.pose === 'drink' ? 'matcha' : 'none'
+  return look
 }
 
-const VERT = /* glsl */ `
-attribute vec2 aBob;
-uniform float uTime;
-`
-
-export function Crowd({ people, animate, flash = true }: { people: Person[]; animate: boolean; flash?: boolean }) {
-  const built = useBuilt(
-    (track) => {
-      const geos: BufferGeometry[] = []
-      const glows: GlowPoint[] = []
-      const r = rng(people.length * 7 + 3)
-      for (const person of people) {
-        const parts = new Parts()
-        let phone: V3 | null = null
-        parts.group(person.p, person.rotY, 1, () => {
-          phone = body(person, parts)
-        })
-        const g = parts.build()
-        const n = g.attributes.position.count
-        const bob = new Float32Array(n * 2)
-        const amp = person.pose === 'dance' ? 0.06 : person.pose === 'cheer' ? 0.035 : 0.008
-        const ph = r() * 6.28
-        for (let i = 0; i < n; i++) {
-          bob[i * 2] = ph
-          bob[i * 2 + 1] = amp
-        }
-        g.setAttribute('aBob', new Float32BufferAttribute(bob, 2))
-        geos.push(g)
-        if (phone) {
-          const [px, py, pz] = phone as V3
-          const c = Math.cos(person.rotY)
-          const s = Math.sin(person.rotY)
-          const wp: V3 = [person.p[0] + px * c + pz * s, py, person.p[2] - px * s + pz * c]
-          glows.push({ p: wp, c: '#bfe0ff', s: 0.12, ph: r() })
-          if (flash) glows.push({ p: wp, c: '#ffffff', s: 0.7, ph: r() })
-        }
-      }
-      const geo = track(geos.length ? mergeGeometries(geos, false)! : new BufferGeometry())
-      geos.forEach((g) => g.dispose())
-      const uni = { uTime: { value: 0 } }
-      const mat = track(new MeshLambertMaterial({ vertexColors: true }))
-      mat.onBeforeCompile = (sh) => {
-        sh.uniforms.uTime = uni.uTime
-        sh.vertexShader = VERT + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.y += abs(sin(uTime * 3.2 + aBob.x)) * aBob.y;\ntransformed.x += sin(uTime * 1.6 + aBob.x) * aBob.y * 0.5;')
-      }
-      return { geo, mat, uni, glows }
-    },
-    [people, flash],
+/**
+ * Party people: the same 3D dolls as the cast (the real character, not stand-ins), standing at
+ * the guest spots nearest the action, each striking the scene's pose (waving, cheering, a selfie,
+ * a drink in hand). Fewer on phones; fewer still when real players are there (they take the slots).
+ */
+export function Crowd({ people, animate }: { people: Person[]; animate: boolean; flash?: boolean }) {
+  const { catalog } = useCatalog()
+  const own = useStudio((s) => s.look.profile.starter)
+  const peers = useRealtime((s) => Object.keys(s.peers).length)
+  const wide = typeof window !== 'undefined' && window.innerWidth >= 900
+  const n = Math.max(2, (wide ? 6 : 4) - peers)
+  const chosen = useMemo(
+    () =>
+      people
+        .filter((p) => p.pose !== 'sit')
+        .sort((a, b) => Math.hypot(a.p[0], a.p[2]) - Math.hypot(b.p[0], b.p[2]))
+        .slice(0, n),
+    [people, n],
   )
-  useAnim(animate, (t) => mutate(built.uni, (u) => (u.uTime.value = t)))
-  const steady = useMemo(() => built.glows.filter((g) => g.c === '#bfe0ff'), [built])
-  const flashes = useMemo(() => built.glows.filter((g) => g.c === '#ffffff'), [built])
+  const looks = useMemo(() => (catalog ? chosen.map((p, i) => guestLook(p, i, own, catalog)) : []), [chosen, own, catalog])
+  if (!catalog) return null
   return (
     <group>
-      <mesh geometry={built.geo} material={built.mat} frustumCulled={false} />
-      {steady.length > 0 && <GlowPoints points={steady} mode="twinkle" animate={animate} intensity={0.8} />}
-      {flashes.length > 0 && <GlowPoints points={flashes} mode="flash" animate={animate} intensity={1.4} />}
+      {chosen.map((p, i) => (
+        <group key={`${p.p[0]}:${p.p[2]}`} position={p.p} rotation={[0, p.rotY, 0]}>
+          <Quiet>
+            <Suspense fallback={null}>
+              <StudioCharacter look={looks[i]} catalog={catalog} animate={animate} remote pose={POSE_OF[p.pose]} expression={FACE_OF[p.pose]} />
+            </Suspense>
+          </Quiet>
+        </group>
+      ))}
     </group>
   )
+}
+
+class Quiet extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+  render() {
+    return this.state.failed ? null : this.props.children
+  }
 }

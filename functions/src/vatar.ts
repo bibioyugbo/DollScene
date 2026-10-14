@@ -17,7 +17,7 @@ import { defineSecret } from 'firebase-functions/params'
 import { onRequest, type Request } from 'firebase-functions/v2/https'
 import type { Response } from 'express'
 import { briefForDay, scoreLook, studioDay } from './shared/studio/challenges'
-import { MAX_SAVED_LOOKS, sanitizeLook, sanitizeSavedLook, type SavedLook, type StudioLook } from './shared/studio/look'
+import { MAX_SAVED_LOOKS, nameKey, sanitizeLook, sanitizeSavedLook, type SavedLook, type StudioLook } from './shared/studio/look'
 import { PRODUCT_BY_ID } from './shared/studio/products'
 
 const VATAR_SECRET = defineSecret('VATAR_SECRET')
@@ -207,6 +207,26 @@ async function route(db: Firestore, path: string, body: Body, req: Request) {
         return { xp, gain, best: Math.max(prev, result.score) }
       })
       return { ...result, ...out, day, brief: brief.id }
+    }
+    case 'names/claim': {
+      // One doll name per player, unique across everyone: case, accents and punctuation don't
+      // make a different name. The player's previous name is released.
+      const p = await verifySession(body.session)
+      const name = typeof body.name === 'string' ? body.name.trim().slice(0, 24) : ''
+      const key = nameKey(name)
+      if (key.length < 2) throw new HttpError(400, 'bad_name')
+      const nameRef = db.collection('dollNames').doc(key)
+      const playerRef = players(db).doc(p.playerId)
+      await loadPlayer(db, p)
+      await db.runTransaction(async (tx) => {
+        const [taken, player] = await Promise.all([tx.get(nameRef), tx.get(playerRef)])
+        if (taken.exists && taken.data()?.playerId !== p.playerId) throw new HttpError(409, 'name_taken')
+        const prev = player.data()?.dollNameKey as string | undefined
+        if (prev && prev !== key) tx.delete(db.collection('dollNames').doc(prev))
+        tx.set(nameRef, { playerId: p.playerId, name, at: FieldValue.serverTimestamp() })
+        tx.update(playerRef, { dollNameKey: key, updatedAt: FieldValue.serverTimestamp() })
+      })
+      return { ok: true, name }
     }
     case 'claim': {
       const p = await verifySession(body.session)

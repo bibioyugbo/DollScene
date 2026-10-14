@@ -60,6 +60,32 @@ export const api = {
   deleteLook: (id: string) => call<{ looks: SavedLook[] }>('looks/delete', { id }),
   submitChallenge: (look: StudioLook) => call<ScoreResult & { xp: number; gain: number; best: number; day: string; brief: string }>('challenge', { look }),
   claim: (purchaseId: string) => call<{ entitlements: string[] }>('claim', { purchaseId }),
+  claimName: (name: string) => call<{ ok: true; name: string }>('names/claim', { name }),
+}
+
+/**
+ * Reserve a doll name for this player. The game backend is the authority; when it isn't
+ * reachable (local development, a preview build) the realtime server keeps the register.
+ * Resolves 'ok', 'taken', or 'unverified' (no register reachable: let them in, it's checked again
+ * on the next claim).
+ */
+export async function claimName(name: string, owner: string): Promise<'ok' | 'taken' | 'unverified'> {
+  try {
+    await api.claimName(name)
+    return 'ok'
+  } catch (e) {
+    if (e instanceof ApiError && e.code === 'name_taken') return 'taken'
+  }
+  const rt = (import.meta.env?.VITE_REALTIME_URL as string | undefined) || (import.meta.env?.DEV ? 'ws://localhost:8787/realtime' : '')
+  if (!rt) return 'unverified'
+  try {
+    const http = rt.replace(/^ws/, 'http').replace(/\/realtime$/, '')
+    const r = await fetch(`${http}/names/claim`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, owner }) })
+    if (r.status === 409) return 'taken'
+    return r.ok ? 'ok' : 'unverified'
+  } catch {
+    return 'unverified'
+  }
 }
 
 /* ------------------------------------------------------------------ device cache */

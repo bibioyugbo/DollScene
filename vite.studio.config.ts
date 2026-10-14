@@ -13,7 +13,7 @@ function studioAtRoot(): Plugin {
   const rewrite: Connect.NextHandleFunction = (req, _res, next) => {
     const url = req.url ?? '/'
     const path = url.split('?')[0]
-    if (req.method === 'GET' && (path === '/' || (!path.includes('.') && !path.startsWith('/@') && !path.startsWith('/api/')))) {
+    if (req.method === 'GET' && (path === '/' || (!path.includes('.') && !path.startsWith('/@') && !path.startsWith('/api/') && !path.startsWith('/rt/')))) {
       req.url = '/studio.html' + url.slice(path.length)
     }
     next()
@@ -25,8 +25,30 @@ function studioAtRoot(): Plugin {
   }
 }
 
+/**
+ * The realtime server (server/realtime: presence, chat, accounts) runs inside the dev and preview
+ * servers on the game's own origin: WebSocket at /realtime, HTTP (accounts, counts) under /rt.
+ * Production deploys run server/realtime on its own and set VITE_REALTIME_URL.
+ */
+function realtimeOnSameOrigin(): Plugin {
+  type Rt = { attach: (s: unknown) => void; handleHttp: (req: unknown, res: unknown) => void }
+  const mount = async (server: { httpServer: unknown; middlewares: Connect.Server }) => {
+    process.env.ALLOW_GUESTS ??= '1'
+    process.env.ACCOUNTS_FILE ??= '.data/accounts.json'
+    process.env.NAMES_FILE ??= '.data/names.json'
+    const rt = (await import(/* @vite-ignore */ new URL('./server/realtime/index.mjs', import.meta.url).href)) as Rt
+    if (server.httpServer) rt.attach(server.httpServer)
+    server.middlewares.use('/rt', (req, res) => rt.handleHttp(req, res))
+  }
+  return {
+    name: 'dollscene-realtime',
+    configureServer: (server) => mount(server),
+    configurePreviewServer: (server) => mount(server),
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), studioAtRoot()],
+  plugins: [react(), tailwindcss(), studioAtRoot(), realtimeOnSameOrigin()],
   server: { port: 5174, open: '/' },
   preview: { port: 5175 },
   optimizeDeps: {

@@ -2,6 +2,7 @@ import type { StudioLook } from '../../shared/studio/look'
 import { resetAllFx } from '../state/fx'
 import { useStudio, type Framing } from '../state/store'
 import { cancelAction, getCharacter, run, type ActionResult, type Move } from './engine'
+import { sfx, type Sfx } from '../ui/sound'
 
 /**
  * The reusable step system behind every routine (skincare, haircare, makeup, nails).
@@ -54,7 +55,7 @@ export interface StepDef {
   apply: (l: StudioLook, ctx: StepCtx) => void
   /** Confirms the state really changed before success is announced. */
   verify?: (l: StudioLook, ctx: StepCtx) => boolean
-  /** Toast on success. */
+  /** What the step achieved (screen readers; no toast is shown). */
   done: string | ((ctx: StepCtx) => string)
   /** Optional optional-ness note shown under the step. */
   note?: string
@@ -63,6 +64,28 @@ export interface StepDef {
 }
 
 let current: Promise<ActionResult> | null = null
+
+/**
+ * ASMR while a step plays: each routine has its own satisfying sound on a gentle loop (foam
+ * bubbles, slurpy creams, pats, swipes, drips, scrubbing). Muting the game silences them.
+ */
+const ASMR: Partial<Record<string, { kind: Sfx; every: number; after?: number }>> = {
+  wash: { kind: 'bubbles', every: 0.32, after: 1.2 },
+  cleanse: { kind: 'bubbles', every: 0.32, after: 0.8 },
+  pop: { kind: 'squelch', every: 0.42, after: 0.4 },
+  spot: { kind: 'squelch', every: 0.6 },
+  toner: { kind: 'swipe', every: 0.55, after: 0.6 },
+  serum: { kind: 'drip', every: 0.7 },
+  eyeCream: { kind: 'pat', every: 0.22, after: 0.6 },
+  moisturiser: { kind: 'squelch', every: 0.45, after: 0.5 },
+  sunscreen: { kind: 'squelch', every: 0.45, after: 0.5 },
+  lipBalm: { kind: 'swipe', every: 0.5 },
+  exfoliate: { kind: 'brush', every: 0.24 },
+  soothe: { kind: 'squelch', every: 0.5 },
+  brighten: { kind: 'drip', every: 0.7 },
+  compress: { kind: 'pat', every: 0.5 },
+  patchOn: { kind: 'dab', every: 0.8 },
+}
 
 export async function runStep(step: StepDef, ctx: Omit<StepCtx, 'look' | 'reduced'> & { reduced?: boolean }): Promise<ActionResult> {
   const store = useStudio.getState()
@@ -97,7 +120,10 @@ export async function runStep(step: StepDef, ctx: Omit<StepCtx, 'look' | 'reduce
   if (reduced) moves = moves.map((m) => ({ ...m, dur: m.dur * 0.6 }))
   const p = run(step.name, moves)
   current = p
-  const r = await p
+  const loop = ASMR[step.id]
+  let timer: ReturnType<typeof setInterval> | undefined
+  const start = loop ? setTimeout(() => (sfx(loop.kind), (timer = setInterval(() => sfx(loop.kind), loop.every * 1000))), (loop.after ?? 0.3) * 1000) : undefined
+  const r = await p.finally(() => (clearTimeout(start), clearInterval(timer)))
   if (current === p) current = null
   resetAllFx()
   if (r === 'cancelled') {
@@ -112,7 +138,7 @@ export async function runStep(step: StepDef, ctx: Omit<StepCtx, 'look' | 'reduce
     s.notify('That didn’t quite take. Your look is safe, try again.', 'error')
     return 'cancelled'
   }
-  s.notify(typeof step.done === 'function' ? step.done(full) : step.done, 'success')
+  // no toast: the change is on the doll (try-ons apply the moment they start)
   return r
 }
 

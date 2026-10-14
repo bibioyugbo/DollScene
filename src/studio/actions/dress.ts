@@ -1,4 +1,5 @@
-import type { HairId, StudioLook } from '../../shared/studio/look'
+import type { HairId, StudioLook, TattooDesign, TattooSpot } from '../../shared/studio/look'
+import { fx } from '../state/fx'
 import { useStudio } from '../state/store'
 import { haptic, sfx } from '../ui/sound'
 import { brushStrokes, hairKind } from './haircare'
@@ -113,5 +114,67 @@ export function wearStep(name: string, change: (l: StudioLook) => void, framing:
     moves: () => [{ dur: 0.7, tick: (t) => void (t < 0.05 && (sfx('sparkle'), haptic(8))), face: (t) => ({ Expr_Smile: 0.5 * Math.sin(t * Math.PI) }) }],
     apply: (l) => change(l),
     done: `${name}: on.`,
+  }
+}
+
+/** The artist inks a design: the buzz of the machine, then fresh, pink skin that settles. */
+export function tattooStep(design: TattooDesign, at: TattooSpot, ink: string): StepDef {
+  const name = `${design[0].toUpperCase()}${design.slice(1)} tattoo`
+  return {
+    id: `tattoo:${design}:${at}`,
+    name,
+    blurb: '',
+    framing: 'full',
+    regions: ['body'],
+    products: [],
+    mode: 'preview',
+    moves: () => [
+      {
+        dur: 2.2,
+        tick: (t) => {
+          if (Math.floor(t * 8) !== Math.floor((t - 0.02) * 8)) sfx('buzz')
+          fx.tattoo.fresh = Math.min(1, t * 1.6)
+          if (t > 0.97) haptic(10)
+        },
+        face: (t) => ({ Expr_Wince: 0.35 * Math.sin(t * Math.PI) }),
+      },
+      { dur: 1.2, tick: (t) => void (fx.tattoo.fresh = 1 - t * 0.7) },
+    ],
+    apply: (l) => {
+      l.tattoos = [...l.tattoos.filter((x) => x.at !== at), { design, at, ink, size: 1 }]
+    },
+    done: `${name}: inked. Keep it moisturised!`,
+  }
+}
+
+/** Laser removal: pulses lift the ink until it's gone; the skin is left a little pink. */
+export function tattooRemoveStep(design: TattooDesign, at: TattooSpot): StepDef {
+  return {
+    id: `tattoo-off:${at}`,
+    name: `Remove the ${design}`,
+    blurb: '',
+    framing: 'full',
+    regions: ['body'],
+    products: [],
+    // the ink only leaves the saved look once the laser has really lifted it
+    mode: 'result',
+    moves: () => [
+      {
+        dur: 2.6,
+        tick: (t) => {
+          if (Math.floor(t * 10) !== Math.floor((t - 0.02) * 10)) sfx('zap')
+          fx.tattoo.fade[at] = t
+          fx.tattoo.fresh = Math.min(1, t * 2) * 0.8
+        },
+        face: (t) => ({ Expr_Wince: 0.45 * Math.sin(t * Math.PI) }),
+      },
+      { dur: 1, tick: (t) => void (fx.tattoo.fresh = 0.8 * (1 - t)) },
+    ],
+    apply: (l) => {
+      l.tattoos = l.tattoos.filter((x) => x.at !== at)
+      delete fx.tattoo.fade[at]
+      fx.tattoo.fresh = 0
+    },
+    done: 'Ink gone. The skin will settle in a day or two.',
   }
 }

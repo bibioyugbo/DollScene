@@ -222,6 +222,24 @@
       "neg": false,
       "pos": true,
       "group": "body"
+    },
+    {
+      "id": "Pregnant",
+      "neg": false,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "ChestFlat",
+      "neg": false,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "BackStraight",
+      "neg": false,
+      "pos": true,
+      "group": "body"
     }
   ],
   "faceRect": [
@@ -337,6 +355,25 @@
       ]
     },
     {
+      "id": "afro_fringe",
+      "name": "Cute fringe afro",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Neg",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos"
+      ]
+    },
+    {
       "id": "two_braids",
       "name": "Two braided ponytails",
       "morphs": [
@@ -363,6 +400,57 @@
       "morphs": [
         "Jaw_Neg",
         "Jaw_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "goddess_braids",
+      "name": "Boho Fulani braids",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "long_curls",
+      "name": "Long curly wig",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "ChinWidth_Pos",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
         "Forehead_Neg",
         "Forehead_Pos",
         "Brows_Pos",
@@ -492,13 +580,6 @@
       "morphs": [
         "Jaw_Neg",
         "Jaw_Pos",
-        "Chin_Neg",
-        "Chin_Pos",
-        "ChinWidth_Neg",
-        "ChinWidth_Pos",
-        "Cheekbones_Neg",
-        "Cheekbones_Pos",
-        "Cheeks_Neg",
         "Cheeks_Pos",
         "Forehead_Neg",
         "Forehead_Pos",
@@ -523,13 +604,6 @@
       "morphs": [
         "Jaw_Neg",
         "Jaw_Pos",
-        "Chin_Neg",
-        "Chin_Pos",
-        "ChinWidth_Neg",
-        "ChinWidth_Pos",
-        "Cheekbones_Neg",
-        "Cheekbones_Pos",
-        "Cheeks_Neg",
         "Cheeks_Pos",
         "Forehead_Neg",
         "Forehead_Pos",
@@ -554,13 +628,6 @@
       "morphs": [
         "Jaw_Neg",
         "Jaw_Pos",
-        "Chin_Neg",
-        "Chin_Pos",
-        "ChinWidth_Neg",
-        "ChinWidth_Pos",
-        "Cheekbones_Neg",
-        "Cheekbones_Pos",
-        "Cheeks_Neg",
         "Cheeks_Pos",
         "Forehead_Neg",
         "Forehead_Pos",
@@ -585,11 +652,6 @@
       "morphs": [
         "Jaw_Neg",
         "Jaw_Pos",
-        "Chin_Neg",
-        "Chin_Pos",
-        "ChinWidth_Neg",
-        "ChinWidth_Pos",
-        "Cheekbones_Pos",
         "Cheeks_Neg",
         "Cheeks_Pos",
         "Forehead_Neg",
@@ -615,18 +677,10 @@
       "morphs": [
         "Jaw_Neg",
         "Jaw_Pos",
-        "Chin_Neg",
-        "Chin_Pos",
-        "ChinWidth_Neg",
-        "ChinWidth_Pos",
-        "Cheekbones_Neg",
-        "Cheekbones_Pos",
-        "Cheeks_Neg",
         "Cheeks_Pos",
         "Forehead_Neg",
         "Forehead_Pos",
         "Brows_Pos",
-        "BrowAngle_Neg",
         "FaceFull_Neg",
         "FaceFull_Pos",
         "FaceLength_Neg",
@@ -1000,70 +1054,70 @@
     {
       "id": "female_sportsuit01",
       "name": "Studio set",
-      "store": "dopebyfabby",
+      "store": "novasport",
       "ease": 0.0,
       "hideMask": true
     },
     {
       "id": "female_casualsuit01",
       "name": "Weekend casual",
-      "store": "kai",
+      "store": "okrika",
       "ease": 0.0,
       "hideMask": true
     },
     {
       "id": "female_casualsuit02",
       "name": "Denim day",
-      "store": "kai",
+      "store": "okrika",
       "ease": 0.0,
       "hideMask": true
     },
     {
       "id": "female_elegantsuit01",
       "name": "Evening",
-      "store": "moncherrie",
+      "store": "moncherie",
       "ease": 0.0,
       "hideMask": true
     },
     {
       "id": "male_casualsuit01",
       "name": "Easy tee & jeans",
-      "store": "kai",
+      "store": "okrika",
       "ease": 0.0,
       "hideMask": true
     },
     {
       "id": "male_casualsuit02",
       "name": "Weekend layers",
-      "store": "deeji",
+      "store": "okrika",
       "ease": 0.0,
       "hideMask": true
     },
     {
       "id": "male_casualsuit03",
       "name": "Street casual",
-      "store": "bolaptsd",
+      "store": "tolaptsd",
       "ease": 0.0,
       "hideMask": true
     },
     {
       "id": "male_casualsuit04",
       "name": "Relaxed knit",
-      "store": "kai",
+      "store": "okrika",
       "ease": 0.0,
       "hideMask": true
     },
     {
       "id": "male_casualsuit05",
       "name": "Smart casual",
-      "store": "moncherrie",
+      "store": "okrika",
       "ease": 0.0,
       "hideMask": true
     },
     {
       "id": "male_casualsuit06",
       "name": "Off-duty",
-      "store": "dopebyfabby",
+      "store": "novasport",
       "ease": 0.0,
       "hideMask": true
     },
@@ -1077,117 +1131,760 @@
     {
       "id": "male_worksuit01",
       "name": "Workwear",
-      "store": "bolaptsd",
+      "store": "tolaptsd",
       "ease": 0.0,
-      "hideMask": true
-    },
-    {
-      "id": "kai_butterfly_red",
-      "name": "Butterfly tank, red",
-      "store": "kai",
-      "ease": 0.0,
-      "hideMask": true
-    },
-    {
-      "id": "kai_butterfly_blue",
-      "name": "Butterfly tank, blue",
-      "store": "kai",
-      "ease": 0.0949,
-      "hideMask": true
-    },
-    {
-      "id": "kai_garden_set",
-      "name": "Garden cami & midi",
-      "store": "kai",
-      "ease": 0.1294,
-      "hideMask": true
-    },
-    {
-      "id": "mc_corset_mini",
-      "name": "Blush corset set",
-      "store": "moncherrie",
-      "ease": 0.1113,
-      "hideMask": true
-    },
-    {
-      "id": "mc_slip_dress",
-      "name": "Lilac slip dress",
-      "store": "moncherrie",
-      "ease": 0.1074,
-      "hideMask": true
-    },
-    {
-      "id": "dbf_sequin_mini",
-      "name": "Gold sequin mini",
-      "store": "dopebyfabby",
-      "ease": 0.0571,
-      "hideMask": true
-    },
-    {
-      "id": "dbf_flare_set",
-      "name": "Emerald flare set",
-      "store": "dopebyfabby",
-      "ease": 0.0,
-      "hideMask": true
-    },
-    {
-      "id": "deeji_iro_buba",
-      "name": "Adire iro & buba",
-      "store": "deeji",
-      "ease": 0.0828,
-      "hideMask": true
-    },
-    {
-      "id": "deeji_ankara_set",
-      "name": "Ankara peplum set",
-      "store": "deeji",
-      "ease": 0.076,
-      "hideMask": true
-    },
-    {
-      "id": "bola_distressed",
-      "name": "No Rules distressed set",
-      "store": "bolaptsd",
-      "ease": 0.0,
-      "hideMask": true
-    },
-    {
-      "id": "bola_rock_set",
-      "name": "Tartan rock set",
-      "store": "bolaptsd",
-      "ease": 0.1089,
       "hideMask": true
     }
   ],
   "shoes": [
     {
       "id": "shoes01",
-      "name": "Sneakers",
+      "name": "Brown brogues",
       "hideMask": true
     },
     {
       "id": "shoes02",
-      "name": "Loafers",
+      "name": "Grey trainers",
       "hideMask": true
     },
     {
       "id": "shoes03",
-      "name": "Flats",
+      "name": "Black loafers",
       "hideMask": true
     },
     {
       "id": "shoes04",
-      "name": "Boots",
+      "name": "Black lace-ups",
       "hideMask": true
     },
     {
       "id": "shoes05",
-      "name": "Trainers",
+      "name": "White trainers",
       "hideMask": true
     },
     {
       "id": "shoes06",
-      "name": "Heels",
+      "name": "Navy sneakers",
+      "hideMask": true
+    }
+  ],
+  "pieces": [
+    {
+      "id": "top_crop_tank",
+      "name": "Butterfly crop tank",
+      "slot": "top",
+      "store": "thai",
+      "colors": [
+        "#C8102E",
+        "#FFC72C",
+        "#2A1200"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "shoes_pumps",
+      "name": "Pointy pumps",
+      "slot": "shoes",
+      "store": "moncherie",
+      "colors": [
+        "#111111",
+        "#2A1A14",
+        "#111111"
+      ],
+      "finish": "patent",
+      "ease": 0.0,
+      "hideMask": true,
+      "arch": 0.5,
+      "lift": 0.0676
+    },
+    {
+      "id": "shoes_block_heels",
+      "name": "Block heels",
+      "slot": "shoes",
+      "store": "dopebyfabby",
+      "colors": [
+        "#D9B35B",
+        "#2A1A14",
+        "#D9B35B"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": false,
+      "arch": 0.42,
+      "lift": 0.0594
+    },
+    {
+      "id": "shoes_mules",
+      "name": "Heeled mules",
+      "slot": "shoes",
+      "store": "moncherie",
+      "colors": [
+        "#F2B8C6",
+        "#2A1A14",
+        "#F2B8C6"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": true,
+      "arch": 0.36,
+      "lift": 0.0531
+    },
+    {
+      "id": "shoes_strappy",
+      "name": "Strappy sandals",
+      "slot": "shoes",
+      "store": "booty",
+      "colors": [
+        "#C9A04A",
+        "#2A1A14",
+        "#C9A04A"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": false,
+      "arch": 0.5,
+      "lift": 0.0666
+    },
+    {
+      "id": "shoes_ankle_strap",
+      "name": "Ankle-strap heels",
+      "slot": "shoes",
+      "store": "dopebyfabby",
+      "colors": [
+        "#B0124A",
+        "#2A1A14",
+        "#D9B35B"
+      ],
+      "finish": "patent",
+      "ease": 0.0,
+      "hideMask": true,
+      "arch": 0.46,
+      "lift": 0.0636
+    },
+    {
+      "id": "shoes_platforms",
+      "name": "Platform heels",
+      "slot": "shoes",
+      "store": "okrika",
+      "colors": [
+        "#E07AA6",
+        "#FFFFFF",
+        "#E07AA6"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": false,
+      "arch": 0.42,
+      "lift": 0.0864
+    },
+    {
+      "id": "shoes_kitten",
+      "name": "Kitten heels",
+      "slot": "shoes",
+      "store": "thai",
+      "colors": [
+        "#F4EFE6",
+        "#2A1A14",
+        "#C9A04A"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": true,
+      "arch": 0.2,
+      "lift": 0.0346
+    },
+    {
+      "id": "shoes_beaded_sandals",
+      "name": "Coral beaded heels",
+      "slot": "shoes",
+      "store": "dejideji",
+      "colors": [
+        "#C9A04A",
+        "#5A3A22",
+        "#E4572E"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": false,
+      "arch": 0.3,
+      "lift": 0.0484
+    },
+    {
+      "id": "shoes_heel_boots",
+      "name": "Heeled boots",
+      "slot": "shoes",
+      "store": "tolaptsd",
+      "colors": [
+        "#141414",
+        "#141414",
+        "#8A8A8A"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": true,
+      "arch": 0.34,
+      "lift": 0.0528
+    },
+    {
+      "id": "top_tank",
+      "name": "Ribbed tank",
+      "slot": "top",
+      "store": "thai",
+      "colors": [
+        "#F4F1EA",
+        "#1C1C1C",
+        "#C9A06A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_cami",
+      "name": "Satin cami",
+      "slot": "top",
+      "store": "moncherie",
+      "colors": [
+        "#9CB89A",
+        "#F4EFE6",
+        "#C9A06A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_corset",
+      "name": "Sweetheart corset",
+      "slot": "top",
+      "store": "moncherie",
+      "colors": [
+        "#F2B8C6",
+        "#E39AAD",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_bandeau",
+      "name": "Bandeau",
+      "slot": "top",
+      "store": "dopebyfabby",
+      "colors": [
+        "#0B6E4F",
+        "#0E8A63",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_baby_tee",
+      "name": "Y2K baby tee",
+      "slot": "top",
+      "store": "thai",
+      "colors": [
+        "#F7C6D9",
+        "#E0457B",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_oversized_tee",
+      "name": "No Rules oversized tee",
+      "slot": "top",
+      "store": "tolaptsd",
+      "colors": [
+        "#232323",
+        "#EDE8DD",
+        "#E63946"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "top_crop_tee",
+      "name": "Wild crop tee",
+      "slot": "top",
+      "store": "tolaptsd",
+      "colors": [
+        "#6E6E72",
+        "#141414",
+        "#F2C14E"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_flame_tee",
+      "name": "Flame tee",
+      "slot": "top",
+      "store": "okrika",
+      "colors": [
+        "#111111",
+        "#FF6A00",
+        "#FFD23F"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_buba",
+      "name": "Adire buba",
+      "slot": "top",
+      "store": "dejideji",
+      "colors": [
+        "#1E2A5C",
+        "#7E9BD6",
+        "#D9A441"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_peplum",
+      "name": "Ankara peplum top",
+      "slot": "top",
+      "store": "dejideji",
+      "colors": [
+        "#F2A33A",
+        "#1B7F79",
+        "#E4572E"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_mesh",
+      "name": "Mesh long sleeve",
+      "slot": "top",
+      "store": "tolaptsd",
+      "colors": [
+        "#0A0A0A",
+        "#0A0A0A",
+        "#8A8A8A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "top_sports_bra",
+      "name": "Sports bra",
+      "slot": "top",
+      "store": "novasport",
+      "colors": [
+        "#2D5BD0",
+        "#FFFFFF",
+        "#FF6A00"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_lace_bralette",
+      "name": "Lace bralette",
+      "slot": "top",
+      "store": "booty",
+      "colors": [
+        "#B0124A",
+        "#F2B8C6",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_baggy_jeans",
+      "name": "Baggy jeans",
+      "slot": "bottom",
+      "store": "thai",
+      "colors": [
+        "#7FA3C9",
+        "#D8A04A",
+        "#B8B8B8"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_skinny_jeans",
+      "name": "Skinny jeans",
+      "slot": "bottom",
+      "store": "okrika",
+      "colors": [
+        "#2B3A55",
+        "#C99A55",
+        "#9A9A9A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_ripped_jeans",
+      "name": "Ripped skinny jeans",
+      "slot": "bottom",
+      "store": "tolaptsd",
+      "colors": [
+        "#1E1E22",
+        "#D8D8D8",
+        "#9A9A9A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_cargo",
+      "name": "Cargo pants",
+      "slot": "bottom",
+      "store": "okrika",
+      "colors": [
+        "#5A5A3C",
+        "#4A4A30",
+        "#C9A06A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_flare_pants",
+      "name": "High-waist flares",
+      "slot": "bottom",
+      "store": "dopebyfabby",
+      "colors": [
+        "#0B6E4F",
+        "#0E8A63",
+        "#0B6E4F"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_leggings",
+      "name": "Leggings",
+      "slot": "bottom",
+      "store": "novasport",
+      "colors": [
+        "#141414",
+        "#FFFFFF",
+        "#2D5BD0"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_lace_briefs",
+      "name": "Lace briefs",
+      "slot": "bottom",
+      "store": "booty",
+      "colors": [
+        "#B0124A",
+        "#F2B8C6",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_mini_skirt",
+      "name": "A-line mini skirt",
+      "slot": "bottom",
+      "store": "thai",
+      "colors": [
+        "#EEEBE3",
+        "#D8D2C4",
+        "#B8B8B8"
+      ],
+      "finish": "cotton",
+      "ease": 0.0959,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_pleated_mini",
+      "name": "Tartan pleated mini",
+      "slot": "bottom",
+      "store": "tolaptsd",
+      "colors": [
+        "#A61E22",
+        "#141414",
+        "#F2C14E"
+      ],
+      "finish": "cotton",
+      "ease": 0.1099,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_satin_mini",
+      "name": "Satin mini skirt",
+      "slot": "bottom",
+      "store": "moncherie",
+      "colors": [
+        "#EBA9BA",
+        "#F7D6E0",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.1066,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_midi_skirt",
+      "name": "Floral midi skirt",
+      "slot": "bottom",
+      "store": "thai",
+      "colors": [
+        "#F6EFE3",
+        "#E8735A",
+        "#4FA65E"
+      ],
+      "finish": "cotton",
+      "ease": 0.1294,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_pencil_skirt",
+      "name": "Ankara pencil skirt",
+      "slot": "bottom",
+      "store": "dejideji",
+      "colors": [
+        "#F2A33A",
+        "#1B7F79",
+        "#E4572E"
+      ],
+      "finish": "cotton",
+      "ease": 0.076,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_iro",
+      "name": "Adire iro (wrapper)",
+      "slot": "bottom",
+      "store": "dejideji",
+      "colors": [
+        "#1E2A5C",
+        "#7E9BD6",
+        "#D9A441"
+      ],
+      "finish": "cotton",
+      "ease": 0.0804,
+      "hideMask": false
+    },
+    {
+      "id": "dress_slip",
+      "name": "Satin slip dress",
+      "slot": "dress",
+      "store": "moncherie",
+      "colors": [
+        "#C9A7D8",
+        "#E6D3EF",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.1114,
+      "hideMask": true
+    },
+    {
+      "id": "dress_sequin_mini",
+      "name": "Gold sequin mini",
+      "slot": "dress",
+      "store": "dopebyfabby",
+      "colors": [
+        "#D9B35B",
+        "#F2D98A",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.0623,
+      "hideMask": true
+    },
+    {
+      "id": "dress_velvet_mini",
+      "name": "Velvet & gold mini",
+      "slot": "dress",
+      "store": "dejideji",
+      "colors": [
+        "#0B0B0E",
+        "#C9A04A",
+        "#E4572E"
+      ],
+      "finish": "cotton",
+      "ease": 0.0788,
+      "hideMask": true
+    },
+    {
+      "id": "dress_lace_bodysuit",
+      "name": "Lace bodysuit",
+      "slot": "dress",
+      "store": "booty",
+      "colors": [
+        "#111111",
+        "#B0124A",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "dress_maxi",
+      "name": "Lilac maxi dress",
+      "slot": "dress",
+      "store": "moncherie",
+      "colors": [
+        "#B9A2D8",
+        "#E8DDF4",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.1752,
+      "hideMask": true
+    },
+    {
+      "id": "top_square_crop",
+      "name": "Square-neck crop top",
+      "slot": "top",
+      "store": "booty",
+      "colors": [
+        "#0B0B0E",
+        "#1A1A1E",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_micro_skirt",
+      "name": "Micro mini skirt",
+      "slot": "bottom",
+      "store": "booty",
+      "colors": [
+        "#0B0B0E",
+        "#1A1A1E",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0474,
+      "hideMask": false
+    },
+    {
+      "id": "top_everyday_tee",
+      "name": "Everyday tee",
+      "slot": "top",
+      "store": "okrika",
+      "colors": [
+        "#F2F0EA",
+        "#B8A68A",
+        "#F2F0EA"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_overalls",
+      "name": "Denim overalls",
+      "slot": "bottom",
+      "store": "okrika",
+      "colors": [
+        "#5B7FA8",
+        "#D8A04A",
+        "#C9A04A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_wide_trousers",
+      "name": "Wide-leg trousers",
+      "slot": "bottom",
+      "store": "dopebyfabby",
+      "colors": [
+        "#E8DCC6",
+        "#D9C9AE",
+        "#C9A04A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_track_jacket",
+      "name": "Track jacket",
+      "slot": "top",
+      "store": "novasport",
+      "colors": [
+        "#141E3C",
+        "#FFFFFF",
+        "#E8E8E8"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_track_pants",
+      "name": "Track pants",
+      "slot": "bottom",
+      "store": "novasport",
+      "colors": [
+        "#141E3C",
+        "#FFFFFF",
+        "#E8E8E8"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_suit_jacket",
+      "name": "Tailored jacket",
+      "slot": "top",
+      "store": "dopebyfabby",
+      "colors": [
+        "#1E2740",
+        "#F4F4F2",
+        "#5A6E9A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_suit_trousers",
+      "name": "Tailored trousers",
+      "slot": "bottom",
+      "store": "dopebyfabby",
+      "colors": [
+        "#1E2740",
+        "#1E2740",
+        "#1E2740"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
       "hideMask": true
     }
   ],
@@ -2356,6 +3053,615 @@
           0.43225
         ],
         "bone": "RightHandRing1"
+      },
+      "industrialAL": {
+        "p": [
+          0.06642,
+          1.47557,
+          0.05934
+        ],
+        "r": 0.0
+      },
+      "industrialBL": {
+        "p": [
+          0.07479,
+          1.47325,
+          0.02633
+        ],
+        "r": 0.0
+      },
+      "industrialAR": {
+        "p": [
+          -0.06642,
+          1.47557,
+          0.05934
+        ],
+        "r": 0.0
+      },
+      "industrialBR": {
+        "p": [
+          -0.07479,
+          1.47325,
+          0.02633
+        ],
+        "r": 0.0
+      }
+    },
+    "tattoos": {
+      "forearmL": {
+        "uv": [
+          0.71975,
+          0.18017
+        ],
+        "s": 0.4569,
+        "up": [
+          -0.9949,
+          0.101
+        ],
+        "right": [
+          -0.0995,
+          -0.995
+        ],
+        "p": [
+          0.38079,
+          1.0184,
+          0.13477
+        ],
+        "n": [
+          -0.29296,
+          0.5603,
+          0.77475
+        ]
+      },
+      "upperArmL": {
+        "uv": [
+          0.58981,
+          0.16516
+        ],
+        "s": 0.5709,
+        "up": [
+          -0.9914,
+          0.1305
+        ],
+        "right": [
+          0.1323,
+          -0.9912
+        ],
+        "p": [
+          0.26045,
+          1.19868,
+          0.02955
+        ],
+        "n": [
+          0.80215,
+          0.57771,
+          0.15104
+        ]
+      },
+      "shoulderBackL": {
+        "uv": [
+          0.5499,
+          0.10796
+        ],
+        "s": 0.4499,
+        "up": [
+          -0.7621,
+          0.6474
+        ],
+        "right": [
+          -0.2372,
+          -0.9715
+        ],
+        "p": [
+          0.14802,
+          1.26728,
+          -0.04564
+        ],
+        "n": [
+          0.18937,
+          0.13458,
+          -0.97264
+        ]
+      },
+      "ankleL": {
+        "uv": [
+          0.33514,
+          0.85937
+        ],
+        "s": 0.5183,
+        "up": [
+          -0.9998,
+          0.0191
+        ],
+        "right": [
+          0.4104,
+          -0.9119
+        ],
+        "p": [
+          0.19079,
+          0.06733,
+          0.02194
+        ],
+        "n": [
+          0.91561,
+          0.16055,
+          -0.36862
+        ]
+      },
+      "calfL": {
+        "uv": [
+          0.61261,
+          0.77237
+        ],
+        "s": 0.3815,
+        "up": [
+          -0.1096,
+          -0.994
+        ],
+        "right": [
+          0.9816,
+          -0.1908
+        ],
+        "p": [
+          0.13752,
+          0.2561,
+          -0.02583
+        ],
+        "n": [
+          -0.56982,
+          -0.20835,
+          -0.79492
+        ]
+      },
+      "thighL": {
+        "uv": [
+          0.51323,
+          0.57537
+        ],
+        "s": 0.471,
+        "up": [
+          -0.2639,
+          -0.9645
+        ],
+        "right": [
+          0.941,
+          -0.3384
+        ],
+        "p": [
+          0.17968,
+          0.69744,
+          0.07201
+        ],
+        "n": [
+          0.92397,
+          0.03847,
+          0.38054
+        ]
+      },
+      "hipL": {
+        "uv": [
+          0.47969,
+          0.50333
+        ],
+        "s": 0.6324,
+        "up": [
+          -0.0305,
+          -0.9995
+        ],
+        "right": [
+          0.9999,
+          -0.0113
+        ],
+        "p": [
+          0.1336,
+          0.84973,
+          0.0932
+        ],
+        "n": [
+          0.69919,
+          0.17762,
+          0.69252
+        ]
+      },
+      "ribsL": {
+        "uv": [
+          0.58131,
+          0.26722
+        ],
+        "s": 0.7038,
+        "up": [
+          -0.5675,
+          0.8234
+        ],
+        "right": [
+          -0.8838,
+          -0.468
+        ],
+        "p": [
+          0.15587,
+          1.20105,
+          0.00147
+        ],
+        "n": [
+          -0.35102,
+          -0.93439,
+          -0.06078
+        ]
+      },
+      "chestL": {
+        "uv": [
+          0.3972,
+          0.23192
+        ],
+        "s": 0.7414,
+        "up": [
+          0.235,
+          -0.972
+        ],
+        "right": [
+          0.9858,
+          -0.168
+        ],
+        "p": [
+          0.0301,
+          1.24238,
+          0.11527
+        ],
+        "n": [
+          0.00214,
+          0.43913,
+          0.89842
+        ]
+      },
+      "wristL": {
+        "uv": [
+          0.6021,
+          0.88526
+        ],
+        "s": 0.6882,
+        "up": [
+          0.6973,
+          -0.7168
+        ],
+        "right": [
+          0.6923,
+          0.7216
+        ],
+        "p": [
+          0.40777,
+          0.96262,
+          0.17342
+        ],
+        "n": [
+          -0.98138,
+          -0.11456,
+          -0.15416
+        ]
+      },
+      "forearmR": {
+        "uv": [
+          0.04131,
+          0.18017
+        ],
+        "s": 0.4569,
+        "up": [
+          0.9949,
+          0.101
+        ],
+        "right": [
+          -0.0995,
+          0.995
+        ],
+        "p": [
+          -0.38079,
+          1.0184,
+          0.13477
+        ],
+        "n": [
+          0.29296,
+          0.5603,
+          0.77475
+        ]
+      },
+      "upperArmR": {
+        "uv": [
+          0.17125,
+          0.16516
+        ],
+        "s": 0.5709,
+        "up": [
+          0.9914,
+          0.1305
+        ],
+        "right": [
+          0.1323,
+          0.9912
+        ],
+        "p": [
+          -0.26045,
+          1.19868,
+          0.02955
+        ],
+        "n": [
+          -0.80215,
+          0.57771,
+          0.15104
+        ]
+      },
+      "shoulderBackR": {
+        "uv": [
+          0.21116,
+          0.10796
+        ],
+        "s": 0.4499,
+        "up": [
+          0.7622,
+          0.6474
+        ],
+        "right": [
+          -0.2372,
+          0.9715
+        ],
+        "p": [
+          -0.14802,
+          1.26728,
+          -0.04564
+        ],
+        "n": [
+          -0.18937,
+          0.13458,
+          -0.97264
+        ]
+      },
+      "ankleR": {
+        "uv": [
+          0.0543,
+          0.85937
+        ],
+        "s": 0.5183,
+        "up": [
+          0.9998,
+          0.0191
+        ],
+        "right": [
+          0.4105,
+          0.9119
+        ],
+        "p": [
+          -0.19079,
+          0.06733,
+          0.02194
+        ],
+        "n": [
+          -0.91561,
+          0.16055,
+          -0.36862
+        ]
+      },
+      "calfR": {
+        "uv": [
+          0.14845,
+          0.77237
+        ],
+        "s": 0.3816,
+        "up": [
+          0.1096,
+          -0.994
+        ],
+        "right": [
+          0.9816,
+          0.1908
+        ],
+        "p": [
+          -0.13752,
+          0.2561,
+          -0.02583
+        ],
+        "n": [
+          0.56982,
+          -0.20835,
+          -0.79492
+        ]
+      },
+      "thighR": {
+        "uv": [
+          0.24783,
+          0.57537
+        ],
+        "s": 0.471,
+        "up": [
+          0.2639,
+          -0.9645
+        ],
+        "right": [
+          0.941,
+          0.3384
+        ],
+        "p": [
+          -0.17968,
+          0.69744,
+          0.07201
+        ],
+        "n": [
+          -0.92397,
+          0.03847,
+          0.38054
+        ]
+      },
+      "hipR": {
+        "uv": [
+          0.28137,
+          0.50333
+        ],
+        "s": 0.6324,
+        "up": [
+          0.0305,
+          -0.9995
+        ],
+        "right": [
+          0.9999,
+          0.0113
+        ],
+        "p": [
+          -0.1336,
+          0.84973,
+          0.0932
+        ],
+        "n": [
+          -0.69919,
+          0.17762,
+          0.69252
+        ]
+      },
+      "ribsR": {
+        "uv": [
+          0.17975,
+          0.26722
+        ],
+        "s": 0.7038,
+        "up": [
+          0.5676,
+          0.8233
+        ],
+        "right": [
+          -0.8838,
+          0.4679
+        ],
+        "p": [
+          -0.15587,
+          1.20105,
+          0.00147
+        ],
+        "n": [
+          0.35102,
+          -0.93439,
+          -0.06078
+        ]
+      },
+      "chestR": {
+        "uv": [
+          0.36386,
+          0.23192
+        ],
+        "s": 0.7415,
+        "up": [
+          -0.235,
+          -0.972
+        ],
+        "right": [
+          0.9858,
+          0.168
+        ],
+        "p": [
+          -0.0301,
+          1.24238,
+          0.11527
+        ],
+        "n": [
+          -0.00214,
+          0.43913,
+          0.89842
+        ]
+      },
+      "wristR": {
+        "uv": [
+          0.52231,
+          0.88477
+        ],
+        "s": 0.6882,
+        "up": [
+          -0.6811,
+          -0.7322
+        ],
+        "right": [
+          0.7086,
+          -0.7056
+        ],
+        "p": [
+          -0.40777,
+          0.96262,
+          0.17342
+        ],
+        "n": [
+          0.98138,
+          -0.11456,
+          -0.15416
+        ]
+      },
+      "nape": {
+        "uv": [
+          0.25651,
+          0.05879
+        ],
+        "s": 0.5899,
+        "up": [
+          0.996,
+          -0.0892
+        ],
+        "right": [
+          -0.2336,
+          0.9723
+        ],
+        "p": [
+          -0.0288,
+          1.33695,
+          -0.03205
+        ],
+        "n": [
+          0.07763,
+          0.47527,
+          -0.87641
+        ]
+      },
+      "lowerBack": {
+        "uv": [
+          0.16851,
+          0.45191
+        ],
+        "s": 0.497,
+        "up": [
+          0.3273,
+          -0.9449
+        ],
+        "right": [
+          0.9188,
+          0.3947
+        ],
+        "p": [
+          -0.0253,
+          0.91654,
+          -0.04632
+        ],
+        "n": [
+          0.00076,
+          0.46231,
+          -0.88672
+        ]
+      },
+      "sternum": {
+        "uv": [
+          0.38053,
+          0.36078
+        ],
+        "s": 0.834,
+        "up": [
+          0.0,
+          -1.0
+        ],
+        "right": [
+          1.0,
+          -0.0
+        ],
+        "p": [
+          0.0,
+          1.07918,
+          0.14284
+        ],
+        "n": [
+          -0.0,
+          0.01567,
+          0.99988
+        ]
       }
     }
   }

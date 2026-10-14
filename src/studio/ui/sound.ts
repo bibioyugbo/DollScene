@@ -48,6 +48,29 @@ export function click(kind: 'tap' | 'select' | 'go' = 'tap') {
   }
 }
 
+/** A soft two-note bell at `f` Hz (the street's active store: each store has its own note). */
+export function chime(f: number) {
+  if (muted) return
+  const a = audio()
+  if (!a) return
+  const t = a.currentTime
+  for (const [mul, delay, gain] of [
+    [1, 0, 0.09],
+    [1.5, 0.06, 0.05],
+  ] as [number, number, number][]) {
+    const o = a.createOscillator()
+    const g = a.createGain()
+    o.type = 'sine'
+    o.frequency.setValueAtTime(f * mul, t + delay)
+    g.gain.setValueAtTime(0.0001, t + delay)
+    g.gain.exponentialRampToValueAtTime(gain, t + delay + 0.01)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + delay + 0.45)
+    o.connect(g).connect(a.destination)
+    o.start(t + delay)
+    o.stop(t + delay + 0.5)
+  }
+}
+
 /* ------------------------------------------------------------------ ASMR effects */
 
 let noiseBuf: AudioBuffer | null = null
@@ -95,7 +118,7 @@ function tone(a: AudioContext, t: number, f0: number, f1: number, dur: number, g
   o.stop(t + dur + 0.02)
 }
 
-export type Sfx = 'pop' | 'squish' | 'swipe' | 'pat' | 'dab' | 'splash' | 'drip' | 'brush' | 'spray' | 'sparkle' | 'door' | 'chime' | 'whoosh' | 'peel' | 'snip' | 'zip'
+export type Sfx = 'pop' | 'squish' | 'swipe' | 'pat' | 'dab' | 'splash' | 'drip' | 'brush' | 'spray' | 'sparkle' | 'door' | 'chime' | 'whoosh' | 'peel' | 'snip' | 'zip' | 'buzz' | 'zap' | 'bubbles' | 'squelch'
 
 /** Soft, satisfying sound effects for the routines (synthesised: nothing to download). */
 export function sfx(kind: Sfx) {
@@ -104,6 +127,21 @@ export function sfx(kind: Sfx) {
   if (!a) return
   const t = a.currentTime + 0.005
   switch (kind) {
+    case 'bubbles':
+      // foam: a fizz of tiny bubbles popping at random, high and soft
+      for (let k = 0; k < 7; k++) {
+        const at = t + Math.random() * 0.28
+        const f = 1400 + Math.random() * 2600
+        tone(a, at, f, f * 0.55, 0.035, 0.035 + Math.random() * 0.03)
+      }
+      hiss(a, t, 0.3, 5200, 0.8, 0.025, 1.1, 'highpass')
+      break
+    case 'squelch':
+      // cream between fingers: a wet, slurpy low squish with a wobble
+      hiss(a, t, 0.26, 420, 3.2, 0.13, 0.55, 'lowpass')
+      tone(a, t, 150 + Math.random() * 40, 70, 0.22, 0.09, 'triangle')
+      tone(a, t + 0.08, 260, 120, 0.1, 0.04, 'sine')
+      break
     case 'pop':
       tone(a, t, 520, 140, 0.09, 0.28)
       hiss(a, t, 0.05, 2400, 1.2, 0.08)
@@ -157,6 +195,16 @@ export function sfx(kind: Sfx) {
       break
     case 'zip':
       hiss(a, t, 0.25, 1200, 4, 0.08, 3)
+      break
+    case 'buzz':
+      // a tattoo machine: a low, fast buzz
+      for (let i = 0; i < 6; i++) tone(a, t + i * 0.09, 118, 112, 0.085, 0.05, 'sawtooth')
+      hiss(a, t, 0.55, 900, 3, 0.03, 1)
+      break
+    case 'zap':
+      // a laser pulse: a bright snap and a crackle
+      tone(a, t, 2600, 900, 0.07, 0.07, 'square')
+      hiss(a, t + 0.02, 0.12, 4200, 2, 0.06, 0.6, 'highpass')
       break
   }
 }

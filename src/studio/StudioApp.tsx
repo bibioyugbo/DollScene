@@ -7,7 +7,7 @@ import { url, useCatalog, type CharacterCatalog } from './character/catalog'
 import { applyShotParams, markShotReady } from './devShot'
 import { realtime, useRealtime } from './net/realtime'
 import { RealtimeSync } from './net/RealtimeSync'
-import { preloadOther, preloadProgress, usePreload } from './preload'
+import { preloadOther, usePreload } from './preload'
 import { DOOR_BY_ID, ROOMS, type DoorId, type RoomId } from './rooms'
 import { SCENE_BY_ID, type SceneId } from './scenes'
 import { flushSave, rescueLook, startSession } from './session'
@@ -16,12 +16,15 @@ import { StudioStage, type Insets, type StageTheme } from './stage/StudioStage'
 import { SkinHealer } from './state/healing'
 import { useStudio } from './state/store'
 import { Arrow3D } from './ui/Arrow3D'
-import { Boot } from './ui/Boot'
+import { Boot, BOOT_MIN_MS } from './ui/Boot'
 import { openPeer } from './ui/Chat'
 import { EventView } from './ui/EventView'
 import { ConfirmDialog, installAsyncHandlers, Toasts } from './ui/feedback'
 import { Icon } from './ui/icons'
 import { PickDoll } from './ui/PickDoll'
+import { PhotoBooth } from './ui/PhotoBooth'
+import { resolveSpot } from './ui/spotPick'
+import { signOut, useAuth } from './net/auth'
 import { ProfilePanel } from './panels/ProfilePanels'
 import { ResultPop } from './ui/results'
 import { RAIL_W, RoomUI, TILE_GRID_W } from './ui/rooms/RoomUI'
@@ -39,44 +42,68 @@ const ROOM_THEME: Record<RoomId, StageTheme> = {
   hair: { top: '#d9c8f2', bottom: '#2e2346', glow: '#ffffff', floor: '#4a3a6a' }, // salon: lilac
   skincare: { top: '#bfeee6', bottom: '#11393a', glow: '#f2fffd', floor: '#2a5a5a' }, // spa: aqua and steam
   doctor: { top: '#ebe4f7', bottom: '#3a3150', glow: '#ffffff', floor: '#5a5070' }, // clinic: clean lavender
-  kai: { top: '#2a3a6a', bottom: '#0c1226', glow: '#ffd23f', floor: '#1b2340' },
-  moncherrie: { top: '#f7c6d4', bottom: '#4a1e30', glow: '#ffe6ee', floor: '#6a2a42' },
-  dopebyfabby: { top: '#1f6b55', bottom: '#06201a', glow: '#ffe6a0', floor: '#0e3a2e' },
-  deeji: { top: '#3a4f9a', bottom: '#0f1430', glow: '#ffd38a', floor: '#1e2a5c' },
-  bolaptsd: { top: '#3a1414', bottom: '#080606', glow: '#ff3b3b', floor: '#221010' },
+  thai: { top: '#fbe7b0', bottom: '#6a4a1e', glow: '#fff6dc', floor: '#c9a46a' }, // sunlit butter-yellow boutique
+  moncherie: { top: '#f7c6d4', bottom: '#4a1e30', glow: '#ffe6ee', floor: '#6a2a42' }, // blush velvet parlour
+  novasport: { top: '#9fe8ff', bottom: '#0c1a2a', glow: '#e9fbff', floor: '#22324a' }, // cool white gym light
+  dopebyfabby: { top: '#2a2414', bottom: '#060504', glow: '#ffe08a', floor: '#3a2e14' }, // black and gold glam
+  dejideji: { top: '#e7a65a', bottom: '#3a1608', glow: '#ffe0b0', floor: '#6b2e1a' }, // warm terracotta and gold
+  tolaptsd: { top: '#3a1414', bottom: '#080606', glow: '#ff3b3b', floor: '#221010' }, // red neon, black brick
+  okrika: { top: '#e9d2a8', bottom: '#3a2614', glow: '#fff1d6', floor: '#6b4a2e' }, // vintage wood and lamps
+  booty: { top: '#ff6fae', bottom: '#14040c', glow: '#ffb3d6', floor: '#2a0a18' }, // hot pink, low light
 }
 
 const TOP_H = 60
 
 /* ------------------------------------------------------------------ the Hub's 2D layer */
 
-function HubUI({ wide, onChangeDoll, onProfile }: { wide: boolean; onChangeDoll: () => void; onProfile: () => void }) {
+/** The DollScene logo: the favicon (the doll on pink) with a sparkle at its right side. */
+export function Logo({ className = 'h-9 w-11' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 80 64" className={`drop-shadow ${className}`} aria-hidden>
+      <defs>
+        <clipPath id="dsLogoClip">
+          <rect width="64" height="64" rx="16" />
+        </clipPath>
+      </defs>
+      <rect width="64" height="64" rx="16" fill="#FFE3EF" />
+      <g clipPath="url(#dsLogoClip)" fill="#FF2E88">
+        <circle cx="32" cy="25" r="12" />
+        <rect x="28" y="34" width="8" height="10" rx="3" />
+        <path d="M11 68c1.4-12 10-19 21-19s19.6 7 21 19z" />
+      </g>
+      <path d="M71 4l2.2 6.3 6.3 2.2-6.3 2.2L71 21l-2.2-6.3-6.3-2.2 6.3-2.2Z" fill="#FFD84D" stroke="#FF2E88" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M75 26l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1Z" fill="#FFD84D" />
+    </svg>
+  )
+}
+
+/** The DollScene wordmark: the logo and "DollScene Beauty Studio". */
+export function Wordmark() {
+  return (
+    <div className="flex items-center gap-2 leading-none">
+      <Logo />
+      <div className="flex flex-col">
+        <span className="text-[22px] font-black tracking-tight text-white drop-shadow">
+          Doll<span className="text-[#ffd1e6]">Scene</span>
+        </span>
+        <span className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.28em] text-white/75">Beauty Studio</span>
+      </div>
+    </div>
+  )
+}
+
+function HubUI({ wide, onSignOut }: { wide: boolean; onSignOut: () => void }) {
   const hovered = useHub((s) => s.hovered)
   const entering = useHub((s) => s.entering)
-  const name = useStudio((s) => s.look.profile.name)
-  const status = useRealtime((s) => s.status)
-  const total = useRealtime((s) => s.counts.total)
   const d = hovered ? DOOR_BY_ID[hovered] : null
   if (entering) return null
   return (
     <>
-      <header className="pointer-events-auto absolute inset-x-0 top-0 z-20 flex items-center gap-2 px-3 pt-[max(env(safe-area-inset-top),10px)]">
-        <div className="flex flex-col leading-none">
-          <span className="text-[24px] font-black tracking-tight text-white drop-shadow">
-            Doll<span className="text-[#ffd1e6]">Scene</span>
-          </span>
-          <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/70">Beauty Studio</span>
-        </div>
-        <span className="flex-1" />
-        <span className="rounded-full bg-black/50 px-3 py-1.5 text-[12px] font-bold text-white backdrop-blur" aria-live="polite">
-          {status === 'live' ? `👥 ${total ?? 1} online` : status === 'connecting' ? 'Connecting…' : 'Offline'}
-        </span>
-        <button type="button" onClick={() => (click('tap'), onProfile())} aria-label="Lookbook, photos, challenges and shop" className="ds-fab grid h-10 w-10 place-items-center rounded-full">
-          <Icon name="heart" className="h-[18px] w-[18px]" />
-        </button>
-        <button type="button" onClick={() => (click('tap'), onChangeDoll())} className="ds-fab flex min-h-10 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-bold">
-          <Icon name="profile" className="h-4 w-4" />
-          {name || 'My doll'}
+      {/* the logo and "DollScene Beauty Studio" on the left, Sign out on the right */}
+      <header className="pointer-events-auto absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-2 px-3 pt-[max(env(safe-area-inset-top),10px)]">
+        <Wordmark />
+        <button type="button" onClick={() => (click('tap'), onSignOut())} className="ds-fab min-h-10 rounded-full px-4 text-[13px] font-bold">
+          Sign out
         </button>
       </header>
       <div className={`pointer-events-none absolute inset-x-0 z-20 flex flex-col items-center gap-3 px-4 ${wide ? 'bottom-8' : 'bottom-[max(env(safe-area-inset-bottom),14px)]'}`}>
@@ -84,10 +111,12 @@ function HubUI({ wide, onChangeDoll, onProfile }: { wide: boolean; onChangeDoll:
           {d ? (
             <>
               {d.name}
-              <span className="block text-[12px] font-bold text-white/75">{d.sub} · tap the door to go in</span>
+              <span className="block text-[12px] font-bold text-white/80">{d.sub} · tap it{wide ? ' or press Enter' : ''} to go in</span>
             </>
+          ) : wide ? (
+            '← → or scroll to move along the street · click a store'
           ) : (
-            'Drag to look around · tap a door'
+            'Swipe along the street · tap a store'
           )}
         </p>
         <div className="flex items-center gap-4">
@@ -109,6 +138,8 @@ export default function StudioApp() {
   const room = useStudio((s) => s.room)
   const paused = useStudio((s) => s.paused)
   const uiHidden = useStudio((s) => s.uiHidden)
+  const booth = useStudio((s) => s.booth)
+  const spotPick = useStudio((s) => s.spotPick)
   const ready = useStudio((s) => s.characterReady)
   const look = useStudio((s) => s.look)
   const pre = usePreload()
@@ -116,6 +147,11 @@ export default function StudioApp() {
   const [modelError, setModelError] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [bootGone, setBootGone] = useState(false)
+  const [bootTimeUp, setBootTimeUp] = useState(false)
+  useEffect(() => {
+    const t = window.setTimeout(() => setBootTimeUp(true), BOOT_MIN_MS)
+    return () => window.clearTimeout(t)
+  }, [])
   const [sceneLoading, setSceneLoading] = useState(false)
   const [sceneReadyId, setSceneReadyId] = useState<string | null>(null)
   const [size, setSize] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
@@ -158,12 +194,19 @@ export default function StudioApp() {
   // Boot ends when the catalog, the session, the 3D doll and every preloaded asset are really ready.
   const bootError = catalogError ? 'DollScene couldn’t load. Check your connection.' : modelError ? 'Your doll couldn’t load. Check your connection.' : null
   useEffect(() => {
-    if (phase === 'boot' && catalog && sessionReady && ready && pre.modulesReady && pre.otherReady && !bootError) {
-      useStudio.getState().setPhase('onboard')
+    // Opens after the short status lines once the doll herself is ready; every other model,
+    // texture and thumbnail keeps preloading in the background (swaps wait for their file).
+    if (phase === 'boot' && catalog && sessionReady && ready && bootTimeUp && !bootError) {
+      // signed in (a remembered 30-day session): straight to the street with her own doll
+      const back = useAuth.getState().status === 'signed-in' && useStudio.getState().look.profile.onboarded
+      useStudio.getState().setPhase(back ? 'hub' : 'onboard')
       useStudio.getState().setFraming('full')
-      markShotReady()
     }
-  }, [phase, catalog, sessionReady, ready, pre.modulesReady, pre.otherReady, bootError])
+  }, [phase, catalog, sessionReady, ready, bootTimeUp, bootError])
+  // dev screenshots: once the game is open AND every module has preloaded
+  useEffect(() => {
+    if (phase !== 'boot' && pre.modulesReady && pre.otherReady) markShotReady()
+  }, [phase, pre.modulesReady, pre.otherReady])
 
   const retry = () => {
     useGLTF.clear(url.body)
@@ -178,6 +221,15 @@ export default function StudioApp() {
     useHub.setState({ entering: null, hovered: null })
     const s = useStudio.getState()
     s.setPhase('hub')
+    s.setFraming('full')
+  }, [])
+  /** Sign out: ends the 30-day session on this device and returns to the doll picker. */
+  const leave = useCallback(() => {
+    void signOut()
+    realtime.stop()
+    const s = useStudio.getState()
+    s.apply((l) => void (l.profile.onboarded = false))
+    s.setPhase('onboard')
     s.setFraming('full')
   }, [])
   const goEvent = useCallback(() => {
@@ -240,7 +292,8 @@ export default function StudioApp() {
     if (phase === 'hub') return { left: 0, right: 0, bottom: 0, top: 0 }
     if (phase === 'event') return { left: 0, right: 0, bottom: Math.min(size.h * 0.32, 250), top: 56 }
     if (uiHidden) return { left: 0, right: 0, bottom: 0, top: 0 }
-    if (phase === 'onboard') return wide ? { left: 0, right: Math.min(size.w * 0.5, 640) + size.w * 0.03, bottom: 0, top: 0 } : { left: 0, right: 0, bottom: Math.min(size.h * 0.58, 500), top: 100 }
+    // the doll stands between the name column (top left) and the picker, never touching the text
+    if (phase === 'onboard') return wide ? { left: Math.min(size.w * 0.26, 340) + 48, right: Math.min(size.w * 0.5, 680) + size.w * 0.03, bottom: 0, top: 0 } : { left: 0, right: 0, bottom: Math.min(size.h * 0.56, 500), top: 150 }
     if (phase === 'scenes') return wide ? { left: 0, right: 0, bottom: 330, top: 120 } : { left: 0, right: 0, bottom: Math.min(size.h * 0.46, 380), top: 150 }
     if (phase === 'studio') return wide ? { left: RAIL_W, right: TILE_GRID_W + 12, bottom: 0, top: TOP_H } : { left: RAIL_W * 0.6, right: 0, bottom: 2 * 120 + 56, top: TOP_H }
     return { left: 0, right: 0, bottom: 0, top: 0 }
@@ -280,7 +333,7 @@ export default function StudioApp() {
 
       <div className="pointer-events-none absolute inset-0">
         {phase === 'onboard' && !uiHidden && catalog && <PickDoll wide={wide} size={size} catalog={catalog} onNext={goHub} />}
-        {phase === 'hub' && <HubUI wide={wide} onChangeDoll={() => useStudio.getState().setPhase('onboard')} onProfile={() => setProfile(true)} />}
+        {phase === 'hub' && <HubUI wide={wide} onSignOut={leave} />}
         {profile && (
           <div className="pointer-events-auto fixed inset-0 z-40 grid place-items-center bg-black/50 p-3" onClick={() => setProfile(false)}>
             <div role="dialog" aria-label="My profile" className="ds-pop ds-sheet ds-scroll-y max-h-[86dvh] w-full max-w-md rounded-[28px] p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -313,7 +366,18 @@ export default function StudioApp() {
             <ActionHud />
           </div>
         )}
-        {uiHidden && phase !== 'event' && phase !== 'hub' && (
+        {booth && <PhotoBooth onClose={() => useStudio.setState({ booth: false })} />}
+        {spotPick && (
+          <div className="pointer-events-auto absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),8px)+58px)] z-40 flex justify-center px-3">
+            <div className="ds-pop flex items-center gap-3 rounded-full bg-black/65 py-1.5 pl-4 pr-1.5 text-[14px] font-extrabold text-white backdrop-blur">
+              {spotPick.hint}
+              <button type="button" onClick={() => (click('tap'), resolveSpot(null))} className="min-h-8 rounded-full bg-white/15 px-3 text-[13px] font-bold">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+        {uiHidden && !booth && phase !== 'event' && phase !== 'hub' && (
           <button type="button" onClick={() => useStudio.setState({ uiHidden: false })} aria-label="Show controls" className="ds-fab pointer-events-auto absolute bottom-[max(env(safe-area-inset-bottom),16px)] right-4 z-30 grid h-12 w-12 place-items-center rounded-full">
             <Icon name="eye" />
           </button>
@@ -337,7 +401,7 @@ export default function StudioApp() {
         <ConfirmDialog />
       </div>
 
-      {!bootGone && <Boot progress={preloadProgress(pre)} error={bootError} onRetry={retry} leaving={phase !== 'boot'} onGone={() => setBootGone(true)} />}
+      {!bootGone && <Boot error={bootError} onRetry={retry} leaving={phase !== 'boot'} onGone={() => setBootGone(true)} />}
       <RescueOnHide />
       <SkinHealer />
       <RealtimeSync />

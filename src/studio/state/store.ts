@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { ROOMS, type RoomId } from '../rooms'
-import { DEFAULT_LOOK, sanitizeLook, type ClinicId, type ExpressionId, type SavedLook, type SceneChoice, type StudioLook } from '../../shared/studio/look'
+import { DEFAULT_LOOK, sanitizeLook, type ClinicId, type ExpressionId, type SavedLook, type SceneChoice, type SpotId, type StudioLook } from '../../shared/studio/look'
 
 /**
  * Where the player is: the boot loader, picking a doll, the Hub (the corridor of doors), a room
@@ -24,15 +24,20 @@ export type Category =
   | 'lips'
   | 'looks'
   | 'nails'
-  | 'jewellery'
   // Hair Studio
   | 'hairstyles'
   | 'haircolour'
   | 'haircare'
   // stores
-  | 'outfits'
+  | 'tops'
+  | 'bottoms'
+  | 'dresses'
   | 'shoes'
+  | 'accessories'
   // Beauty Doctor
+  | 'tattoos'
+  | 'piercings'
+  | 'jewellery'
   | 'clinicFace'
   | 'clinicBody'
 
@@ -69,7 +74,8 @@ export interface PhotoState {
 
 export const POSES = ['relaxed', 'hand-on-hip', 'hands-on-hips', 'wave', 'peace', 'blow-kiss', 'selfie', 'thinking', 'hair-touch', 'arms-crossed', 'hands-clasped'] as const
 export type PoseId = (typeof POSES)[number]
-export const EXPRESSION_PRESETS = ['neutral', 'smile', 'laugh', 'kiss', 'wink', 'surprised', 'sad', 'soft', 'pout'] as const
+// (no 'kiss': it was the same face as the pout)
+export const EXPRESSION_PRESETS = ['neutral', 'smile', 'laugh', 'wink', 'surprised', 'sad', 'soft', 'pout'] as const
 export type ExpressionPreset = (typeof EXPRESSION_PRESETS)[number]
 
 export interface ConfirmRequest {
@@ -113,6 +119,12 @@ interface StudioState {
   /** The 3D character has loaded and its hands/anchors are bound (routines can run). */
   characterReady: boolean
   photo: PhotoState
+  /** The photo booth is open (the rest of the UI hides). */
+  booth: boolean
+  /** Waiting for the player to tap a spot on her face (pimples to squeeze). */
+  spotPick: { ids: SpotId[]; hint: string } | null
+  /** A photo-booth shot in progress: the doll strikes its pose (mirror selfie or selfie). */
+  shot: 'mirror' | 'selfie' | null
   /** The scene before the last Change Scene (for "go back"). */
   prevScene: SceneChoice | null
 
@@ -185,8 +197,13 @@ export const CATEGORY_FRAMING: Record<Category, Framing> = {
   hairstyles: 'hair',
   haircolour: 'hair',
   haircare: 'hair',
-  outfits: 'full',
+  tops: 'full',
+  bottoms: 'full',
+  dresses: 'full',
   shoes: 'full',
+  accessories: 'full',
+  tattoos: 'full',
+  piercings: 'face',
   clinicFace: 'face',
   clinicBody: 'full',
 }
@@ -216,6 +233,9 @@ export const useStudio = create<StudioState>((set, get) => ({
 
   characterReady: false,
   photo: { pose: 'relaxed', expression: 'smile', yaw: 0, pitch: 0.05, zoom: 1, lift: 0 },
+  booth: false,
+  spotPick: null,
+  shot: null,
   prevScene: null,
 
   paused: false,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { ExpressionId, HairId, OutfitId, ShoeId, SpotId } from '../../shared/studio/look'
+import type { ExpressionId, HairId, OutfitId, PieceSlot, ShoeId, SpotId, TattooSpot } from '../../shared/studio/look'
 
 /**
  * public/models/studio/character.json, written by scripts/character/build_character.py.
@@ -24,6 +24,24 @@ export interface CareData {
   spots: (Landmark & { id: SpotId; r: number })[]
   nails: { bone: string; p: V3; n: V3; dir: V3; width: number; length: number }[]
   jewellery: Record<string, { p: V3; r: number; dir?: V3; bone?: string }>
+  /** Tattoo anchors: body UV, UV units per metre of skin there, the UV direction of "up". */
+  tattoos?: Partial<Record<TattooSpot, { uv: [number, number]; s: number; up: [number, number]; right?: [number, number]; p: V3; n: V3 }>>
+}
+
+/** A wardrobe piece (scripts/character/outfit/build_pieces.py, shoes.py). */
+export interface PieceEntry {
+  id: string
+  name: string
+  slot: PieceSlot
+  store: string
+  /** Default colours: primary, secondary, accent. */
+  colors: [string, string, string]
+  finish: string
+  ease: number
+  hideMask: boolean
+  /** Shoes: the foot arch (radians) and how far they lift her (m). */
+  arch?: number
+  lift?: number
 }
 
 export interface CharacterCatalog {
@@ -42,6 +60,8 @@ export interface CharacterCatalog {
   /** store: which Hub store sells it; ease: how far a skirt stands off the hips at the hands (m). */
   outfits: { id: OutfitId; name: string; hideMask: boolean; store?: string | null; ease?: number }[]
   shoes: { id: ShoeId; name: string; hideMask: boolean }[]
+  /** Wardrobe pieces (older builds have none). */
+  pieces?: PieceEntry[]
   /** Expression shape keys on the body (older builds have none). */
   expressions?: ExpressionId[]
   /** Skincare/nail/jewellery anchors (older builds have none). */
@@ -55,6 +75,8 @@ export const url = {
   hair: (id: string) => `${STUDIO_BASE}/hair/${id}.glb`,
   outfit: (id: string) => `${STUDIO_BASE}/outfits/${id}.glb`,
   shoes: (id: string) => `${STUDIO_BASE}/shoes/${id}.glb`,
+  piece: (id: string) => `${STUDIO_BASE}/pieces/${id}.glb`,
+  pieceThumb: (id: string) => `/thumbs/pieces/${id}.webp`,
   mask: (name: string) => `${STUDIO_BASE}/masks/${name}.png`,
   eye: (id: string) => `${STUDIO_BASE}/eyes/${id}.png`,
   hairThumb: (id: string) => `/thumbs/hair/${id}.webp`,
@@ -63,12 +85,47 @@ export const url = {
   shoeThumb: (id: string) => `/thumbs/shoes/${id}.webp`,
 }
 
+/** Everything she can wear, as one list: pieces, plus the classic sets (dress) and classic shoes. */
+export interface Wearable {
+  id: string
+  name: string
+  slot: PieceSlot
+  store: string | null
+  colors: [string, string, string]
+  /** Recolourable through three slots (pieces) or one tint (classics). */
+  slots: 1 | 3
+  src: string
+  mask: string | null
+  ease: number
+  arch: number
+  lift: number
+}
+
+const W3: [string, string, string] = ['#FFFFFF', '#FFFFFF', '#FFFFFF']
+const wearCache = new WeakMap<CharacterCatalog, Map<string, Wearable>>()
+export function wearables(c: CharacterCatalog): Map<string, Wearable> {
+  let m = wearCache.get(c)
+  if (m) return m
+  m = new Map()
+  for (const p of c.pieces ?? [])
+    m.set(p.id, { id: p.id, name: p.name, slot: p.slot, store: p.store, colors: p.colors, slots: 3, src: url.piece(p.id), mask: p.hideMask ? url.mask(`hide_${p.id}`) : null, ease: p.ease ?? 0, arch: p.arch ?? 0, lift: p.lift ?? 0 })
+  for (const o of c.outfits)
+    m.set(o.id, { id: o.id, name: o.name, slot: 'dress', store: o.store ?? null, colors: W3, slots: 1, src: url.outfit(o.id), mask: o.hideMask ? url.mask(`hide_${o.id}`) : null, ease: o.ease ?? 0, arch: 0, lift: 0 })
+  for (const s of c.shoes)
+    m.set(s.id, { id: s.id, name: s.name, slot: 'shoes', store: null, colors: W3, slots: 1, src: url.shoes(s.id), mask: s.hideMask ? url.mask(`hide_${s.id}`) : null, ease: 0, arch: 0, lift: 0 })
+  wearCache.set(c, m)
+  return m
+}
+
 let cache: Promise<CharacterCatalog> | null = null
 
 export function loadCatalog(): Promise<CharacterCatalog> {
-  cache ??= fetch(`${STUDIO_BASE}/character.json`).then((r) => {
+  cache ??= fetch(`${STUDIO_BASE}/character.json`).then(async (r) => {
     if (!r.ok) throw new Error(`character.json ${r.status}`)
-    return r.json() as Promise<CharacterCatalog>
+    const c = (await r.json()) as CharacterCatalog
+    // dev only: automated checks read the catalog (window.__dsCatalog)
+    if (import.meta.env?.DEV) (window as unknown as { __dsCatalog?: CharacterCatalog }).__dsCatalog = c
+    return c
   })
   cache.catch(() => {
     cache = null

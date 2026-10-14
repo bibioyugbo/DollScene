@@ -1,5 +1,5 @@
 import type { Vector3 } from 'three'
-import type { SpotId } from '../../shared/studio/look'
+import type { SpotId, TattooSpot } from '../../shared/studio/look'
 
 /**
  * Per-frame visual state for animations: what's on the skin right now (foam, wet, cream...), how
@@ -32,6 +32,8 @@ export interface SkinFx {
   dab: Partial<Record<SpotId, number>>
   /** Pimple squeeze 0..1 (the bump flattens; a tiny cartoon pop at the end). */
   squeeze: Partial<Record<SpotId, number>>
+  /** Under-eye patch peel 0..1 (L/R). */
+  eyePeel: { L: number; R: number }
   /** Patch peel 0..1 per spot (lift, then off). */
   peel: Partial<Record<SpotId, number>>
   /** A patch pinched in the fingers: it leaves the skin and follows this world point. */
@@ -74,8 +76,16 @@ export interface MakeupFx {
   reveal: Partial<Record<string, number>>
 }
 
+export interface TattooFx {
+  /** Per tattoo spot: laser removal progress 0..1 (the ink lifts away). */
+  fade: Partial<Record<TattooSpot, number>>
+  /** Pink, raised skin after a laser pass or fresh ink, 0..1 (all tattoos). */
+  fresh: number
+}
+
 export const fx = {
-  skin: { foam: zeroRegions(), wet: zeroRegions(), cream: zeroRegions(), sheen: zeroRegions(), eyeCream: 0, balm: 0, dab: {}, squeeze: {}, peel: {}, held: null, dew: 0, flakesOff: 0, soothe: 0, bright: 0, heal: {} } as SkinFx,
+  tattoo: { fade: {}, fresh: 0 } as TattooFx,
+  skin: { foam: zeroRegions(), wet: zeroRegions(), cream: zeroRegions(), sheen: zeroRegions(), eyeCream: 0, balm: 0, dab: {}, squeeze: {}, peel: {}, eyePeel: { L: 0, R: 0 }, held: null, dew: 0, flakesOff: 0, soothe: 0, bright: 0, heal: {} } as SkinFx,
   hair: { wet: 0, foam: 0, cream: 0, sections: [0, 0, 0, 0, 0, 0, 0, 0] } as HairFx,
   nails: { coat: new Array(10).fill(1), stage: 'none' } as NailFx,
   makeup: { reveal: {} } as MakeupFx,
@@ -91,6 +101,7 @@ export function resetSkinFx() {
   fx.skin.dab = {}
   fx.skin.squeeze = {}
   fx.skin.peel = {}
+  fx.skin.eyePeel = { L: 0, R: 0 }
   fx.skin.held = null
   fx.skin.dew = 0
   fx.skin.flakesOff = 0
@@ -115,4 +126,5 @@ export function resetAllFx() {
   resetHairFx()
   resetNailFx()
   fx.makeup.reveal = {}
+  fx.tattoo = { fade: {}, fresh: 0 }
 }

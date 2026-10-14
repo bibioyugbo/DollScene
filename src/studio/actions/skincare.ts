@@ -3,7 +3,7 @@ import { CLEAR_SKIN, DEFAULT_MAKEUP, type CareStep, type SkinCare, type SpotId, 
 import { effectorPoint } from '../character/rig'
 import { fx, type Region } from '../state/fx'
 import type { PropState } from '../character/props'
-import { headUp, type HandGoal, type Move, type MoveCtx } from './engine'
+import { headUp, landmark, landmarkNormal, localDir, localVec, type HandGoal, type Move, type MoveCtx } from './engine'
 import { along, at, both, circles, glide, holdAt, holding, stretch, stroke, taps, type Contact } from './moves'
 import type { Product, StepDef } from './steps'
 import { showResult } from '../ui/results'
@@ -109,6 +109,7 @@ export function morningLook(l: StudioLook, o: { patches: number; spots: number; 
     hydration: 0.25,
     glow: 0.12,
     lips: 0.2,
+    eyePatches: true,
   }
   l.makeup = structuredClone(DEFAULT_MAKEUP)
   l.hair.care.bonnet = o.bonnet
@@ -201,6 +202,61 @@ export const PATCHES: StepDef = {
   },
   verify: (l, { target }) => !l.care.patches.includes(target as SpotId),
   done: 'Patch off. That spot has gone flat.',
+}
+
+/* ------------------------------------------------------------------ A2. under-eye patches */
+
+/** The outer corner of an under-eye patch, following it as it peels (0 = flat, 1 = off). */
+const eyePatchCorner =
+  (side: 'L' | 'R', peel: (t: number) => number): Contact =>
+  (t, { c }) => {
+    const key = `underEye${side}` as const
+    const pts = c.care.strokes[key]
+    const n = landmarkNormal(c, key)
+    const mid = (pts?.length && landmark(c, `stroke:${key}:${pts.length >> 1}`)) || landmark(c, key) || c.head.getWorldPosition(new Vector3())
+    const y = headUp(c)
+    y.addScaledVector(n, -y.dot(n)).normalize()
+    const out = new Vector3().crossVectors(y, n).normalize().multiplyScalar(side === 'R' ? -1 : 1)
+    const hinge = mid.clone().addScaledVector(n, 0.0013).addScaledVector(y, 0.0015).addScaledVector(out, -0.016)
+    const a = Math.min(1, peel(t) / 0.7) * 1.7
+    return { p: hinge.addScaledVector(out, 0.033 * Math.cos(a)).addScaledVector(n, 0.033 * Math.sin(a) + 0.001), n }
+  }
+
+export const EYE_PATCHES: StepDef = {
+  id: 'eyePatches',
+  name: 'Peel off eye patches',
+  blurb: 'Pinch each one at the outer corner and peel it slowly toward the nose.',
+  framing: 'face',
+  regions: ['face'],
+  products: PRODUCTS.fingers,
+  mode: 'result',
+  blocked: (l) => (l.care.eyePatches ? null : 'No eye patches on right now.'),
+  moves: () =>
+    (['L', 'R'] as const).flatMap((s) => {
+      const side = s === 'L' ? 'Left' : 'Right'
+      return [
+        // the hand on that side pinches the patch's outer corner...
+        ...stroke({ side, contact: eyePatchCorner(s, () => 0), effector: 'pinch', grip: 'pinch', dur: 0.55, noOut: true, gap: 0.001, face: () => ({ Expr_Squint: 0.25 }) }),
+        // ...and peels it off toward the nose (the hand follows the lifting edge)
+        ...stroke({
+          side,
+          contact: eyePatchCorner(s, (t) => t),
+          effector: 'pinch',
+          grip: 'pinch',
+          dur: 1.15,
+          noIn: true,
+          gap: 0.001,
+          tick: (t) => ((fx.skin.eyePeel[s] = t > 0.97 ? 1 : t), void (t < 0.04 && sfx('peel'))),
+          face: (t) => ({ Expr_Squint: 0.25, Expr_BrowsUp: Math.sin(t * Math.PI) * 0.25 }),
+        }),
+      ]
+    }),
+  apply: (l) => {
+    l.care.eyePatches = false
+    markDone(l, 'eyePatches')
+  },
+  verify: (l) => !l.care.eyePatches,
+  done: 'Eye patches off: bright, de-puffed eyes.',
 }
 
 /* ------------------------------------------------------------------ B. pop (optional) */
@@ -678,17 +734,71 @@ export function skinCheckIn(l: StudioLook, seed: number) {
 
 /* ------------------------------------------------------------------ face wash (dewy result) */
 
+/**
+ * Lathering between the palms: the hands meet in front of her chest, palms together, fingers up
+ * and a little forward, and rub up and down against each other (the cleanser foams up).
+ */
+const lather = (dur: number): Move => {
+  const hand = (side: 'Left' | 'Right') => (t: number, { c }: MoveCtx): HandGoal => {
+    const s = side === 'Left' ? 1 : -1
+    const neck = landmark(c, 'neck') ?? c.head.getWorldPosition(new Vector3())
+    const rub = Math.sin(t * Math.PI * 7) * 0.014 * s
+    return {
+      target: neck.clone().add(localVec(c, new Vector3(0.017 * s, -0.17 + rub, 0.23))),
+      fingers: localDir(c, new Vector3(-0.12 * s, 0.85, 0.5)).normalize(),
+      palm: localDir(c, new Vector3(-s, 0, 0)),
+      effector: 'palm',
+      grip: 'flat',
+      weight: Math.min(1, t * 5 + 0.001),
+    }
+  }
+  return { dur, left: hand('Left'), right: hand('Right') }
+}
+
+/** One splash of water: cupped palms to the cheeks (eyes shut), a splash sound and droplets. */
+const splash = (k: number, of: number, rinse: boolean): Move[] =>
+  both(
+    {
+      side: 'Left',
+      contact: at('cheekL'),
+      effector: 'palm',
+      grip: 'cup',
+      dur: 0.7,
+      tilt: -0.3,
+      standoff: 0.14,
+      face: closedEyes,
+      tick: (t) => (rinse && fade(['foam'], 1 - k / of, 1 - (k + 1) / of)(t), raise(['forehead', 'cheekL', 'cheekR', 'nose', 'chin', 'perimeter'], 'wet', 1)(t), void (fx.skin.dew = Math.max(fx.skin.dew, rinse ? ((k + t) / of) * 0.9 : 0.3 * t)), void (t > 0.45 && t < 0.5 && (sfx('splash'), haptic(10)))),
+    },
+    { side: 'Right', contact: at('cheekR'), effector: 'palm', grip: 'cup', dur: 0.7, tilt: -0.3, standoff: 0.14 },
+  )
+
+/** Patting dry with a soft towel: pressed (never rubbed) to each cheek, the forehead and chin. */
+const patDry = (): Move[] => {
+  const towel: PropState = { id: 'towel', hold: 'palm' }
+  return [
+    ...stroke({ side: 'Right', contact: taps(at('cheekR'), 2, 0.012), effector: 'palm', grip: 'flat', dur: 0.8, prop: towel, noOut: true, tick: (t) => (fade(['wet'], 1, 0.75)(t), void (Math.abs(t - 0.25) < 0.02 || Math.abs(t - 0.75) < 0.02 ? sfx('pat') : 0)), face: closedEyes }),
+    ...stroke({ side: 'Right', contact: glide(at('cheekR'), at('cheekL')), effector: 'palm', grip: 'flat', dur: 0.5, prop: towel, noIn: true, noOut: true, standoff: 0.03, face: closedEyes }),
+    ...stroke({ side: 'Right', contact: taps(at('cheekL'), 2, 0.012), effector: 'palm', grip: 'flat', dur: 0.8, prop: towel, noIn: true, noOut: true, tick: (t) => (fade(['wet'], 0.75, 0.5)(t), void (Math.abs(t - 0.25) < 0.02 || Math.abs(t - 0.75) < 0.02 ? sfx('pat') : 0)), face: closedEyes }),
+    ...stroke({ side: 'Right', contact: taps(along('forehead', 0.5, 0.5), 2, 0.012), effector: 'palm', grip: 'flat', dur: 0.8, prop: towel, noIn: true, tick: (t) => (fade(['wet'], 0.5, 0.2)(t), void (Math.abs(t - 0.5) < 0.02 ? sfx('pat') : 0)), face: closedEyes }),
+  ]
+}
+
 export const FACE_WASH: StepDef = {
   id: 'wash',
   name: 'Face wash',
-  blurb: 'Lather up, then splash it all off with clean water.',
+  blurb: 'Wet the face, lather the cleanser between your palms, massage it in, rinse three times, pat dry.',
   framing: 'face',
   regions: ['forehead', 'cheeks', 'nose', 'chin'],
   products: PRODUCTS.cleanser.slice(0, 2),
   mode: 'result',
   moves: ({ product }) => [
+    // warm water first, so the cleanser foams
+    ...splash(0, 1, false),
     ...dispense(product, 'cleanser'),
-    ...faceRub(1.6),
+    // work it into a rich lather between the palms
+    lather(1.5),
+    // massage the foam in: cheeks, forehead, down the nose, round the chin (eyes shut)
+    ...faceRub(2.2),
     // three splashes of water: cupped hands to the face, foam rinses away, droplets bead up
     ...[0, 1, 2].flatMap((k) =>
       both(
@@ -696,6 +806,8 @@ export const FACE_WASH: StepDef = {
         { side: 'Right', contact: at('cheekR'), effector: 'palm', grip: 'cup', dur: 0.7, tilt: -0.3, standoff: 0.14 },
       ),
     ),
+    // pat dry with a towel (dewy skin stays)
+    ...patDry(),
     pause(0.9, (t) => void (fx.skin.dew = 0.9 + 0.1 * t), () => ({ Expr_BlinkL: 0.3, Expr_BlinkR: 0.3, Expr_Smile: 0.35 })),
   ],
   apply: (l) => {

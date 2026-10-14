@@ -93,8 +93,14 @@ def layout(head, spacing=11.0, jitter=0.25, seed=21, radius=0.0042, r_var=0.08, 
         sweep = not comb and abs(az) < 75 and el < sweep_el  # lateral front: swept to the temples
         front = front and not comb
         side = 1.0 if az >= 0 else -1.0
-        if comb:
+        if comb or sweep or (abs(az) < 125 and el < 70):
             front = False
+            # combed-back front locs lie OVER the crown locs all the way back (beneath them they
+            # looked cut off at the hairline): the top layer, a little higher the further forward
+            m = r + 0.003 + layer * 1.0 + 0.004 * (1 - min(1.0, max(0.0, (el - hl) / 40)))
+        if sweep:
+            # temple locs: back above the ear, then down in front of the shoulder (fullness at the front)
+            front = True
         if front:
             lane = side * (0.065 + 0.03 * min(1, abs(az) / front_az))
         else:
@@ -110,15 +116,42 @@ def layout(head, spacing=11.0, jitter=0.25, seed=21, radius=0.0042, r_var=0.08, 
         t = F - n * F.dot(n)
         t = t.normalized() if t.length > 1e-4 else Vector((0, 1, 0))
         out = (t * 0.85 + n * 0.3).normalized()
-        hang = head.drape(start, out, 1.0, step=0.008, margin=m, stiff=0.85, bend=0.05, gravity=g, stop_z=sz)
-        pts = resample([root] + hang, head.z_skull - 0.02, fine=step * 0.5, coarse=step * 1.25)
+        flat = comb or sweep or (abs(az) < 125 and el < 70)
+        if flat:
+            # combed back FLAT: along the scalp from the hairline over the top of the head, rising
+            # gradually from just above the skin onto the top layer (so it reads as one continuous
+            # loc, never a stub standing up at the hairline), then down the back
+            d0 = head.dir(az, el)
+            if comb:
+                d1 = head.dir(az * 0.55, 86.0)
+                d2 = head.dir(180.0 - az * 0.35, 58.0)
+            elif sweep:  # temples: back just above the ear, then they fall forward of the shoulder
+                d1 = head.dir(side * (abs(az) + 22.0), min(80.0, el + 6.0))
+                d2 = head.dir(side * min(92.0, abs(az) + 26.0), max(30.0, el - 12.0))
+            else:  # sides: back along the side of the head, above the ear, in their own row
+                d1 = head.dir(side * min(170.0, abs(az) + 30.0), min(80.0, el + 8.0))
+                d2 = head.dir(side * min(176.0, abs(az) + 55.0), max(30.0, el - 10.0))
+            path = []
+            N_ = 26
+            for i in range(N_ + 1):
+                t = i / N_
+                dv = (d0 * (1 - t) ** 2 + d1 * 2 * t * (1 - t) + d2 * t * t).normalized()
+                q, nq = head.surf_dir(dv)
+                lift = (r + 0.0015) + (m - r - 0.0015) * smoothstep(0.0, 0.45, t)
+                path.append(q + nq * lift)
+            down = (path[-1] - path[-2]).normalized()
+            hang = head.drape(path[-1], down, 1.0, step=0.008, margin=m, stiff=0.9, bend=0.08, gravity=g, stop_z=sz)
+            pts = resample([root] + path + hang[1:], head.z_skull - 0.02, fine=step * 0.5, coarse=step * 1.25)
+        else:
+            hang = head.drape(start, out, 1.0, step=0.008, margin=m, stiff=0.85, bend=0.05, gravity=g, stop_z=sz)
+            pts = resample([root] + hang, head.z_skull - 0.02, fine=step * 0.5, coarse=step * 1.25)
         # round the bends on the head (sweeps off the forehead), then re-clear the head
         for _ in range(4):
             new = list(pts)
             for i in range(2, len(pts) - 1):
                 if pts[i].z > head.z_skull - 0.04:
                     new[i] = pts[i] * 0.5 + (pts[i - 1] + pts[i + 1]) * 0.25
-            pts = [new[0], new[1]] + [head.push_out(q, None, head_margin=m) for q in new[2:]]
+            pts = [new[0], new[1]] + [head.push_out(q, None, head_margin=(min(m, r + 0.0015 + (m - r) * smoothstep(0.0, 0.1, (q - pts[0]).length)) if flat else m)) for q in new[2:]]
         wide = [q for q in pts if q.z < head.z_neck + 0.03 and abs(q.x) > 0.13]
         if wide:
             hairkit.log("WIDE strand", len(strands), "az %.0f el %.0f front %s" % (az, el, front), "max|x| %.3f at z %.3f" % (max(abs(q.x) for q in wide), wide[0].z))
@@ -260,3 +293,87 @@ def finish_style(style, head, b, roughness=0.8, tex=None):
 # The one shared medium-locs layout (locs + locs_retwist).
 LOCS = dict(spacing=11.5, jitter=0.25, seed=21, radius=0.0057, r_var=0.08, stop_z=1.12, stop_var=0.03, step=0.032, sweep_el=52.0)
 LOCS_SIDES = 5
+
+
+def fall_layout(head, spacing=11.0, jitter=0.25, seed=21, radius=0.0057, r_var=0.08, stop_z=1.12, stop_var=0.03, step=0.03, layer=0.011, wavy=0.0):
+    """A clean, complete hanging layout (locs, curls): a centre part; every strand is one unbroken
+    piece from its root to its tip. Front and side strands lie along the scalp out to the side of
+    the head above the ear, then hang in front of the shoulders (the face stays clear); back
+    strands lie down the back of the head and hang down the back. A strand's height over the scalp
+    follows its root's height, so upper strands always lie OVER lower ones and never pass through
+    them; below the neck they hang over the clothes (BODY_MARGIN)."""
+    rng = np.random.default_rng(seed)
+    roots = hairkit.scalp_roots(head, spacing_deg=spacing, jitter=jitter, seed=seed)
+    strands = []
+    for az, el in roots:
+        p, n = head.surf(az, el)
+        r = radius * (1 + rng.uniform(-r_var, r_var))
+        sz = stop_z + rng.uniform(-stop_var, stop_var)
+        hl = head.hairline(az)
+        h = min(1.0, max(0.0, (el - hl) / max(89 - hl, 1)))
+        m = r + 0.0035 + layer * h
+        side = 1.0 if (az > 0 or (az == 0 and rng.uniform() < 0.5)) else -1.0
+        a = abs(az)
+        front = a < 112
+        if front:
+            # out to the side of the head, just above and in front of the ear
+            fa, fe = side * (78.0 + 14.0 * min(1.0, a / 110)), 18.0 + 6.0 * (1 - h)
+        else:
+            fa, fe = az, 6.0
+        d0 = head.dir(az, el)
+        d1 = head.dir(fa, fe)
+        path = []
+        N_ = 28
+        for i in range(N_ + 1):
+            t = i / N_
+            dv = (d0 * (1 - t) + d1 * t).normalized()
+            q, nq = head.surf_dir(dv)
+            lift = (r + 0.0015) + (m - r - 0.0015) * smoothstep(0.0, 0.3, t)
+            path.append(q + nq * lift)
+        # leaving the scalp: front strands fall forward of the shoulder, back ones down the back,
+        # each keeping its own lane (no crossing, never onto the arms)
+        lane = max(-0.13, min(0.13, path[-1].x * 1.15))
+        g = head.lane_gravity(lane, front=front)
+        down = (path[-1] - path[-2]).normalized()
+        hang = head.drape(path[-1], down, 1.0, step=0.008, margin=m, stiff=0.88, bend=0.08, gravity=g, stop_z=sz)
+        root = p - n * max(0.002, r * 0.75)
+        pts = resample([root] + path + hang[1:], head.z_skull - 0.02, fine=step * 0.5, coarse=step * 1.25)
+        for _ in range(3):
+            new = list(pts)
+            for i in range(2, len(pts) - 1):
+                new[i] = pts[i] * 0.5 + (pts[i - 1] + pts[i + 1]) * 0.25
+            pts = [new[0], new[1]] + [head.push_out(q, None, head_margin=min(m, r + 0.0015 + (m - r) * smoothstep(0.0, 0.08, (q - pts[0]).length))) for q in new[2:]]
+        if wavy > 0:
+            ph = rng.uniform(0, 6.28, 2)
+            fq = rng.uniform(7, 12)
+            L = 0.0
+            for i in range(2, len(pts)):
+                L += (pts[i] - pts[i - 1]).length
+                k = smoothstep(0.03, 0.12, L) * wavy
+                pts[i] = head.push_out(pts[i] + Vector((math.sin(L * fq + ph[0]), math.cos(L * fq * 0.7 + ph[1]) * 0.5, 0)) * k, None, head_margin=m)
+        strands.append({"az": az, "el": el, "p": p, "n": n, "r": r, "pts": pts, "front": front, "margin": m, "rng": float(rng.uniform())})
+    hairkit.log("fall layout", len(strands), "strands")
+    return strands
+
+
+def helix(pts, coil_r=0.008, pitch=0.018, start=0.04, phase=0.0, res=0.0025):
+    """A coil wound round a strand's centre line (curls): the radius grows from 0 over `start` m
+    from the root, so the curl springs from the scalp, never floating off it."""
+    fine = [pts[0]]
+    for i in range(1, len(pts)):
+        seg = pts[i] - pts[i - 1]
+        k = max(1, int(seg.length / res))
+        fine += [pts[i - 1] + seg * (j / k) for j in range(1, k + 1)]
+    pts = fine
+    out = [pts[0]]
+    L = 0.0
+    up = Vector((0, 0, 1))
+    for i in range(1, len(pts)):
+        L += (pts[i] - pts[i - 1]).length
+        tg = (pts[min(i + 1, len(pts) - 1)] - pts[i - 1]).normalized()
+        e1 = tg.cross(up if abs(tg.dot(up)) < 0.9 else Vector((1, 0, 0))).normalized()
+        e2 = tg.cross(e1).normalized()
+        th = phase + 2 * math.pi * L / pitch
+        rr = coil_r * smoothstep(0.0, start, L)
+        out.append(pts[i] + (e1 * math.cos(th) + e2 * math.sin(th)) * rr)
+    return out

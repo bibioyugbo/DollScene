@@ -1,0 +1,579 @@
+{
+  "top_crop_tank": {
+    "name": "Butterfly crop tank",
+    "slot": "top",
+    "store": "thai",
+    "colors": [
+      "#C8102E",
+      "#FFC72C",
+      "#2A1200"
+    ],
+    "ease": 0.0
+  },
+  "shoes_pumps": {
+    "name": "Pointy pumps",
+    "slot": "shoes",
+    "store": "moncherie",
+    "colors": [
+      "#111111",
+      "#2A1A14",
+      "#111111"
+    ],
+    "finish": "patent",
+    "ease": 0.0,
+    "arch": 0.5,
+    "lift": 0.0676
+  },
+  "shoes_block_heels": {
+    "name": "Block heels",
+    "slot": "shoes",
+    "store": "dopebyfabby",
+    "colors": [
+      "#D9B35B",
+      "#2A1A14",
+      "#D9B35B"
+    ],
+    "finish": "leather",
+    "ease": 0.0,
+    "arch": 0.42,
+    "lift": 0.0594
+  },
+  "shoes_mules": {
+    "name": "Heeled mules",
+    "slot": "shoes",
+    "store": "moncherie",
+    "colors": [
+      "#F2B8C6",
+      "#2A1A14",
+      "#F2B8C6"
+    ],
+    "finish": "leather",
+    "ease": 0.0,
+    "arch": 0.36,
+    "lift": 0.0531
+  },
+  "shoes_strappy": {
+    "name": "Strappy sandals",
+    "slot": "shoes",
+    "store": "booty",
+    "colors": [
+      "#C9A04A",
+      "#2A1A14",
+      "#C9A04A"
+    ],
+    "finish": "leather",
+    "ease": 0.0,
+    "arch": 0.5,
+    "lift": 0.0666
+  },
+  "shoes_ankle_strap": {
+    "name": "Ankle-strap heels",
+    "slot": "shoes",
+    "store": "dopebyfabby",
+    "colors": [
+      "#B0124A",
+      "#2A1A14",
+      "#D9B35B"
+    ],
+    "finish": "patent",
+    "ease": 0.0,
+    "arch": 0.46,
+    "lift": 0.0636
+  },
+  "shoes_platforms": {
+    "name": "Platform heels",
+    "slot": "shoes",
+    "store": "okrika",
+    "colors": [
+      "#E07AA6",
+      "#FFFFFF",
+      "#E07AA6"
+    ],
+    "finish": "leather",
+    "ease": 0.0,
+    "arch": 0.42,
+    "lift": 0.0864
+  },
+  "shoes_kitten": {
+    "name": "Kitten heels",
+    "slot": "shoes",
+    "store": "thai",
+    "colors": [
+      "#F4EFE6",
+      "#2A1A14",
+      "#C9A04A"
+    ],
+    "finish": "leather",
+    "ease": 0.0,
+    "arch": 0.2,
+    "lift": 0.0346
+  },
+  "shoes_beaded_sandals": {
+    "name": "Coral beaded heels",
+    "slot": "shoes",
+    "store": "dejideji",
+    "colors": [
+      "#C9A04A",
+      "#5A3A22",
+      "#E4572E"
+    ],
+    "finish": "leather",
+    "ease": 0.0,
+    "arch": 0.3,
+    "lift": 0.0484
+  },
+  "shoes_heel_boots": {
+    "name": "Heeled boots",
+    "slot": "shoes",
+    "store": "tolaptsd",
+    "colors": [
+      "#141414",
+      "#141414",
+      "#8A8A8A"
+    ],
+    "finish": "leather",
+    "ease": 0.0,
+    "arch": 0.34,
+    "lift": 0.0528
+  },
+  "top_tank": {
+    "name": "Ribbed tank",
+    "slot": "top",
+    "store": "thai",
+    "colors": [
+      "#F4F1EA",
+      "#1C1C1C",
+      "#C9A06A"
+    ],
+    "ease": 0.0
+  },
+  "top_cami": {
+    "name": "Satin cami",
+    "slot": "top",
+    "store": "moncherie",
+    "colors": [
+      "#9CB89A",
+      "#F4EFE6",
+      "#C9A06A"
+    ],
+    "ease": 0.0
+  },
+  "top_corset": {
+    "name": "Sweetheart corset",
+    "slot": "top",
+    "store": "moncherie",
+    "colors": [
+      "#F2B8C6",
+      "#E39AAD",
+      "#FFFFFF"
+    ],
+    "ease": 0.0
+  },
+  "top_bandeau": {
+    "name": "Bandeau",
+    "slot": "top",
+    "store": "dopebyfabby",
+    "colors": [
+      "#0B6E4F",
+      "#0E8A63",
+      "#D9B35B"
+    ],
+    "ease": 0.0
+  },
+  "top_baby_tee": {
+    "name": "Y2K baby tee",
+    "slot": "top",
+    "store": "thai",
+    "colors": [
+      "#F7C6D9",
+      "#E0457B",
+      "#FFFFFF"
+    ],
+    "ease": 0.0
+  },
+  "top_oversized_tee": {
+    "name": "No Rules oversized tee",
+    "slot": "top",
+    "store": "tolaptsd",
+    "colors": [
+      "#232323",
+      "#EDE8DD",
+      "#E63946"
+    ],
+    "ease": 0.0
+  },
+  "top_crop_tee": {
+    "name": "Wild crop tee",
+    "slot": "top",
+    "store": "tolaptsd",
+    "colors": [
+      "#6E6E72",
+      "#141414",
+      "#F2C14E"
+    ],
+    "ease": 0.0
+  },
+  "top_flame_tee": {
+    "name": "Flame tee",
+    "slot": "top",
+    "store": "okrika",
+    "colors": [
+      "#111111",
+      "#FF6A00",
+      "#FFD23F"
+    ],
+    "ease": 0.0
+  },
+  "top_buba": {
+    "name": "Adire buba",
+    "slot": "top",
+    "store": "dejideji",
+    "colors": [
+      "#1E2A5C",
+      "#7E9BD6",
+      "#D9A441"
+    ],
+    "ease": 0.0
+  },
+  "top_peplum": {
+    "name": "Ankara peplum top",
+    "slot": "top",
+    "store": "dejideji",
+    "colors": [
+      "#F2A33A",
+      "#1B7F79",
+      "#E4572E"
+    ],
+    "ease": 0.0
+  },
+  "top_mesh": {
+    "name": "Mesh long sleeve",
+    "slot": "top",
+    "store": "tolaptsd",
+    "colors": [
+      "#0A0A0A",
+      "#0A0A0A",
+      "#8A8A8A"
+    ],
+    "ease": 0.0
+  },
+  "top_sports_bra": {
+    "name": "Sports bra",
+    "slot": "top",
+    "store": "novasport",
+    "colors": [
+      "#2D5BD0",
+      "#FFFFFF",
+      "#FF6A00"
+    ],
+    "ease": 0.0
+  },
+  "top_lace_bralette": {
+    "name": "Lace bralette",
+    "slot": "top",
+    "store": "booty",
+    "colors": [
+      "#B0124A",
+      "#F2B8C6",
+      "#D9B35B"
+    ],
+    "ease": 0.0
+  },
+  "bottom_baggy_jeans": {
+    "name": "Baggy jeans",
+    "slot": "bottom",
+    "store": "thai",
+    "colors": [
+      "#7FA3C9",
+      "#D8A04A",
+      "#B8B8B8"
+    ],
+    "ease": 0.0
+  },
+  "bottom_skinny_jeans": {
+    "name": "Skinny jeans",
+    "slot": "bottom",
+    "store": "okrika",
+    "colors": [
+      "#2B3A55",
+      "#C99A55",
+      "#9A9A9A"
+    ],
+    "ease": 0.0
+  },
+  "bottom_ripped_jeans": {
+    "name": "Ripped skinny jeans",
+    "slot": "bottom",
+    "store": "tolaptsd",
+    "colors": [
+      "#1E1E22",
+      "#D8D8D8",
+      "#9A9A9A"
+    ],
+    "ease": 0.0
+  },
+  "bottom_cargo": {
+    "name": "Cargo pants",
+    "slot": "bottom",
+    "store": "okrika",
+    "colors": [
+      "#5A5A3C",
+      "#4A4A30",
+      "#C9A06A"
+    ],
+    "ease": 0.0
+  },
+  "bottom_flare_pants": {
+    "name": "High-waist flares",
+    "slot": "bottom",
+    "store": "dopebyfabby",
+    "colors": [
+      "#0B6E4F",
+      "#0E8A63",
+      "#0B6E4F"
+    ],
+    "ease": 0.0
+  },
+  "bottom_leggings": {
+    "name": "Leggings",
+    "slot": "bottom",
+    "store": "novasport",
+    "colors": [
+      "#141414",
+      "#FFFFFF",
+      "#2D5BD0"
+    ],
+    "ease": 0.0
+  },
+  "bottom_lace_briefs": {
+    "name": "Lace briefs",
+    "slot": "bottom",
+    "store": "booty",
+    "colors": [
+      "#B0124A",
+      "#F2B8C6",
+      "#D9B35B"
+    ],
+    "ease": 0.0
+  },
+  "bottom_mini_skirt": {
+    "name": "A-line mini skirt",
+    "slot": "bottom",
+    "store": "thai",
+    "colors": [
+      "#EEEBE3",
+      "#D8D2C4",
+      "#B8B8B8"
+    ],
+    "ease": 0.0959
+  },
+  "bottom_pleated_mini": {
+    "name": "Tartan pleated mini",
+    "slot": "bottom",
+    "store": "tolaptsd",
+    "colors": [
+      "#A61E22",
+      "#141414",
+      "#F2C14E"
+    ],
+    "ease": 0.1099
+  },
+  "bottom_satin_mini": {
+    "name": "Satin mini skirt",
+    "slot": "bottom",
+    "store": "moncherie",
+    "colors": [
+      "#EBA9BA",
+      "#F7D6E0",
+      "#FFFFFF"
+    ],
+    "ease": 0.1066
+  },
+  "bottom_midi_skirt": {
+    "name": "Floral midi skirt",
+    "slot": "bottom",
+    "store": "thai",
+    "colors": [
+      "#F6EFE3",
+      "#E8735A",
+      "#4FA65E"
+    ],
+    "ease": 0.1294
+  },
+  "bottom_pencil_skirt": {
+    "name": "Ankara pencil skirt",
+    "slot": "bottom",
+    "store": "dejideji",
+    "colors": [
+      "#F2A33A",
+      "#1B7F79",
+      "#E4572E"
+    ],
+    "ease": 0.076
+  },
+  "bottom_iro": {
+    "name": "Adire iro (wrapper)",
+    "slot": "bottom",
+    "store": "dejideji",
+    "colors": [
+      "#1E2A5C",
+      "#7E9BD6",
+      "#D9A441"
+    ],
+    "ease": 0.0804
+  },
+  "dress_slip": {
+    "name": "Satin slip dress",
+    "slot": "dress",
+    "store": "moncherie",
+    "colors": [
+      "#C9A7D8",
+      "#E6D3EF",
+      "#FFFFFF"
+    ],
+    "ease": 0.1114
+  },
+  "dress_sequin_mini": {
+    "name": "Gold sequin mini",
+    "slot": "dress",
+    "store": "dopebyfabby",
+    "colors": [
+      "#D9B35B",
+      "#F2D98A",
+      "#FFFFFF"
+    ],
+    "ease": 0.0623
+  },
+  "dress_velvet_mini": {
+    "name": "Velvet & gold mini",
+    "slot": "dress",
+    "store": "dejideji",
+    "colors": [
+      "#0B0B0E",
+      "#C9A04A",
+      "#E4572E"
+    ],
+    "ease": 0.0788
+  },
+  "dress_lace_bodysuit": {
+    "name": "Lace bodysuit",
+    "slot": "dress",
+    "store": "booty",
+    "colors": [
+      "#111111",
+      "#B0124A",
+      "#D9B35B"
+    ],
+    "ease": 0.0
+  },
+  "dress_maxi": {
+    "name": "Lilac maxi dress",
+    "slot": "dress",
+    "store": "moncherie",
+    "colors": [
+      "#B9A2D8",
+      "#E8DDF4",
+      "#FFFFFF"
+    ],
+    "ease": 0.1752
+  },
+  "top_square_crop": {
+    "name": "Square-neck crop top",
+    "slot": "top",
+    "store": "booty",
+    "colors": [
+      "#0B0B0E",
+      "#1A1A1E",
+      "#D9B35B"
+    ],
+    "ease": 0.0
+  },
+  "bottom_micro_skirt": {
+    "name": "Micro mini skirt",
+    "slot": "bottom",
+    "store": "booty",
+    "colors": [
+      "#0B0B0E",
+      "#1A1A1E",
+      "#D9B35B"
+    ],
+    "ease": 0.0474
+  },
+  "top_everyday_tee": {
+    "name": "Everyday tee",
+    "slot": "top",
+    "store": "okrika",
+    "colors": [
+      "#F2F0EA",
+      "#B8A68A",
+      "#F2F0EA"
+    ],
+    "ease": 0.0
+  },
+  "bottom_overalls": {
+    "name": "Denim overalls",
+    "slot": "bottom",
+    "store": "okrika",
+    "colors": [
+      "#5B7FA8",
+      "#D8A04A",
+      "#C9A04A"
+    ],
+    "ease": 0.0
+  },
+  "bottom_wide_trousers": {
+    "name": "Wide-leg trousers",
+    "slot": "bottom",
+    "store": "dopebyfabby",
+    "colors": [
+      "#E8DCC6",
+      "#D9C9AE",
+      "#C9A04A"
+    ],
+    "ease": 0.0
+  },
+  "top_track_jacket": {
+    "name": "Track jacket",
+    "slot": "top",
+    "store": "novasport",
+    "colors": [
+      "#141E3C",
+      "#FFFFFF",
+      "#E8E8E8"
+    ],
+    "ease": 0.0
+  },
+  "bottom_track_pants": {
+    "name": "Track pants",
+    "slot": "bottom",
+    "store": "novasport",
+    "colors": [
+      "#141E3C",
+      "#FFFFFF",
+      "#E8E8E8"
+    ],
+    "ease": 0.0
+  },
+  "top_suit_jacket": {
+    "name": "Tailored jacket",
+    "slot": "top",
+    "store": "dopebyfabby",
+    "colors": [
+      "#1E2740",
+      "#F4F4F2",
+      "#5A6E9A"
+    ],
+    "ease": 0.0
+  },
+  "bottom_suit_trousers": {
+    "name": "Tailored trousers",
+    "slot": "bottom",
+    "store": "dopebyfabby",
+    "colors": [
+      "#1E2740",
+      "#1E2740",
+      "#1E2740"
+    ],
+    "ease": 0.0
+  }
+}

@@ -1,5 +1,74 @@
 # Changelog
 
+## Unreleased: the October 14 brief
+
+- **Loader**: text only, three or four status lines ("Setting up balloons...", "Buying the
+  drinks..."), about 2.5 s, then in; everything else keeps loading behind.
+- **Accounts**: sign up (username = the doll's name, password, date of birth, 18+) and sign in;
+  30-day refresh tokens that rotate on use and end on Sign out; scrypt passwords; "That username is
+  already taken." and other exact errors; the doll is saved to the account. Served by the realtime
+  server, mounted on the game's own dev/preview origin (so chat is live, not "offline"). Logo: the
+  favicon with a sparkle on its right.
+- **Landing**: Bibi 11th (the middle of 21), witty one-liners for every doll and random doll;
+  women slimmer overall; plus-size men and women in Random doll; no toasts or confirm dialogs while
+  trying things on (changes land on the doll).
+- **Cast**: Bibi's iced matcha (clear cup, milk and matcha layers, ice, straw, held upright);
+  Ifeoma's green bandeau, wide-leg trousers and a fat hand-rolled joint seen from the front, with low,
+  red eyes (anyone holding a joint); Grace long blonde in a lilac maxi; Mei a caramel baddie in a
+  black two-piece with her phone, long nails, her part in her skin tone; Sofia's mark beside her lip,
+  darker; Chloe in overalls; Nala's long curly wig; new bios. Men on the male base: straight backs,
+  lean thighs, flat chests (Ji-woo's reduced); Tobi in round glasses; Femi in a tracksuit; Chidi in
+  a tailored suit; Jayden fat with lean thighs. Glasses: round or rectangular only.
+- **Wardrobe**: every store stocks at least four tops, bottoms, dresses and shoes (cross-stocked
+  pieces in their colourways); chains, necklaces and pearls drape over clothing.
+- **Fixes**: male chests and every garment over them shaded with craters (morph normals of keys
+  built on other morphs are recomputed after the build: `fix_morph_normals.py`); stray sliver
+  triangles poking out of garments are dropped (lace briefs, slip dress); tattoos didn't render
+  (the skin used 17 texture units; hide masks now pack into one) and now read on every skin tone;
+  a wig keeps the last doll's colour when the next doll wears the same style; Tolaptsd's shutter
+  flicker; the realtime server crashing on a dropped connection; swipes on Safari touch.
+- **The street**: the stores round a curve like a game map, golden hour; each building its own
+  roofline; ← →, wheel/trackpad and swipe move store to store; the active store glows (outline,
+  aura, sign, light) and chimes its own note; Sign out (no Back); "Back to Street" in the stores.
+- **Studio**: tooltips on the rail, a real shoe icon, Body/Face zoom, Undo and Turn only ("Hold to
+  see before" removed), Take a picture (mirror selfie, selfie, screen capture; save or share).
+- **Beauty Doctor**: piercings grouped by area; a true septum horseshoe, a long industrial bar,
+  three lip piercings (labret, Monroe, snake bites).
+- **Skincare**: the morning first (bonnet off, pull the pimple patch, peel the eye patches, wash);
+  a fuller face wash (wet, lather between the palms, massage, rinse, pat dry with a towel); ASMR
+  sounds per step (foam bubbles, creamy squelches, pats, peels...); tap the pimple, then the squeeze.
+- **Make a Scene**: only the selections, with the scene's name and dress code top left; light and
+  weather as painted swatches (your view only); real players per scene or "Be the first to enter";
+  "X and Y are here" on arrival; tap a person to talk to them (tagged), or talk to everyone; Selfie
+  in every scene (the real shot, to save or share); "Kiss" removed (it was the pout); real dolls as
+  the guests; hands clasped redone.
+
+## Unreleased: wardrobe pieces, cast and street (October 2026 brief)
+
+- **Wardrobe as pieces**: 40 reusable pieces (14 tops, 13 bottoms, 4 dresses, 9 heeled shoes), each
+  one asset recoloured through three colour slots (main, second, accent) with colourway presets and
+  per-slot pickers; dolls are presets that reference pieces. Classic MakeHuman sets/shoes remain
+  (one tint). Old saves are migrated to pieces. Fitted tops tuck into loose bottoms.
+- **Shoes**: pumps, block heels, mules, strappy sandals, ankle-strap heels, heeled boots, platforms,
+  kitten heels, coral beaded heels: lofted around the arched foot; the app pitches the feet and lifts
+  the doll by each shoe's own arch/lift. Dresses and skirts are always worn with heels.
+- **Bodies**: ChestFlat (a male chest: masculine dolls no longer show breasts), Pregnant (Grace only),
+  arms relax in the doll's own frame (no spread arms after turning her).
+- **Accessories & body art**: coral headband/necklaces/bracelets/anklets, waist beads, horsehair
+  whisk, lit joint (ember + smoke), clutch, fan, rainbow pins, glasses chain, layered chains,
+  industrial piercing; tattoos inked in the skin (12 designs, 23 spots), laser removal and piercing
+  counter at the Beauty Doctor. Glasses re-spaced to real frame proportions. Mei's wig has a part line.
+- **Cast**: 21 dolls with one-line bios (new: Bambi, Jayden, Elias, Remi, Candi); new hair: boho
+  Fulani braids (613 blonde for Bibi), a fringe afro (Ifeoma).
+- **Entry**: Enter button sized to its label; date of birth required (under 18 can't enter; only the
+  yes/no is kept); unique doll names (Firestore `dollNames`, realtime-server register in dev):
+  "That name is already taken"; Random doll is text only; the name sits centred under the doll.
+- **Hub**: a golden-hour high street with 12 distinct buildings (Tolaptsd, Thai Collective, Mon
+  Cherie, Nova Sport, Glam Studio, Dope by Fabby, Deji Deji, Skin Bay, Beauty Doctor, Okrika Closet,
+  BOOTY, Make a Scene), lit display windows, lamps, trees, traffic; "People already here" when others
+  are inside. Header: logo + Back only. Store interiors match their buildings.
+- **Loader**: cycling glam icons (hair dryer, hangers, ring, lipstick, chain), "Loading your scenes...".
+
 ## Unreleased: DollScene · Beauty Studio upgrade (`dollscene-lagos-life`)
 
 See `docs/UPGRADE_AUDIT.md` for the audit and setup.

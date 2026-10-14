@@ -10,7 +10,7 @@ import { Matrix4, Quaternion, Vector3, type Bone, type Object3D, type SkinnedMes
  */
 
 export type Side = 'Left' | 'Right'
-export type Grip = 'relaxed' | 'open' | 'flat' | 'point' | 'tap' | 'pinch' | 'hold' | 'cup' | 'peace' | 'fist'
+export type Grip = 'relaxed' | 'open' | 'flat' | 'point' | 'tap' | 'pinch' | 'hold' | 'cup' | 'peace' | 'fist' | 'wrap'
 
 const FINGERS = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'] as const
 type Finger = (typeof FINGERS)[number]
@@ -27,6 +27,8 @@ const GRIPS: Record<Grip, Record<Finger, [number, number, number]>> = {
   cup: { Thumb: [0.3, 0.25, 0.15], Index: [0.35, 0.45, 0.3], Middle: [0.4, 0.5, 0.3], Ring: [0.45, 0.55, 0.3], Pinky: [0.5, 0.6, 0.35] },
   // index and middle up and apart, ring and pinky curled into the palm, the thumb folded over them
   peace: { Thumb: [0.95, 0.75, 0.55], Index: [0.02, 0.04, 0.02], Middle: [0.02, 0.04, 0.02], Ring: [1.45, 1.55, 0.85], Pinky: [1.5, 1.6, 0.85] },
+  // round a cup ~8 cm across: fingers curled just enough to meet its side, thumb opposite
+  wrap: { Thumb: [0.55, 0.3, 0.2], Index: [0.55, 0.62, 0.42], Middle: [0.6, 0.66, 0.44], Ring: [0.62, 0.68, 0.44], Pinky: [0.66, 0.7, 0.46] },
   fist: { Thumb: [0.7, 0.6, 0.5], Index: [1.3, 1.45, 0.8], Middle: [1.35, 1.5, 0.8], Ring: [1.4, 1.5, 0.8], Pinky: [1.45, 1.55, 0.8] },
 }
 

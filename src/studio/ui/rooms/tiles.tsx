@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react'
 import { PROCEDURES } from '../../../shared/studio/clinic'
 import { HAIR_COLOR_PRESETS } from '../../../shared/studio/hairColors'
-import { LOCS, type ClinicId, type HairId, type Jewellery, type MorphId, type SpotId, type StudioLook } from '../../../shared/studio/look'
+import { HEELS, LOCS, needsHeels, TATTOO_DESIGNS, type ClinicId, type Extras, type HairId, type Jewellery, type MorphId, type PieceSlot, type SpotId, type StudioLook, type TattooDesign, type TattooSpot } from '../../../shared/studio/look'
 import { MAKEUP_PRESETS, mixHex } from '../../../shared/studio/presets'
-import { dressStep, hairColourStep, hairStyleStep, wearStep } from '../../actions/dress'
+import { dressStep, hairColourStep, hairStyleStep, tattooRemoveStep, tattooStep, wearStep } from '../../actions/dress'
 import { BONNET_ON, BRUSH, DRY, HAIR_PRODUCTS, hairKind, RETWIST, RETWIST_TO, TAKEDOWN, TAKEDOWN_TO, WASH } from '../../actions/haircare'
 import { amountOf, BROW_STEP, lookStep, makeupStep, REMOVE_ALL, shadeProduct, type MakeupKey } from '../../actions/makeup'
 import { MANICURE } from '../../actions/nailcare'
-import { BONNET_OFF, BRIGHTEN, CLEANSE, COMPRESS, EXFOLIATE, EYE_CREAM, FACE_WASH, LIP_BALM, MOISTURISER, PATCH_ON, PATCHES, POP, PRODUCTS, SERUM, SOOTHE, SPOT, SUNSCREEN, TONER, WAKE, skinCheckIn } from '../../actions/skincare'
+import { BONNET_OFF, BRIGHTEN, CLEANSE, COMPRESS, EXFOLIATE, EYE_CREAM, EYE_PATCHES, FACE_WASH, LIP_BALM, MOISTURISER, PATCH_ON, PATCHES, POP, PRODUCTS, SERUM, SOOTHE, SPOT, SUNSCREEN, TONER, WAKE, skinCheckIn } from '../../actions/skincare'
 import { runStep, type Product, type StepDef } from '../../actions/steps'
-import { url, type CharacterCatalog } from '../../character/catalog'
+import { url, wearables, type CharacterCatalog, type Wearable } from '../../character/catalog'
+import { pickSpot } from '../spotPick'
+import { tattooPreview } from '../../character/tattoos'
 import { PALETTES } from '../../editors/palettes'
 import type { RoomId } from '../../rooms'
 import { useStudio, type Category } from '../../state/store'
@@ -33,7 +35,11 @@ export interface Tile {
   blocked?: string | null
   /** A colour dropdown next to the icon (hairstyles). */
   palette?: { label: string; colors: { color: string; name: string }[]; value: string | null; onPick: (c: string) => void }
+  /** Colourways and per-slot colours for a recolourable piece (primary, secondary, accent). */
+  colours?: { label: string; ways: { name: string; colors: [string, string, string] }[]; value: [string, string, string] | null; slots: 1 | 3; onPick: (c: [string, string, string]) => void }
   sfx?: Sfx
+  /** A heading the tile sits under (piercings: Ears, Nose, Lips, Brow, Navel). */
+  section?: string
 }
 
 export const CATEGORY_NAMES: Record<Category, string> = {
@@ -49,12 +55,17 @@ export const CATEGORY_NAMES: Record<Category, string> = {
   lips: 'Lips',
   looks: 'Full looks',
   nails: 'Nails',
-  jewellery: 'Jewellery',
+  jewellery: 'Jewellery counter',
   hairstyles: 'Hairstyles',
   haircolour: 'Hair colour',
   haircare: 'Haircare',
-  outfits: 'Outfits',
+  tops: 'Tops',
+  bottoms: 'Bottoms',
+  dresses: 'Dresses & sets',
   shoes: 'Shoes',
+  accessories: 'Accessories',
+  tattoos: 'Tattoo studio',
+  piercings: 'Piercing counter',
   clinicFace: 'Face',
   clinicBody: 'Body & hair',
 }
@@ -97,16 +108,27 @@ function skincareTiles(cat: Category, look: StudioLook): Tile[] {
               l.care.morning = true
               l.makeup = structuredClone(l.makeup)
               l.hair.care.bonnet = true
+              // she slept in her overnight things: a patch on a pimple and hydrogel eye patches
+              const pimple = (Object.entries(l.care.spots) as [SpotId, string][]).find(([, st]) => st === 'pimple')
+              if (pimple) l.care.patches = [pimple[0]]
+              else {
+                l.care.spots.cheekL = 'pimple'
+                l.care.patches = ['cheekL']
+              }
+              l.care.eyePatches = true
             })
             s.markBefore()
             await runStep(WAKE, { product: WAKE.products[0], target: null, option: null })
           },
         },
-        stepTile('bonnetOff', 'Bonnet off', <Art kind="bonnetOff" />, BONNET_OFF, look, BONNET_OFF.products[0]),
+        stepTile('bonnetOff', 'Bonnet off', <Art kind="bonnetOff" />, BONNET_OFF, look, BONNET_OFF.products[0], { sfx: 'whoosh' }),
+        stepTile('patchOff', 'Pull pimple patch', <Art kind="patchOff" skin={skin} />, PATCHES, look, PRODUCTS.fingers[0], { badge: c.patches.length ? `×${c.patches.length}` : undefined, sfx: 'peel' }),
+        stepTile('eyePatches', 'Eye patches off', <Art kind="patch" skin={skin} color="#F5B3C3" />, EYE_PATCHES, look, PRODUCTS.fingers[0], { sfx: 'peel' }),
+        stepTile('wash', 'Wash face (foamy)', <Art kind="wash" skin={skin} />, FACE_WASH, look, PRODUCTS.cleanser[0], { on: done('wash'), sfx: 'bubbles' }),
       ]
     case 'cleanse':
       return [
-        stepTile('wash', 'Face wash', <Art kind="wash" skin={skin} />, FACE_WASH, look, PRODUCTS.cleanser[0], { on: done('wash'), sfx: 'squish' }),
+        stepTile('wash', 'Wash face (foamy)', <Art kind="wash" skin={skin} />, FACE_WASH, look, PRODUCTS.cleanser[0], { on: done('wash'), sfx: 'bubbles' }),
         stepTile('foam', 'Foam cleanser', <Art kind="foamCleanser" color="#9FD8C4" color2="#2B6B5A" />, CLEANSE, look, PRODUCTS.cleanser[0], { option: 'cloth', sfx: 'squish' }),
         stepTile('balm', 'Melt balm', <Art kind="balmCleanser" color="#F4D9A8" color2="#C9A06A" />, CLEANSE, look, PRODUCTS.cleanser[1], { option: 'cloth', sfx: 'squish' }),
         stepTile('micellar', 'Micellar + pad', <Art kind="micellar" color="#D8E8F6" color2="#7FA8C8" />, CLEANSE, look, PRODUCTS.cleanser[2], { sfx: 'swipe' }),
@@ -115,9 +137,18 @@ function skincareTiles(cat: Category, look: StudioLook): Tile[] {
       const count = (states: string[]) => Object.values(c.spots).filter((s) => states.includes(s as string)).length
       const pimples = count(['pimple'])
       return [
-        stepTile('pop', 'Pop a pimple', <Art kind="pop" skin={skin} />, POP, look, PRODUCTS.fingers[0], { option: 'squeeze', badge: pimples ? `×${pimples}` : undefined, sfx: 'squish' }),
+        {
+          // tap the pimple first: the face zooms in with a ring on each one; the squeeze starts on
+          // the one she taps
+          ...stepTile('pop', 'Pop a pimple', <Art kind="pop" skin={skin} />, POP, look, PRODUCTS.fingers[0], { option: 'squeeze', badge: pimples ? `×${pimples}` : undefined, sfx: 'squelch' }),
+          run: async () => {
+            const ids = (POP.targets?.(look) ?? []).map((t) => t.id as SpotId)
+            if (!ids.length) return
+            const id = await pickSpot(ids, 'Tap a pimple to squeeze it')
+            if (id) await runStep(POP, { product: PRODUCTS.fingers[0], target: id, option: 'squeeze' })
+          },
+        },
         stepTile('patchOn', 'Pimple patch', <Art kind="patch" skin={skin} />, PATCH_ON, look, PRODUCTS.fingers[0], { sfx: 'dab' }),
-        stepTile('patchOff', 'Peel a patch', <Art kind="patchOff" skin={skin} />, PATCHES, look, PRODUCTS.fingers[0], { badge: c.patches.length ? `×${c.patches.length}` : undefined, sfx: 'peel' }),
         stepTile('spot', 'Spot gel', <Art kind="spotGel" skin={skin} color="#CFE8D0" color2="#5FAE6A" />, SPOT, look, PRODUCTS.spot[0], { sfx: 'dab' }),
         stepTile('compress', 'Warm compress', <Art kind="compress" color="#F4C3A1" />, COMPRESS, look, PRODUCTS.compress[0], { badge: count(['boil']) ? `×${count(['boil'])}` : undefined, sfx: 'pat' }),
         stepTile('soothe', 'Aloe calm gel', <Art kind="soothe" />, SOOTHE, look, PRODUCTS.soothe[0], { badge: c.rash > 0.05 ? 'rash' : undefined, sfx: 'pat' }),
@@ -306,46 +337,10 @@ function makeupTiles(cat: Category, look: StudioLook): Tile[] {
           art: <Art kind="remove" />,
           run: () => {
             useStudio.getState().apply((l) => void (l.nails = { ...l.nails, amount: 0, art: 'none', gems: false, length: 0, shape: 'natural' }))
-            useStudio.getState().notify('Polish off, nails back to natural.', 'success')
           },
           blocked: look.nails.amount < 0.01 && look.nails.length < 0.01 ? 'No polish on right now.' : null,
         },
       ]
-    case 'jewellery': {
-      const j = look.jewellery
-      const metal = { gold: '#D4A64A', silver: '#C8CBD2', rose: '#D9A0A0' }[j.metal]
-      const wear = (id: string, label: string, art: ArtKind, patch: Partial<Jewellery>, on: boolean, framing: StepDef['framing'] = 'face', off: Partial<Jewellery> = {}): Tile => ({
-        id,
-        label,
-        art: <Art kind={art} color={id.startsWith('glasses') ? (patch.frame ?? j.frame) : metal} skin={look.skin.tone} />,
-        on,
-        run: () => runStep(wearStep(label, (l) => void Object.assign(l.jewellery, on ? off : patch), framing), { product: shadeProduct('#fff'), target: null, option: null }),
-      })
-      return [
-        wear('ears:hoops', 'Hoops', 'earrings', { ears: 'hoops' }, j.ears === 'hoops', 'face', { ears: 'none' }),
-        wear('ears:studs', 'Studs', 'earrings', { ears: 'studs' }, j.ears === 'studs', 'face', { ears: 'none' }),
-        wear('ears:drops', 'Drops', 'earrings', { ears: 'drops' }, j.ears === 'drops', 'face', { ears: 'none' }),
-        wear('ears:huggies', 'Huggies', 'earrings', { ears: 'huggies' }, j.ears === 'huggies', 'face', { ears: 'none' }),
-        wear('nose:stud', 'Nose stud', 'noseRing', { nose: 'stud' }, j.nose === 'stud', 'face', { nose: 'none' }),
-        wear('nose:ring', 'Nose ring', 'noseRing', { nose: 'ring' }, j.nose === 'ring', 'face', { nose: 'none' }),
-        wear('septum', 'Septum', 'piercing', { septum: true }, j.septum, 'face', { septum: false }),
-        wear('neck:chain', 'Chain', 'necklace', { necklace: 'chain' }, j.necklace === 'chain', 'bust', { necklace: 'none' }),
-        wear('neck:pendant', 'Pendant', 'necklace', { necklace: 'pendant' }, j.necklace === 'pendant', 'bust', { necklace: 'none' }),
-        wear('neck:pearls', 'Pearls', 'necklace', { necklace: 'pearls' }, j.necklace === 'pearls', 'bust', { necklace: 'none' }),
-        wear('wrist:bangle', 'Bangle', 'bracelet', { wrist: 'bangle' }, j.wrist === 'bangle', 'hands', { wrist: 'none' }),
-        wear('wrist:stack', 'Stack', 'bracelet', { wrist: 'stack' }, j.wrist === 'stack', 'hands', { wrist: 'none' }),
-        wear('rings', 'Rings', 'rings', { rings: true }, j.rings, 'hands', { rings: false }),
-        wear('glasses:round', 'Round frames', 'glasses', { glasses: 'round', frame: '#2A1A14' }, j.glasses === 'round', 'face', { glasses: 'none' }),
-        wear('glasses:cateye', 'Cat-eye', 'glasses', { glasses: 'cateye', frame: '#7A1F2B' }, j.glasses === 'cateye', 'face', { glasses: 'none' }),
-        wear('glasses:sunnies', 'Sunnies', 'glasses', { glasses: 'sunnies', frame: '#0C0808' }, j.glasses === 'sunnies', 'face', { glasses: 'none' }),
-        {
-          id: 'metal',
-          label: { gold: 'Gold → silver', silver: 'Silver → rose', rose: 'Rose → gold' }[j.metal],
-          art: <Art kind="rings" color={metal} />,
-          run: () => useStudio.getState().apply((l) => void (l.jewellery.metal = ({ gold: 'silver', silver: 'rose', rose: 'gold' } as const)[l.jewellery.metal])),
-        },
-      ]
-    }
     default:
       return []
   }
@@ -359,6 +354,8 @@ export const HAIR_PALETTE = [
   { color: '#6B3A22', name: 'Chestnut' },
   { color: '#B9854A', name: 'Honey blonde' },
   { color: '#E6DCC8', name: 'Platinum' },
+  { color: '#E3C48E', name: '613 blonde' },
+  { color: '#A3202A', name: 'Red' },
   { color: '#B5552A', name: 'Ginger' },
   { color: '#5E1A26', name: 'Burgundy' },
   { color: '#E07AA6', name: 'Pink' },
@@ -459,30 +456,151 @@ function GarmentThumb({ src, fallback }: { src: string; fallback: ReactNode }) {
   )
 }
 
+/** Colourways every recolourable piece offers (primary, secondary, accent). */
+export const COLOURWAYS: { name: string; colors: [string, string, string] }[] = [
+  { name: 'Red & yellow', colors: ['#C8102E', '#FFC72C', '#2A1200'] },
+  { name: 'Green & yellow', colors: ['#1E7A3A', '#FFC72C', '#0E2A16'] },
+  { name: 'Blue & orange', colors: ['#1F4FA8', '#F28C28', '#0E1A33'] },
+  { name: 'Pink & purple', colors: ['#E07AA6', '#6A3FB0', '#2A1030'] },
+  { name: 'Red & green', colors: ['#C8102E', '#1E7A3A', '#F4EFE6'] },
+  { name: 'Black & gold', colors: ['#111111', '#D9B35B', '#FFFFFF'] },
+  { name: 'Cream & black', colors: ['#F4EFE6', '#141414', '#C9A04A'] },
+  { name: 'Lilac & white', colors: ['#B9A2D8', '#FFFFFF', '#6A3FB0'] },
+]
+/** One-colour tints for the classic sets. */
+const TINTS: { name: string; colors: [string, string, string] }[] = [
+  { name: 'As made', colors: ['#FFFFFF', '#FFFFFF', '#FFFFFF'] },
+  ...['#C8102E', '#1E7A3A', '#1F4FA8', '#E07AA6', '#111111', '#D9B35B', '#6A3FB0'].map((c) => ({ name: c, colors: [c, c, c] as [string, string, string] })),
+]
+
+const CAT_SLOT: Partial<Record<Category, PieceSlot>> = { tops: 'top', bottoms: 'bottom', dresses: 'dress', shoes: 'shoes' }
+
+function PieceThumb({ item }: { item: Wearable }) {
+  const src = item.slots === 3 ? url.pieceThumb(item.id) : item.slot === 'shoes' ? url.shoeThumb(item.id) : url.outfitThumb(item.id)
+  return <GarmentThumb src={src} fallback={<Art kind="none" />} />
+}
+
+/** Put a piece on (a dress replaces the top and bottom; a top or bottom takes the dress off). Heels with skirts and dresses. */
+export function wearPiece(l: StudioLook, item: Wearable, colors: [string, string, string], items: Map<string, Wearable>) {
+  const slot = item.slot
+  l.wear[slot] = { id: item.id, colors }
+  if (slot === 'dress') l.wear.top = l.wear.bottom = null
+  if (slot === 'top' || slot === 'bottom') {
+    if (l.wear.dress) {
+      l.wear.dress = null
+      // never half-dressed: the other half comes back as a basic
+      if (!l.wear.top) l.wear.top = { id: 'top_tank', colors: ['#F4EFE6', '#2A2A2A', '#2A2A2A'] }
+      if (!l.wear.bottom) l.wear.bottom = { id: 'bottom_skinny_jeans', colors: ['#2E3D5C', '#D8A04A', '#B8B8B8'] }
+    }
+  }
+  if (needsHeels(l.wear) && !HEELS.includes(l.wear.shoes?.id ?? '')) {
+    // the store's own heels if it sells any, in the outfit's main colour
+    const heel = [...items.values()].find((w) => w.slot === 'shoes' && HEELS.includes(w.id) && w.store === item.store) ?? items.get('shoes_pumps')
+    if (heel) {
+      l.wear.shoes = { id: heel.id, colors: heel.colors }
+    }
+  }
+}
+
+/**
+ * What each store also stocks from the shared wardrobe (every piece is one reusable, recolourable
+ * asset), chosen to suit its vibe, so every department has at least four options. Its own pieces
+ * come first. (Dresses include the classic full outfits.)
+ */
+const ALSO_STOCKS: Partial<Record<RoomId, Partial<Record<PieceSlot, string[]>>>> = {
+  tolaptsd: { top: ['top_flame_tee'], bottom: ['bottom_skinny_jeans', 'bottom_cargo', 'bottom_leggings'], dress: ['dress_lace_bodysuit', 'dress_velvet_mini'], shoes: ['shoes_platforms', 'shoes04', 'shoes06'] },
+  thai: { top: ['top_cami'], bottom: ['bottom_flare_pants'], dress: ['dress_slip', 'dress_maxi', 'dress_sequin_mini', 'female_casualsuit02'], shoes: ['shoes_mules', 'shoes_block_heels', 'shoes05'] },
+  moncherie: { top: ['top_lace_bralette', 'top_square_crop'], bottom: ['bottom_pencil_skirt', 'bottom_midi_skirt', 'bottom_flare_pants'], dress: ['dress_sequin_mini'], shoes: ['shoes_strappy', 'shoes_ankle_strap'] },
+  novasport: { top: ['top_tank', 'top_everyday_tee'], bottom: ['bottom_cargo', 'bottom_baggy_jeans'], dress: ['dress_lace_bodysuit', 'male_casualsuit01'] },
+  dopebyfabby: { top: ['top_corset', 'top_square_crop'], bottom: ['bottom_satin_mini'], dress: ['dress_slip', 'dress_maxi'], shoes: ['shoes_pumps', 'shoes_strappy'] },
+  dejideji: { top: ['top_bandeau', 'top_cami'], bottom: ['bottom_midi_skirt', 'bottom_wide_trousers'], dress: ['dress_maxi', 'dress_slip', 'female_elegantsuit01'], shoes: ['shoes_block_heels', 'shoes_mules', 'shoes_kitten'] },
+  okrika: { top: ['top_oversized_tee', 'top_crop_tee'], bottom: ['bottom_ripped_jeans'] },
+  booty: { top: ['top_corset', 'top_cami'], bottom: ['bottom_satin_mini', 'bottom_pleated_mini'], dress: ['dress_slip', 'dress_sequin_mini', 'dress_velvet_mini'], shoes: ['shoes_pumps', 'shoes_platforms', 'shoes_ankle_strap'] },
+}
+
+/** A store's department: its own pieces, then what it also stocks. */
+export function storeStock(items: Map<string, Wearable>, room: RoomId, slot: PieceSlot): Wearable[] {
+  const list = [...items.values()].filter((w) => w.slot === slot && w.store === room)
+  for (const id of ALSO_STOCKS[room]?.[slot] ?? []) {
+    const w = items.get(id)
+    if (w && w.slot === slot && !list.includes(w)) list.push(w)
+  }
+  return list
+}
+
 function storeTiles(cat: Category, room: RoomId, look: StudioLook, catalog: CharacterCatalog): Tile[] {
-  if (cat === 'outfits') {
-    return catalog.outfits
-      .filter((o) => o.store === room)
-      .map((o) => ({
-        id: `outfit:${o.id}`,
-        label: o.name,
-        art: <GarmentThumb src={url.outfitThumb(o.id)} fallback={<Art kind="none" />} />,
-        on: look.outfit.id === o.id,
-        run: () => runStep(dressStep(o.name, (l) => void (l.outfit = { id: o.id, dye: '#FFFFFF', dyeAmount: 0 })), { product: shadeProduct('#fff'), target: null, option: null }),
+  const items = wearables(catalog)
+  const slot = CAT_SLOT[cat]
+  if (slot) {
+    const list = storeStock(items, room, slot)
+    // the trainers and sneakers live at Nova Sport and the thrift store
+    if (slot === 'shoes' && (room === 'novasport' || room === 'okrika')) for (const w of items.values()) if (w.slot === 'shoes' && w.slots === 1 && !list.includes(w)) list.push(w)
+    return list.map((w) => {
+      const worn = look.wear[slot]?.id === w.id ? look.wear[slot]! : null
+      const flat = slot === 'shoes' && !HEELS.includes(w.id) && needsHeels(look.wear)
+      const ways = w.slots === 3 ? [{ name: 'Original', colors: w.colors }, ...COLOURWAYS] : TINTS
+      const put = (colors: [string, string, string]) => runStep(dressStep(w.name, (l) => wearPiece(l, w, colors, items)), { product: shadeProduct(colors[0]), target: null, option: null })
+      return {
+        id: `wear:${w.id}`,
+        label: w.name,
+        art: <PieceThumb item={w} />,
+        on: !!worn,
+        blocked: flat ? 'Dresses and skirts are worn with heels here. Pick a heel.' : null,
+        run: () => put(worn?.colors ?? w.colors),
+        colours: { label: `${w.name} colours`, ways, value: worn?.colors ?? null, slots: w.slots, onPick: (c) => void put(c) },
         sfx: 'zip' as const,
-      }))
+      }
+    })
   }
-  if (cat === 'shoes') {
-    return catalog.shoes.map((s) => ({
-      id: `shoes:${s.id}`,
-      label: s.name,
-      art: <GarmentThumb src={url.shoeThumb(s.id)} fallback={<Art kind="none" />} />,
-      on: look.shoes.id === s.id,
-      run: () => runStep(dressStep(s.name, (l) => void (l.shoes = { id: s.id })), { product: shadeProduct('#fff'), target: null, option: null }),
-      sfx: 'zip' as const,
-    }))
-  }
+  if (cat === 'accessories') return accessoryTiles(room, look)
   return []
+}
+
+/* ------------------------------------------------------------------ accessories */
+
+type ExtraDef = { id: string; label: string; art: ArtKind; color?: string; on: (e: Extras, j: Jewellery) => boolean; set: (l: StudioLook, on: boolean) => void; framing?: StepDef['framing'] }
+const EXTRAS: Record<string, ExtraDef> = {
+  coralBand: { id: 'coralBand', label: 'Coral headband', art: 'beads', color: '#D9452B', on: (e) => e.head === 'coralBand', set: (l, on) => void (l.extras.head = on ? 'coralBand' : 'none'), framing: 'hair' },
+  satinBand: { id: 'satinBand', label: 'Satin headband', art: 'band', on: (e) => e.head === 'satinBand', set: (l, on) => void (l.extras.head = on ? 'satinBand' : 'none'), framing: 'hair' },
+  headscarf: { id: 'headscarf', label: 'Head wrap', art: 'band', on: (e) => e.head === 'headscarf', set: (l, on) => void (l.extras.head = on ? 'headscarf' : 'none'), framing: 'hair' },
+  coralBeads: { id: 'coralBeads', label: 'Coral necklaces', art: 'beads', color: '#D9452B', on: (e) => e.coralBeads, set: (l, on) => void (l.extras.coralBeads = on), framing: 'bust' },
+  coralWrists: { id: 'coralWrists', label: 'Coral bracelets', art: 'beads', color: '#D9452B', on: (e) => e.coralWrists, set: (l, on) => void (l.extras.coralWrists = on), framing: 'hands' },
+  anklets: { id: 'anklets', label: 'Coral anklets', art: 'beads', color: '#D9452B', on: (e) => e.anklets, set: (l, on) => void (l.extras.anklets = on), framing: 'full' },
+  waistBeads: { id: 'waistBeads', label: 'Waist beads', art: 'beads', color: '#E4572E', on: (e) => e.waistBeads, set: (l, on) => void (l.extras.waistBeads = on), framing: 'full' },
+  whip: { id: 'whip', label: 'Horsehair whisk', art: 'whisk', on: (e) => e.held === 'whip', set: (l, on) => void (l.extras.held = on ? 'whip' : 'none'), framing: 'full' },
+  fan: { id: 'fan', label: 'Hand fan', art: 'fan', color: '#E4572E', on: (e) => e.held === 'fan', set: (l, on) => void (l.extras.held = on ? 'fan' : 'none'), framing: 'full' },
+  clutch: { id: 'clutch', label: 'Clutch bag', art: 'clutch', on: (e) => e.held === 'clutch', set: (l, on) => void (l.extras.held = on ? 'clutch' : 'none'), framing: 'full' },
+  joint: { id: 'joint', label: 'Lit joint', art: 'joint', on: (e) => e.held === 'joint', set: (l, on) => void (l.extras.held = on ? 'joint' : 'none'), framing: 'full' },
+  chains: { id: 'chains', label: 'Layered chains', art: 'necklace', color: '#D4A64A', on: (e) => e.chains, set: (l, on) => void (l.extras.chains = on), framing: 'bust' },
+  choker: { id: 'choker', label: 'Choker', art: 'necklace', color: '#141014', on: (_e, j) => j.necklace === 'choker', set: (l, on) => void (l.jewellery.necklace = on ? 'choker' : 'none'), framing: 'bust' },
+  pins: { id: 'pins', label: 'Rainbow pins', art: 'pins', on: (e) => e.pins, set: (l, on) => void (l.extras.pins = on), framing: 'bust' },
+  glassesChain: { id: 'glassesChain', label: 'Glasses chain', art: 'glasses', color: '#D4A64A', on: (e) => e.glassesChain, set: (l, on) => {
+    l.extras.glassesChain = on
+    if (on && l.jewellery.glasses === 'none') Object.assign(l.jewellery, { glasses: 'square', frame: '#E0457B' })
+  }, framing: 'face' },
+}
+const STORE_EXTRAS: Partial<Record<RoomId, string[]>> = {
+  dejideji: ['coralBand', 'coralBeads', 'coralWrists', 'anklets', 'waistBeads', 'whip', 'fan', 'headscarf'],
+  tolaptsd: ['chains', 'choker', 'joint'],
+  moncherie: ['satinBand', 'clutch', 'choker'],
+  dopebyfabby: ['chains', 'clutch', 'satinBand'],
+  okrika: ['glassesChain', 'pins', 'fan', 'headscarf'],
+  booty: ['pins', 'choker', 'waistBeads', 'glassesChain'],
+}
+
+function accessoryTiles(room: RoomId, look: StudioLook): Tile[] {
+  return (STORE_EXTRAS[room] ?? []).map((k) => {
+    const x = EXTRAS[k]
+    const on = x.on(look.extras, look.jewellery)
+    return {
+      id: `extra:${x.id}`,
+      label: on ? `${x.label} (off)` : x.label,
+      art: <Art kind={x.art} color={x.color ?? look.extras.color} />,
+      on,
+      run: () => runStep(wearStep(x.label, (l) => x.set(l, !on), x.framing ?? 'full'), { product: shadeProduct('#fff'), target: null, option: null }),
+      sfx: 'sparkle' as const,
+    }
+  })
 }
 
 /* ------------------------------------------------------------------ Beauty Doctor */
@@ -510,7 +628,142 @@ function unsupported(p: (typeof PROCEDURES)[number], catalog: CharacterCatalog):
   return null
 }
 
+/** Where each design goes first (then the next free spot). */
+const TATTOO_HOME: Record<TattooDesign, TattooSpot[]> = {
+  rose: ['forearmL', 'thighR', 'shoulderBackL'],
+  butterfly: ['ankleL', 'lowerBack', 'chestL'],
+  heart: ['wristR', 'hipL', 'ankleR'],
+  star: ['wristL', 'ankleR', 'nape'],
+  moon: ['nape', 'wristR', 'ribsL'],
+  snake: ['forearmR', 'thighL', 'calfR'],
+  script: ['wristR', 'ribsR', 'chestR'],
+  vine: ['ribsL', 'calfL', 'hipR'],
+  dagger: ['forearmL', 'calfR', 'thighL'],
+  sun: ['upperArmL', 'shoulderBackR', 'lowerBack'],
+  swallow: ['chestR', 'chestL', 'hipR'],
+  band: ['upperArmR', 'upperArmL', 'calfL'],
+}
+const SPOT_NAME = (s: TattooSpot) =>
+  s
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/ L$/, ' (left)')
+    .replace(/ R$/, ' (right)')
+    .replace(/^./, (c) => c.toUpperCase())
+
+function PreviewArt({ design, ink }: { design: TattooDesign; ink: string }) {
+  return (
+    <span className="grid h-full w-full place-items-center rounded-[14px] bg-[#f4e6dc]">
+      <img src={tattooPreview(design, ink, 96)} alt="" className="h-[80%] w-[80%] object-contain" />
+    </span>
+  )
+}
+
+function doctorTiles(cat: Category, look: StudioLook): Tile[] {
+  const j = look.jewellery
+  const metal = { gold: '#D4A64A', silver: '#C8CBD2', rose: '#D9A0A0' }[j.metal]
+  const pierce = (id: string, label: string, art: ArtKind, patch: Partial<Jewellery>, on: boolean, off: Partial<Jewellery>, framing: StepDef['framing'] = 'face', section?: string): Tile => ({
+    id,
+    section,
+    label: on ? `${label} (out)` : label,
+    art: <Art kind={art} color={metal} skin={look.skin.tone} />,
+    on,
+    run: () => runStep(wearStep(on ? `${label} out` : label, (l) => void Object.assign(l.jewellery, on ? off : patch), framing), { product: shadeProduct('#fff'), target: null, option: null }),
+    sfx: 'snip' as const,
+  })
+  if (cat === 'tattoos') {
+    const ink = '#1A1A22'
+    const add: Tile[] = TATTOO_DESIGNS.map((d) => {
+      const spot = [...TATTOO_HOME[d], ...(['calfL', 'calfR', 'thighL', 'thighR', 'hipL', 'hipR'] as TattooSpot[])].find((s) => !look.tattoos.some((t) => t.at === s))
+      return {
+        id: `ink:${d}`,
+        label: `${d[0].toUpperCase()}${d.slice(1)} tattoo`,
+        art: <PreviewArt design={d} ink={ink} />,
+        on: look.tattoos.some((t) => t.design === d),
+        blocked: look.tattoos.length >= 8 ? 'Eight tattoos is the limit here. Remove one first.' : !spot ? 'No free spot for this one.' : null,
+        run: () => spot && runStep(tattooStep(d, spot, ink), { product: shadeProduct(ink), target: null, option: null }),
+        sfx: 'buzz' as const,
+      }
+    })
+    const remove: Tile[] = look.tattoos.map((t) => ({
+      id: `laser:${t.at}`,
+      label: `Remove ${t.design} · ${SPOT_NAME(t.at)}`,
+      art: (
+        <span className="relative block h-full w-full">
+          <PreviewArt design={t.design} ink={t.ink} />
+          <span className="absolute inset-0 grid place-items-center text-[28px]" aria-hidden>
+            ✕
+          </span>
+        </span>
+      ),
+      run: () => runStep(tattooRemoveStep(t.design, t.at), { product: shadeProduct('#ff3355'), target: null, option: null }),
+      sfx: 'zap' as const,
+    }))
+    return [...remove, ...add]
+  }
+  if (cat === 'piercings') {
+    const any = j.ears !== 'none' || j.helix || j.industrial || j.nose !== 'none' || j.septum || j.lip !== 'none' || j.brow || j.navel
+    return [
+      // grouped by where they go, each the real jewellery for that spot
+      pierce('ears:studs', 'Lobe studs', 'earrings', { ears: 'studs' }, j.ears === 'studs', { ears: 'none' }, 'face', 'Ears'),
+      pierce('ears:hoops', 'Lobe hoops', 'earrings', { ears: 'hoops' }, j.ears === 'hoops', { ears: 'none' }, 'face', 'Ears'),
+      pierce('ears:huggies', 'Lobe huggies', 'earrings', { ears: 'huggies' }, j.ears === 'huggies', { ears: 'none' }, 'face', 'Ears'),
+      pierce('ears:drops', 'Lobe drops', 'earrings', { ears: 'drops' }, j.ears === 'drops', { ears: 'none' }, 'face', 'Ears'),
+      pierce('helix', 'Helix ring (upper ear)', 'piercing', { helix: true }, j.helix, { helix: false }, 'face', 'Ears'),
+      pierce('industrial', 'Industrial (long ear bar)', 'piercing', { industrial: true }, j.industrial, { industrial: false }, 'face', 'Ears'),
+      pierce('nose:stud', 'Nostril stud', 'noseRing', { nose: 'stud' }, j.nose === 'stud', { nose: 'none' }, 'face', 'Nose'),
+      pierce('nose:ring', 'Nostril hoop', 'noseRing', { nose: 'ring' }, j.nose === 'ring', { nose: 'none' }, 'face', 'Nose'),
+      pierce('septum', 'Septum horseshoe', 'piercing', { septum: true }, j.septum, { septum: false }, 'face', 'Nose'),
+      pierce('lip:labret', 'Labret (under lip)', 'piercing', { lip: 'labret' }, j.lip === 'labret', { lip: 'none' }, 'face', 'Lips'),
+      pierce('lip:monroe', 'Monroe (above lip)', 'piercing', { lip: 'monroe' }, j.lip === 'monroe', { lip: 'none' }, 'face', 'Lips'),
+      pierce('lip:snakebites', 'Snake bites (rings)', 'piercing', { lip: 'snakebites' }, j.lip === 'snakebites', { lip: 'none' }, 'face', 'Lips'),
+      pierce('brow', 'Eyebrow bar', 'piercing', { brow: true }, j.brow, { brow: false }, 'face', 'Brow'),
+      pierce('navel', 'Belly bar', 'piercing', { navel: true }, j.navel, { navel: false }, 'full', 'Navel'),
+      {
+        id: 'pierce:out',
+        label: 'Take all piercings out',
+        art: <Art kind="remove" />,
+        blocked: any ? null : 'No piercings in right now.',
+        run: () => runStep(wearStep('All piercings out', (l) => void Object.assign(l.jewellery, { ears: 'none', helix: false, industrial: false, nose: 'none', septum: false, lip: 'none', brow: false, navel: false })), { product: shadeProduct('#fff'), target: null, option: null }),
+      },
+    ]
+  }
+  if (cat === 'jewellery') return jewelleryTiles(look)
+  return []
+}
+
+function jewelleryTiles(look: StudioLook): Tile[] {
+  const j = look.jewellery
+  const metal = { gold: '#D4A64A', silver: '#C8CBD2', rose: '#D9A0A0' }[j.metal]
+  const wear = (id: string, label: string, art: ArtKind, patch: Partial<Jewellery>, on: boolean, framing: StepDef['framing'] = 'face', off: Partial<Jewellery> = {}): Tile => ({
+    id,
+    label,
+    art: <Art kind={art} color={id.startsWith('glasses') ? (patch.frame ?? j.frame) : metal} skin={look.skin.tone} />,
+    on,
+    run: () => runStep(wearStep(label, (l) => void Object.assign(l.jewellery, on ? off : patch), framing), { product: shadeProduct('#fff'), target: null, option: null }),
+  })
+  return [
+    wear('neck:chain', 'Chain', 'necklace', { necklace: 'chain' }, j.necklace === 'chain', 'bust', { necklace: 'none' }),
+    wear('neck:pendant', 'Pendant', 'necklace', { necklace: 'pendant' }, j.necklace === 'pendant', 'bust', { necklace: 'none' }),
+    wear('neck:pearls', 'Pearls', 'necklace', { necklace: 'pearls' }, j.necklace === 'pearls', 'bust', { necklace: 'none' }),
+    wear('neck:choker', 'Choker', 'necklace', { necklace: 'choker' }, j.necklace === 'choker', 'bust', { necklace: 'none' }),
+    wear('wrist:bangle', 'Bangle', 'bracelet', { wrist: 'bangle' }, j.wrist === 'bangle', 'hands', { wrist: 'none' }),
+    wear('wrist:chain', 'Chain bracelet', 'bracelet', { wrist: 'chain' }, j.wrist === 'chain', 'hands', { wrist: 'none' }),
+    wear('wrist:stack', 'Stack', 'bracelet', { wrist: 'stack' }, j.wrist === 'stack', 'hands', { wrist: 'none' }),
+    wear('rings', 'Rings', 'rings', { rings: true }, j.rings, 'hands', { rings: false }),
+    wear('glasses:round', 'Round frames', 'glasses', { glasses: 'round', frame: '#2A1A14' }, j.glasses === 'round', 'face', { glasses: 'none' }),
+    wear('glasses:square', 'Square frames', 'glasses', { glasses: 'square', frame: '#0C0808' }, j.glasses === 'square', 'face', { glasses: 'none' }),
+    wear('glasses:sunnies', 'Sunnies', 'glasses', { glasses: 'sunnies', frame: '#0C0808' }, j.glasses === 'sunnies', 'face', { glasses: 'none' }),
+    {
+      id: 'metal',
+      label: { gold: 'Gold → silver', silver: 'Silver → rose', rose: 'Rose → gold' }[j.metal],
+      art: <Art kind="rings" color={metal} />,
+      run: () => useStudio.getState().apply((l) => void (l.jewellery.metal = ({ gold: 'silver', silver: 'rose', rose: 'gold' } as const)[l.jewellery.metal])),
+    },
+  ]
+}
+
 function clinicTiles(cat: Category, look: StudioLook, catalog: CharacterCatalog): Tile[] {
+  if (cat === 'tattoos' || cat === 'piercings' || cat === 'jewellery') return doctorTiles(cat, look)
   const area = cat === 'clinicFace' ? ['face'] : ['body', 'hair']
   return [
     {
@@ -519,9 +772,6 @@ function clinicTiles(cat: Category, look: StudioLook, catalog: CharacterCatalog)
       art: <Art kind="drip" color="#F2A33A" />,
       on: look.care.glow > 0.7,
       run: async () => {
-        const s = useStudio.getState()
-        const ok = await s.ask({ title: 'Glow drip?', body: 'A relaxing drip session: her skin comes out glowing and hydrated. Fictional styling only.', confirm: 'Start the drip' })
-        if (!ok) return
         await runStep(
           wearStep('Glow drip', (l) => {
             l.care.glow = Math.min(1, l.care.glow + 0.4)
@@ -544,18 +794,8 @@ function clinicTiles(cat: Category, look: StudioLook, catalog: CharacterCatalog)
         run: async () => {
           const s = useStudio.getState()
           s.setFraming(p.framing)
-          if (applied > 0) {
-            const ok = await s.ask({ title: `Reverse ${p.name}?`, body: 'Her shape goes back to how it was before this procedure.', confirm: 'Reverse it' })
-            if (ok) {
-              s.apply((l) => void delete l.clinic[p.id])
-              s.notify(`${p.name} reversed.`, 'success')
-            }
-            return
-          }
-          useStudio.setState({ clinicPreview: { ...look.clinic, [p.id]: 0.6 } })
-          const ok = await s.ask({ title: `${p.name}?`, body: `${p.blurb} You're seeing the preview now. Confirm to keep it (reversible here any time). Fictional styling only, not advice about real procedures.`, confirm: 'Confirm', cancel: 'No thanks' })
-          useStudio.setState({ clinicPreview: null })
-          if (!ok) return
+          // no confirm dialogs: tap applies it, tap again reverses it (and Undo always works)
+          if (applied > 0) return s.apply((l) => void delete l.clinic[p.id])
           await runStep(wearStep(p.name, (l) => void (l.clinic[p.id] = 0.6), p.framing), { product: shadeProduct('#fff'), target: null, option: null })
         },
       }

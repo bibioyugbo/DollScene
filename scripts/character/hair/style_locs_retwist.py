@@ -10,7 +10,7 @@ import lockit  # noqa: E402
 
 STYLE = "locs_retwist"
 head = hairkit.open_base()
-strands = lockit.layout(head, **lockit.LOCS)
+strands = lockit.fall_layout(head, **{k: v for k, v in lockit.LOCS.items() if k != "sweep_el"})
 b = hairkit.Builder(head)
 lockit.build_strands(head, b, strands, root="tight", sides=lockit.LOCS_SIDES)
 lockit.finish_style(STYLE, head, b, roughness=0.75, tex=hairkit.tex_loc(512, seed=9, fuzz=0.55, crevice=0.45))

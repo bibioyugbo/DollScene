@@ -3,7 +3,7 @@ import { Suspense, useEffect, useRef } from 'react'
 import { DefaultLoadingManager } from 'three'
 import { create } from 'zustand'
 import { CHARACTER_PRESETS } from '../shared/studio/presets'
-import { url, type CharacterCatalog } from './character/catalog'
+import { url, wearables, type CharacterCatalog } from './character/catalog'
 import { eyeTexture, loadedModules } from './character/StudioCharacter'
 import { preloadScenes } from './scenes'
 
@@ -40,11 +40,11 @@ export function preloadProgress(s: PreloadState) {
 }
 
 export function moduleUrls(catalog: CharacterCatalog) {
-  return [...catalog.hair.map((h) => url.hair(h.id)), ...catalog.outfits.map((o) => url.outfit(o.id)), ...catalog.shoes.map((s) => url.shoes(s.id))]
+  return [...catalog.hair.map((h) => url.hair(h.id)), ...[...wearables(catalog).values()].map((w) => w.src)]
 }
 
 export function maskUrls(catalog: CharacterCatalog) {
-  return [...catalog.outfits.filter((o) => o.hideMask).map((o) => url.mask(`hide_${o.id}`)), ...catalog.shoes.filter((s) => s.hideMask).map((s) => url.mask(`hide_${s.id}`))]
+  return [...wearables(catalog).values()].filter((w) => w.mask).map((w) => w.mask!)
 }
 
 /**
@@ -113,6 +113,7 @@ export function preloadOther(catalog: CharacterCatalog) {
     ...catalog.hair.filter((h) => h.id !== 'bonnet').map((h) => () => image(url.hairThumb(h.id))),
     ...catalog.outfits.map((o) => () => image(url.outfitThumb(o.id))),
     ...catalog.shoes.map((s) => () => image(url.shoeThumb(s.id))),
+    ...(catalog.pieces ?? []).map((p) => () => image(url.pieceThumb(p.id))),
     ...catalog.eyes.map((e) => () => eyeTexture(e).catch(() => null)),
     () => preloadScenes().catch(() => null),
     () => (document.fonts ? Promise.all([document.fonts.load('900 40px "Red Hat Display"'), document.fonts.load('700 16px "Red Hat Display"')]).catch(() => null) : Promise.resolve()),

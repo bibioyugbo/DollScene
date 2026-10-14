@@ -1,6 +1,7 @@
-import { CHARACTER_PRESETS } from '../shared/studio/presets'
+import { DEFAULT_PRESET } from '../shared/studio/presets'
 import { MAX_SAVED_LOOKS, type SavedLook } from '../shared/studio/look'
 import { api, ApiError, readCache, writeCache } from './backend/api'
+import { loadAccountLook, restore, saveAccountLook, useAuth } from './net/auth'
 import { useStudio } from './state/store'
 import { ERROR_TEXT, errorCode, isFramed, vatar, type VatarPurchase } from './vatar/sdk'
 
@@ -29,6 +30,8 @@ let warned = false
 
 async function pushCurrent() {
   const s = useStudio.getState()
+  // a signed-in DollScene account keeps her doll on the server too
+  if (useAuth.getState().status === 'signed-in') void saveAccountLook(s.look).catch(() => {})
   if (!online()) return persistLocal(s.connection === 'offline')
   try {
     await api.saveCurrent(s.look)
@@ -91,7 +94,10 @@ export async function startSession() {
     saveTimer = window.setTimeout(pushCurrent, 1500)
   })
 
-  if (!vatar.available() || !isFramed()) return enterPreview()
+  if (!vatar.available() || !isFramed()) {
+    enterPreview()
+    return restoreAccount()
+  }
 
   try {
     const init = await vatar.init()
@@ -119,19 +125,30 @@ async function reconnect() {
     const current = cache?.dirty && cache.current ? cache.current : remote.current
     st({ connection: mode, saved: remote.looks, entitlements: remote.entitlements, xp: remote.xp, todayBest: remote.today.best })
     if (current) useStudio.setState({ look: current, before: current, past: [], future: [] })
-    else useStudio.getState().replace(CHARACTER_PRESETS[0].look)
+    else useStudio.getState().replace(DEFAULT_PRESET.look)
     if (cache?.dirty) void pushCurrent()
   } catch {
     st({ connection: 'offline', saved: cache?.looks ?? [] })
     if (cache?.current) st({ look: cache.current, before: cache.current })
-    else useStudio.setState({ look: CHARACTER_PRESETS[0].look, before: CHARACTER_PRESETS[0].look })
+    else useStudio.setState({ look: DEFAULT_PRESET.look, before: DEFAULT_PRESET.look })
     useStudio.getState().notify('Offline. Your changes are kept on this device until you reconnect.')
   }
 }
 
+/** Signed in on this device within the last 30 days: bring her own doll back (no landing screen). */
+async function restoreAccount() {
+  if (!(await restore())) return
+  const look = await loadAccountLook().catch(() => null)
+  const name = useAuth.getState().user?.username ?? ''
+  const s = useStudio.getState()
+  const base = look ?? s.look
+  const next = { ...base, profile: { ...base.profile, name: name || base.profile.name, onboarded: true } }
+  useStudio.setState({ look: next, before: next, past: [], future: [] })
+}
+
 function enterPreview(message?: string) {
   const cache = readCache(PREVIEW_ID)
-  const look = cache?.current ?? CHARACTER_PRESETS[0].look
+  const look = cache?.current ?? DEFAULT_PRESET.look
   useStudio.setState({ connection: 'preview', player: null, saved: cache?.looks ?? [], look, before: look })
   if (message) useStudio.getState().notify(message)
 }

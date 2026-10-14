@@ -11,9 +11,11 @@ import { ACTIVITIES, type Activity } from './activities'
 import { Chat, PeerMenu, usePeerMenu } from './Chat'
 import { myActivity } from '../net/RealtimeSync'
 import { haptic, sfx } from './sound'
+import { useRealtime } from '../net/realtime'
+import { PhotoResult, shoot as shootPose } from './PhotoBooth'
 
 const POSE_NAMES: Record<PoseId, string> = { relaxed: 'Relaxed', 'hand-on-hip': 'Hand on hip', 'hands-on-hips': 'Hands on hips', wave: 'Wave', peace: 'Peace sign', 'blow-kiss': 'Blow a kiss', selfie: 'Selfie', thinking: 'Thinking', 'hair-touch': 'Hair touch', 'arms-crossed': 'Arms crossed', 'hands-clasped': 'Hands clasped' }
-const EXPR_NAMES: Record<ExpressionPreset, string> = { neutral: 'Neutral', smile: 'Smile', laugh: 'Laugh', kiss: 'Kiss', wink: 'Wink', surprised: 'Surprised', sad: 'Sad', soft: 'Soft', pout: 'Pout' }
+const EXPR_NAMES: Record<ExpressionPreset, string> = { neutral: 'Neutral', smile: 'Smile', laugh: 'Laugh', wink: 'Wink', surprised: 'Surprised', sad: 'Sad', soft: 'Soft', pout: 'Pout' }
 
 /**
  * Make a Scene: the doll at the event. Drag to orbit, pinch/scroll to zoom, pick a photo spot,
@@ -49,12 +51,43 @@ export function EventView({ onBackToStudio, onChangeScene, onOutfit }: { onBackT
     return () => window.clearInterval(t)
   }, [activity, setPhoto])
   useEffect(() => () => void (myActivity.act = ''), [])
-  const doActivity = (a: Activity) => {
+  // arriving at a scene where real people already are: say who (names when few, else a count)
+  const peers = useRealtime((s) => s.peers)
+  const channel = useRealtime((s) => s.channel)
+  const greeted = useRef('')
+  useEffect(() => {
+    const here = `scene:${look.scene.id}`
+    if (channel !== here || greeted.current === here) return
+    const t = window.setTimeout(() => {
+      greeted.current = here
+      const names = Object.values(useRealtime.getState().peers).map((p) => p.name)
+      if (!names.length) return
+      const who = names.length === 1 ? `${names[0]} is` : names.length === 2 ? `${names[0]} and ${names[1]} are` : `${names.length} people are`
+      notify(`${who} here right now. Say hi!`, 'info')
+      sfx('chime')
+    }, 700)
+    return () => window.clearTimeout(t)
+  }, [channel, look.scene.id, peers, notify])
+
+  const [selfie, setSelfie] = useState<Blob | null>(null)
+  const doActivity = async (a: Activity) => {
     haptic(10)
     if (a.sfx) sfx(a.sfx)
     loopT.current = 0
     setActivity(a)
     setPhoto({ pose: a.pose, expression: a.expr })
+    if (a.id === 'selfie') {
+      // a real selfie: she holds the phone out, the shot is taken and shown to save or share
+      setHidden(true)
+      try {
+        setSelfie(await shootPose('selfie'))
+      } catch (e) {
+        console.error(e)
+        notify('That selfie didn’t come out. Try again.', 'error')
+      } finally {
+        setHidden(false)
+      }
+    }
   }
 
   const shoot = async () => {
@@ -89,11 +122,12 @@ export function EventView({ onBackToStudio, onChangeScene, onOutfit }: { onBackT
   return (
     <>
       {flash && <div className="pointer-events-none absolute inset-0 z-40 bg-white/80" aria-hidden />}
+      {selfie && <PhotoResult blob={selfie} onRetake={() => (setSelfie(null), void doActivity(acts.find((x) => x.id === 'selfie')!))} onDone={() => setSelfie(null)} />}
       {peerMenu && <PeerMenu peer={peerMenu} onClose={() => usePeerMenu.setState({ peer: null })} onMention={(n) => window.dispatchEvent(new CustomEvent('ds-mention', { detail: n }))} />}
       <header className="pointer-events-auto absolute inset-x-0 top-0 z-20 flex items-center gap-2 px-3 pt-[max(env(safe-area-inset-top),10px)]">
-        <button type="button" onClick={onBackToStudio} className="ds-fab flex min-h-11 items-center gap-1.5 rounded-full pl-2.5 pr-4 text-[13px]">
+        <button type="button" onClick={onBackToStudio} className="ds-fab flex min-h-11 items-center gap-1.5 rounded-full pl-2.5 pr-4 text-[13px] font-bold">
           <Icon name="back" className="h-4 w-4" />
-          Hub
+          Back to Street
         </button>
         <button type="button" onClick={onOutfit} className="ds-fab hidden min-h-11 rounded-full px-3.5 text-[12px] font-bold sm:block">
           Change outfit
@@ -135,7 +169,7 @@ export function EventView({ onBackToStudio, onChangeScene, onOutfit }: { onBackT
               ]}
             />
           </div>
-          {tab === 'do' && <Chips label="Activities" value={activity?.id ?? null} onPick={(id) => doActivity(acts.find((a) => a.id === id)!)} options={acts.map((a) => ({ id: a.id, name: `${a.emoji} ${a.label}` }))} />}
+          {tab === 'do' && <Chips label="Activities" value={activity?.id ?? null} onPick={(id) => void doActivity(acts.find((a) => a.id === id)!)} options={acts.map((a) => ({ id: a.id, name: `${a.emoji} ${a.label}` }))} />}
           {tab === 'pose' && <Chips label="Pose" value={photo.pose} onPick={(pose) => (setActivity(null), setPhoto({ pose }))} options={POSES.map((p) => ({ id: p, name: POSE_NAMES[p] }))} />}
           {tab === 'face' && <Chips label="Expression" value={photo.expression} onPick={(expression) => setPhoto({ expression })} options={EXPRESSION_PRESETS.map((p) => ({ id: p, name: EXPR_NAMES[p] }))} />}
           {tab === 'spot' && def && (

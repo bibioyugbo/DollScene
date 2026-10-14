@@ -10,6 +10,8 @@ import { SCENE_BY_ID, SceneEnvironment, type SceneId, type TimeOfDay, type Weath
 import { useShownLook, useStudio, type Angle, type Framing } from '../state/store'
 import { setCapture } from './capture'
 import { Hub, useHub } from './Hub'
+import { Interior } from './Interior'
+import { SpotMarkers } from './SpotMarkers'
 import { Bubble, Players } from './Players'
 import { PreloadModules } from '../preload'
 import { useRealtime, type Peer } from '../net/realtime'
@@ -253,6 +255,7 @@ export function StudioStage({ catalog, theme, insets, reducedMotion, attempt, on
   const paused = useStudio((s) => s.paused)
   const phase = useStudio((s) => s.phase)
   const category = useStudio((s) => s.category)
+  const room = useStudio((s) => s.room)
   const action = useStudio((s) => s.action)
   const clinicPreview = useStudio((s) => s.clinicPreview)
   const photoPose = useStudio((s) => s.photo.pose)
@@ -272,7 +275,9 @@ export function StudioStage({ catalog, theme, insets, reducedMotion, attempt, on
     const [a, b] = [...pointers.current.values()]
     return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : null
   }
-  const pose = event ? photoPose : category === 'nails' && phase === 'studio' && !action ? 'present' : null
+  const shot = useStudio((s) => s.shot)
+  // a photo-booth shot overrides the pose while it's taken
+  const pose = shot === 'mirror' ? 'mirror' : shot === 'selfie' ? 'selfie' : event ? photoPose : category === 'nails' && phase === 'studio' && !action ? 'present' : null
 
   return (
     <div
@@ -288,6 +293,8 @@ export function StudioStage({ catalog, theme, insets, reducedMotion, attempt, on
       }}
       onPointerMove={(e) => {
         if (!drag.current || !pointers.current.has(e.pointerId)) return
+        // the step since the last move (movementX is 0 for touch on Safari: swipes need this)
+        const stepX = e.clientX - pointers.current.get(e.pointerId)!.x
         pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
         const pd = pinchDist()
         const s = useStudio.getState()
@@ -299,7 +306,7 @@ export function StudioStage({ catalog, theme, insets, reducedMotion, attempt, on
           const dx = e.clientX - drag.current.x
           const dy = e.clientY - drag.current.y
           if (hub) {
-            useHub.getState().look(-(e.movementX || 0) * 0.005)
+            useHub.getState().look(-stepX * 0.005)
             return
           }
           if (event) s.setPhoto({ yaw: drag.current.yaw - dx * 0.008, pitch: MathUtils.clamp(drag.current.pitch + dy * 0.005, -0.35, 0.9) })
@@ -315,6 +322,8 @@ export function StudioStage({ catalog, theme, insets, reducedMotion, attempt, on
         drag.current = null
       }}
       onWheel={(e) => {
+        // the street: scroll or two-finger swipe sideways (or the wheel) moves store to store
+        if (hub) return useHub.getState().wheel(Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY)
         if (event) useStudio.getState().setPhoto({ zoom: MathUtils.clamp(useStudio.getState().photo.zoom * (1 + e.deltaY * 0.001), 0.45, 2.2) })
         else zoom.current = MathUtils.clamp(zoom.current * (1 + e.deltaY * 0.001), 0.6, 1.5)
       }}
@@ -349,11 +358,13 @@ export function StudioStage({ catalog, theme, insets, reducedMotion, attempt, on
             <color attach="background" args={[theme.bottom]} />
             <Backdrop top={theme.top} bottom={theme.bottom} glow={theme.glow} />
             <StudioLights />
+            {phase === 'studio' && room && <Interior room={room} />}
             <Floor color={theme.floor} />
           </>
         )}
         {!hub && <CameraRig zoom={zoom} insets={insets} event={event} spot={spot} />}
         {phase === 'event' && <Players catalog={catalog} at={spot} onTap={(p) => onPeer?.(p)} />}
+        {phase === 'studio' && <SpotMarkers />}
         <Suspense fallback={null}>
           <PreloadModules catalog={catalog} />
         </Suspense>

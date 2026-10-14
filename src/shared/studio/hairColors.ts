@@ -17,6 +17,7 @@ export const HAIR_COLOR_PRESETS: readonly HairColorPreset[] = [
   { id: 'chestnut', name: 'Chestnut', color: '#6B3A22', shine: 0.4 },
   { id: 'honey_blonde', name: 'Honey blonde', color: '#B9854A', shine: 0.4 },
   { id: 'platinum_blonde', name: 'Platinum blonde', color: '#E6DCC8', shine: 0.45 },
+  { id: 'blonde_613', name: '613 blonde', color: '#E3C48E', shine: 0.45 },
   { id: 'ginger', name: 'Ginger', color: '#B5552A', shine: 0.4 },
   { id: 'burgundy', name: 'Burgundy', color: '#5E1A26', shine: 0.45 },
   { id: 'red', name: 'Red', color: '#A3202A', shine: 0.45 },

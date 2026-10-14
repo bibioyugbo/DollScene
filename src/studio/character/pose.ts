@@ -36,6 +36,8 @@ function aim(b: Bone, child: Bone, target: Vector3) {
  */
 export function relaxPose(root: Object3D, out = 0.2) {
   root.updateWorldMatrix(true, true)
+  // directions in her own space (she may be turned on the turntable when this runs)
+  const rq = root.getWorldQuaternion(new Quaternion())
   for (const side of ['Left', 'Right'] as const) {
     const s = side === 'Left' ? 1 : -1
     const arm = bone(root, `${side}Arm`)
@@ -43,8 +45,8 @@ export function relaxPose(root: Object3D, out = 0.2) {
     const hand = bone(root, `${side}Hand`)
     if (!arm || !fore || !hand) continue
     // glTF space: +Y up, the character faces +Z, her left is +X.
-    aim(arm, fore, new Vector3(out * s, -1, -0.02))
-    aim(fore, hand, new Vector3((0.1 + (out - 0.2) * 0.6) * s, -1, 0.16))
+    aim(arm, fore, new Vector3(out * s, -1, -0.02).applyQuaternion(rq))
+    aim(fore, hand, new Vector3((0.1 + (out - 0.2) * 0.6) * s, -1, 0.16).applyQuaternion(rq))
   }
 }
 

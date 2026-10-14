@@ -1,4 +1,4 @@
-import { Color, MeshPhysicalMaterial, Vector2, Vector4, type MeshStandardMaterial, type Texture } from 'three'
+import { Color, DataTexture, LinearFilter, MeshPhysicalMaterial, NoColorSpace, RGBAFormat, Vector2, Vector4, type MeshStandardMaterial, type Texture } from 'three'
 import { clinicEffect } from '../../shared/studio/clinic'
 import { MARKS, SPOT_IDS, type ClinicId, type StudioLook, type Undertone } from '../../shared/studio/look'
 import type { CareData } from './catalog'
@@ -59,9 +59,14 @@ export type SkinUniforms = Record<`u${(typeof LAYERS)[number]}`, { value: Vector
     uMaskE: { value: Texture | null }
     uRegionsOn: { value: number }
     uBodyMask: { value: Texture }
-    uHide0: { value: Texture | null }
-    uHide1: { value: Texture | null }
+    /** The four slots' hide masks packed in one texture (R top, G bottom, B dress, A shoes): one
+     * texture unit instead of four, so the skin stays within 16 (phones) with the tattoo ink. */
+    uHide: { value: Texture | null }
     uHideOn: { value: Vector4 }
+    /** Tattoo ink in body UV (premultiplied: rgb ink, a coverage); see tattoos.ts. */
+    uTattoo: { value: Texture | null }
+    /** x: tattoos on, y: fading under a removal laser (0..1), z: freshly inked redness */
+    uTattooFx: { value: Vector4 }
   }
 
 const FRAG_HEAD = /* glsl */ `
@@ -69,8 +74,8 @@ uniform vec3 uTone;
 uniform vec4 uFaceRect;
 uniform vec4 uLipFx, uBase, uCare, uCare2, uCare3, uCare4, uLipCentreUv, uMark;
 uniform float uShimmer, uGlow, uRegionsOn;
-uniform sampler2D uMaskA, uMaskB, uMaskC, uMaskD, uMaskE, uBodyMask, uHide0, uHide1;
-uniform vec4 uHideOn;
+uniform sampler2D uMaskA, uMaskB, uMaskC, uMaskD, uMaskE, uBodyMask, uHide, uTattoo;
+uniform vec4 uHideOn, uTattooFx;
 uniform vec4 uSpotA[${NSPOT}];
 uniform vec4 uSpotB[${NSPOT}];
 ${LAYERS.map((l) => `uniform vec4 u${l};`).join('\n')}
@@ -90,8 +95,10 @@ vec3 dsPerturb(vec3 surf_pos, vec3 surf_norm, vec2 dHdxy, float faceDir) {
 `
 
 const FRAG_LAYERS = /* glsl */ `
-if (uHideOn.x > 0.5 && texture2D(uHide0, vMapUv).r > 0.5) discard;
-if (uHideOn.y > 0.5 && texture2D(uHide1, vMapUv).r > 0.5) discard;
+if (dot(uHideOn, vec4(1.0)) > 0.5) {
+  vec4 hm = texture2D(uHide, vMapUv);
+  if (any(greaterThan(uHideOn * step(0.5, hm), vec4(0.5)))) discard;
+}
 vec3 dtl = diffuseColor.rgb / 0.72;
 float dsH = 0.0;
 float dl = dot(dtl, vec3(0.2126, 0.7152, 0.0722));
@@ -150,14 +157,34 @@ if (uCare3.z > 0.001) {
   dsH += flake * d * 0.6;
 }
 
+/* ---- tattoos: ink sits in the skin, under the makeup; healed ink is a little soft and never pure black ---- */
+if (uTattooFx.x > 0.5) {
+  vec4 ink = texture2D(uTattoo, vMapUv);
+  if (ink.a > 0.002) {
+    vec3 inkCol = ink.rgb;
+    float a = ink.a * 0.92 * (1.0 - uTattooFx.y);
+    // ink reads through the skin tone: multiply plus a little of the ink's own colour
+    vec3 inked = col * mix(vec3(1.0), inkCol * 1.6 + 0.08, 0.92);
+    // on deep skin, healed ink shows as a cooler blue-black mark (not just "darker"): shift toward
+    // it by how deep the tone is, so tattoos read on every skin tone
+    float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
+    float deep = 1.0 - smoothstep(0.02, 0.22, lum);
+    // (clearly darker too, ~a third of the skin's brightness: hue alone doesn't read on deep tones)
+    inked = mix(inked, col * vec3(0.3, 0.36, 0.52) + vec3(0.0, 0.0006, 0.0028) + inkCol * 0.04, deep * 0.9);
+    col = mix(col, inked, a);
+    // fresh ink / laser session: a pink, raised halo that fades as it heals
+    col = mix(col, col * vec3(1.18, 0.86, 0.86), uTattooFx.z * smoothstep(0.0, 0.4, ink.a));
+  }
+}
+
 /* ---- who she is: a mole, a birthmark, freckles or vitiligo (under the makeup) ---- */
 float mk = uMark.w;
 if (mk > 0.5) {
   float md = length((vMapUv - uMark.xy) * vec2(1.0, 1.0));
   if (mk < 1.5) {
-    // mole: a small, slightly raised dark dot
-    float m = smoothstep(0.0045, 0.0025, md);
-    col = mix(col, col * vec3(0.38, 0.3, 0.28), m);
+    // mole: a small, distinctly dark brown-black dot (it should read at a glance)
+    float m = smoothstep(0.0034, 0.0018, md);
+    col = mix(col, col * vec3(0.17, 0.12, 0.1) + vec3(0.006, 0.003, 0.002), m);
   } else if (mk < 2.5) {
     // birthmark: a soft irregular patch
     float edge = 0.032 * (0.75 + 0.5 * dsNoise(vMapUv * 120.0));
@@ -343,9 +370,10 @@ export function createSkinMaterial(src: MeshStandardMaterial, masks: SkinMasks, 
     uMaskE: { value: masks.faceE },
     uRegionsOn: { value: masks.faceD && masks.faceE ? 1 : 0 },
     uBodyMask: { value: masks.body },
-    uHide0: { value: null },
-    uHide1: { value: null },
+    uHide: { value: null },
     uHideOn: { value: v4() },
+    uTattoo: { value: null },
+    uTattooFx: { value: v4() },
     ...Object.fromEntries(LAYERS.map((l) => [`u${l}`, { value: v4() }])),
     ...Object.fromEntries(FX.flatMap((f) => [[`u${f}D`, { value: v4() }], [`u${f}E`, { value: v4() }]])),
   } as SkinUniforms
@@ -372,7 +400,7 @@ export function createSkinMaterial(src: MeshStandardMaterial, masks: SkinMasks, 
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>\n${FRAG_NORMAL}`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n${FRAG_SPARKLE}`)
   }
-  mat.customProgramCacheKey = () => 'dollscene-skin-v3'
+  mat.customProgramCacheKey = () => 'dollscene-skin-v4'
   return { material: mat, uniforms, baseNormal }
 }
 
@@ -462,7 +490,21 @@ export function applyLookToSkin(u: SkinUniforms, look: StudioLook, opts: { revea
   if (opts.care) lipCentre(opts.care, u.uLipCentreUv.value)
   const kind = MARKS.indexOf(look.skin.mark)
   const at = opts.care?.landmarks[look.skin.markAt]
-  u.uMark.value.set(at?.uv[0] ?? 0, at?.uv[1] ?? 0, 0, kind > 0 && (at || kind >= 3) ? kind : 0)
+  let mu = at?.uv[0] ?? 0
+  let mv = at?.uv[1] ?? 0
+  // a beauty mark "at the lip corner" sits BESIDE the lip, a little out and up from the corner (on
+  // the skin, never in the lip colour), measured from her own mouth so it fits every face
+  const lips = opts.care?.landmarks.lips
+  const nose = opts.care?.landmarks.noseTip
+  if (at && lips && nose && look.skin.markAt.startsWith('lipCorner')) {
+    const du = at.uv[0] - lips.uv[0]
+    const dv = at.uv[1] - lips.uv[1]
+    const half = Math.hypot(du, dv)
+    const ul = Math.hypot(nose.uv[0] - lips.uv[0], nose.uv[1] - lips.uv[1]) || 1
+    mu += du * 0.35 + ((nose.uv[0] - lips.uv[0]) / ul) * half * 0.6
+    mv += dv * 0.35 + ((nose.uv[1] - lips.uv[1]) / ul) * half * 0.6
+  }
+  u.uMark.value.set(mu, mv, 0, kind > 0 && (at || kind >= 3) ? kind : 0)
 
   for (const f of FX) {
     const r = fx ? fx[f.toLowerCase() as 'foam' | 'wet' | 'cream' | 'sheen'] : null
@@ -478,4 +520,41 @@ export function applyLookToSkin(u: SkinUniforms, look: StudioLook, opts: { revea
     a.set(s.uv[0], s.uv[1], s.r, st ? SPOT_CODE[st] : 0)
     u.uSpotB.value[i].set(fx?.dab[id] ?? 0, fx?.squeeze[id] ?? 0, fx?.heal[id] ?? 0, 0)
   })
+}
+
+/**
+ * Packs up to four hide masks (each a red-channel mask in body UV) into one RGBA texture, channel
+ * per slot. A DataTexture: no canvas premultiplication, so the alpha channel is a real fourth mask.
+ */
+export class HidePack {
+  readonly texture: DataTexture
+  private readonly data: Uint8Array
+  private readonly slots: (Texture | null)[] = [null, null, null, null]
+  private readonly size: number
+  constructor(size = 1024) {
+    this.size = size
+    this.data = new Uint8Array(size * size * 4)
+    this.texture = new DataTexture(this.data, size, size, RGBAFormat)
+    this.texture.colorSpace = NoColorSpace
+    this.texture.magFilter = LinearFilter
+    this.texture.minFilter = LinearFilter
+    this.texture.needsUpdate = true
+  }
+  set(slot: 0 | 1 | 2 | 3, t: Texture | null) {
+    if (this.slots[slot] === t) return
+    this.slots[slot] = t
+    const S = this.size
+    const d = this.data
+    for (let i = slot; i < d.length; i += 4) d[i] = 0
+    const img = t?.image as CanvasImageSource | undefined
+    if (img) {
+      const cv = document.createElement('canvas')
+      cv.width = cv.height = S
+      const g = cv.getContext('2d', { willReadFrequently: true })!
+      g.drawImage(img, 0, 0, S, S)
+      const src = g.getImageData(0, 0, S, S).data
+      for (let i = 0; i < S * S; i++) d[i * 4 + slot] = src[i * 4]
+    }
+    this.texture.needsUpdate = true
+  }
 }

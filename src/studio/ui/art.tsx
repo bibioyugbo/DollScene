@@ -62,6 +62,14 @@ export type ArtKind =
   | 'rings'
   | 'glasses'
   | 'piercing'
+  // accessories
+  | 'beads'
+  | 'band'
+  | 'whisk'
+  | 'fan'
+  | 'clutch'
+  | 'joint'
+  | 'pins'
   // hair care
   | 'hairBrush'
   | 'hairWash'
@@ -470,6 +478,80 @@ export function Art({ kind, color = '#E8B48A', color2 = '#2B2B33', skin = '#8A5A
           <>
             <path d="M24 14q-4 22 2 30q6 4 12 0q6-8 2-30" fill={skin} />
             <circle cx={kind === 'noseRing' ? 40 : 32} cy="42" r="6" fill="none" stroke={color} strokeWidth="3" />
+          </>
+        )
+      case 'beads':
+        return (
+          <>
+            {Array.from({ length: 11 }, (_, i) => {
+              const a = Math.PI * (0.1 + (0.8 * i) / 10)
+              return <circle key={i} cx={32 - Math.cos(a) * 22} cy={16 + Math.sin(a) * 26} r="4.2" fill={color} stroke="#000" strokeOpacity="0.15" />
+            })}
+            {Array.from({ length: 9 }, (_, i) => {
+              const a = Math.PI * (0.15 + (0.7 * i) / 8)
+              return <circle key={`b${i}`} cx={32 - Math.cos(a) * 15} cy={16 + Math.sin(a) * 17} r="3.4" fill={color} opacity="0.85" />
+            })}
+          </>
+        )
+      case 'band':
+        return (
+          <>
+            <path d="M8 40q24-30 48 0" stroke={color} strokeWidth="9" fill="none" strokeLinecap="round" />
+            <path d="M8 40q24-30 48 0" stroke="#fff" strokeOpacity="0.35" strokeWidth="2" fill="none" strokeLinecap="round" />
+          </>
+        )
+      case 'whisk':
+        return (
+          <>
+            <rect x="29" y="6" width="6" height="22" rx="3" fill="#3A2216" />
+            <rect x="28" y="12" width="8" height="3" fill="#D9452B" />
+            <rect x="28" y="18" width="8" height="3" fill="#C9A04A" />
+            {Array.from({ length: 9 }, (_, i) => (
+              <path key={i} d={`M32 28q${(i - 4) * 2} 14 ${(i - 4) * 4} 30`} stroke="#F4F1EA" strokeWidth="2" fill="none" strokeLinecap="round" />
+            ))}
+          </>
+        )
+      case 'fan':
+        return (
+          <>
+            {Array.from({ length: 9 }, (_, i) => {
+              const a = -0.95 + (i / 8) * 1.9
+              return <path key={i} d={`M32 52L${32 + Math.sin(a) * 26} ${52 - Math.cos(a) * 26}`} stroke={i % 2 ? color : '#C9A04A'} strokeWidth="7" strokeLinecap="round" />
+            })}
+            <circle cx="32" cy="52" r="3" fill="#3A2216" />
+          </>
+        )
+      case 'clutch':
+        return (
+          <>
+            <rect x="10" y="22" width="44" height="26" rx="5" fill={color} />
+            <path d="M10 30h44" stroke="#000" strokeOpacity="0.2" strokeWidth="2" />
+            <circle cx="32" cy="30" r="3.4" fill="#D9B35B" />
+          </>
+        )
+      case 'joint':
+        return (
+          <>
+            <path d="M12 44L50 22" stroke="#EFE9DC" strokeWidth="6" strokeLinecap="round" />
+            <path d="M12 44L18 40.5" stroke="#C8B48C" strokeWidth="6" strokeLinecap="round" />
+            <circle cx="51" cy="21.5" r="3.6" fill="#FF5A1A" />
+            <path d="M52 16q-4-5 0-9t0-8" stroke="#D8D8DC" strokeOpacity="0.8" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          </>
+        )
+      case 'pins':
+        return (
+          <>
+            {[
+              [24, 26, 12],
+              [42, 38, 9],
+            ].map(([cx, cy, r], k) => (
+              <g key={k}>
+                {['#e40303', '#ff8c00', '#ffed00', '#008026', '#004dff', '#750787'].map((c, i) => (
+                  <rect key={i} x={cx - r} y={cy - r + (i * 2 * r) / 6} width={2 * r} height={(2 * r) / 6 + 0.4} fill={c} clipPath={`circle(${r}px at ${r}px ${r - (i * 2 * r) / 6}px)`} />
+                ))}
+                <circle cx={cx} cy={cy} r={r} fill="none" stroke="#D9B35B" strokeWidth="2" />
+              </g>
+            ))}
           </>
         )
       case 'necklace':

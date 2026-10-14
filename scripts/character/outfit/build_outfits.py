@@ -85,7 +85,9 @@ def top_field(base, hem_z, neck_front=0.03, neck_back=0.08, neck_w=0.075, curve_
     if sleeve_len is None:
         armpit = zc - 0.025
         xl = np.where(z < armpit, armhole_x, armhole_x - (z - armpit) * (armhole_x - strap[1]) / 0.07)
-        arm = np.maximum(xl, strap[1]) - ax
+        # the armhole only shapes the top near the armpit; lower down the sides follow the body
+        # (a fixed width there cut holes in the sides of curvy and plus bodies at the waist)
+        arm = np.where(z < armpit - 0.1, 1.0, np.maximum(xl, strap[1]) - ax)
         band = np.minimum(ax - strap[0], strap[1] - ax)
         neck = np.maximum(neck, band)  # straps run up through the neckline
         upper = np.maximum.reduce([band, curve - z, (armpit + 0.06) - z])

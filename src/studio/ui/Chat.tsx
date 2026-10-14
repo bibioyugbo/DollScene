@@ -6,15 +6,23 @@ import { Icon } from './icons'
 import { click } from './sound'
 
 /**
- * Public scene chat. Everything said shows as a speech bubble over the speaker's doll (and in this
- * short log). "@name" mentions highlight and ping that player wherever they are; tapping a name
- * mentions them back. Every player can be muted (hidden for you), blocked (neither of you sees the
- * other) or reported (logged for review, and blocked for you).
+ * Scene chat. Everything said shows as a speech bubble over the speaker's head (and in this short
+ * log). Typing with no one selected talks to the whole scene; tapping a person (their doll or
+ * their name) points your messages at them: "To @name" sits on the chat bar, the message is tagged
+ * and pings them wherever they are. Every player can be muted (hidden for you), blocked (neither
+ * of you sees the other) or reported (logged for review, and blocked for you), from the ⋯ on the tag.
  */
 
-/** Which player's menu is open (a tap on their doll or their name). */
+/** Which player's safety menu is open (mute, block, report). */
 export const usePeerMenu = create<{ peer: { id: string; name: string } | null }>(() => ({ peer: null }))
-export const openPeer = (peer: { id: string; name: string }) => usePeerMenu.setState({ peer })
+/** Who your messages are directed at (null: everyone). */
+export const useChatTo = create<{ to: { id: string; name: string } | null }>(() => ({ to: null }))
+/** A tap on a person: direct the next messages at them. */
+export const openPeer = (peer: { id: string; name: string }) => {
+  click('select')
+  useChatTo.setState({ to: peer })
+  window.dispatchEvent(new CustomEvent('ds-chat-focus'))
+}
 
 const REASONS = ['Harassment or bullying', 'Hate or slurs', 'Sexual content', 'Spam', 'Something else']
 
@@ -71,14 +79,25 @@ export function Chat({ onPeer }: { onPeer: (p: { id: string; name: string }) => 
   const status = useRealtime((s) => s.status)
   const me = useRealtime((s) => s.me)
   const peers = useRealtime((s) => s.peers)
+  const to = useChatTo((s) => s.to)
   const [text, setText] = useState('')
   const [open, setOpen] = useState(false)
   const input = useRef<HTMLInputElement>(null)
   const recent = chat.slice(-(open ? 30 : 3))
+  // the person you're talking to left the scene: back to everyone
+  useEffect(() => {
+    if (to && !peers[to.id]) useChatTo.setState({ to: null })
+  }, [to, peers])
+  useEffect(() => {
+    const fn = () => input.current?.focus()
+    window.addEventListener('ds-chat-focus', fn)
+    return () => window.removeEventListener('ds-chat-focus', fn)
+  }, [])
   const send = () => {
     if (!text.trim()) return
     click('tap')
-    realtime.say(text)
+    // directed: tagged with their name (they're pinged); otherwise open to the whole scene
+    realtime.say(to && !text.includes(`@${to.name}`) ? `@${to.name} ${text}` : text)
     setText('')
   }
   // a tap on "@name" (or a name) starts a reply
@@ -97,7 +116,7 @@ export function Chat({ onPeer }: { onPeer: (p: { id: string; name: string }) => 
       <div className={`flex flex-col gap-1 ${open ? 'ds-scroll-y max-h-[30dvh] rounded-2xl bg-black/45 p-2 backdrop-blur' : ''}`} aria-live="polite">
         {recent.map((m) => (
           <p key={m.id} className={`text-[13px] leading-snug text-white drop-shadow-[0_1px_3px_rgb(0_0_0/0.9)] ${m.pending ? 'opacity-60' : ''} ${m.forMe ? 'rounded-lg bg-[#ff8fb1]/30 px-1.5' : ''}`}>
-            <button type="button" className="font-black text-[#ffd1e6]" onClick={() => (m.from === me ? null : onPeer({ id: m.from, name: m.name }))}>
+            <button type="button" className="font-black text-[#ffd1e6]" onClick={() => (m.from === me ? null : openPeer({ id: m.from, name: m.name }))}>
               {m.name}
             </button>{' '}
             {m.text.split(/(@[\p{L}\p{N}_.'-]{1,24})/u).map((part, i) =>
@@ -112,6 +131,17 @@ export function Chat({ onPeer }: { onPeer: (p: { id: string; name: string }) => 
           </p>
         ))}
       </div>
+      {to && (
+        <div className="flex items-center gap-1 self-start rounded-full bg-[#ff8fb1] py-0.5 pl-3 pr-1 text-[13px] font-extrabold text-[#2a0a18] shadow-lg">
+          To @{to.name}
+          <button type="button" aria-label={`Options for ${to.name}`} onClick={() => onPeer(to)} className="grid h-7 w-7 place-items-center rounded-full hover:bg-black/10">
+            ⋯
+          </button>
+          <button type="button" aria-label="Talk to everyone" onClick={() => (click('tap'), useChatTo.setState({ to: null }))} className="grid h-7 w-7 place-items-center rounded-full hover:bg-black/10">
+            <Icon name="close" className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
       <div className="flex items-center gap-1.5">
         <button type="button" aria-label={open ? 'Hide chat log' : 'Show chat log'} aria-expanded={open} onClick={() => setOpen((o) => !o)} className="ds-fab relative grid h-11 w-11 shrink-0 place-items-center rounded-full">
           <Icon name="chat" className="h-[18px] w-[18px]" />
@@ -123,9 +153,9 @@ export function Chat({ onPeer }: { onPeer: (p: { id: string; name: string }) => 
           maxLength={200}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send()}
-          placeholder={status === 'live' ? 'Say something… (@name to mention)' : 'Chat is offline'}
+          placeholder={status === 'live' ? (to ? `Message @${to.name}…` : 'Say something to everyone…') : status === 'connecting' ? 'Connecting to chat…' : 'Chat is offline'}
           disabled={status !== 'live'}
-          aria-label="Chat message (public)"
+          aria-label={to ? `Message to ${to.name}` : 'Chat message to everyone'}
           className="h-11 min-w-0 flex-1 rounded-full bg-white/95 px-4 text-[14px] font-semibold text-[#1c1220] shadow-lg placeholder:text-[#1c1220]/45 disabled:opacity-60"
         />
         <button type="button" aria-label="Send" onClick={send} disabled={!text.trim() || status !== 'live'} className="ds-cta grid h-11 w-11 shrink-0 place-items-center rounded-full disabled:opacity-40">

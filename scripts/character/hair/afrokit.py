@@ -19,7 +19,7 @@ import shellkit
 from hairkit import smoothstep
 
 
-def build(style, oc_off, radii, drop_side, drop_back, ramp, lumps, cols=150, rows_out=60, seed=7, hug_back=0.6):
+def build(style, oc_off, radii, drop_side, drop_back, ramp, lumps, cols=150, rows_out=60, seed=7, hug_back=0.6, drop_front=0.0, front_width=55.0):
     """ramp = (front, side, back) degrees over which the volume swells from its edge."""
     head = hairkit.open_base()
     c = head.c
@@ -35,7 +35,9 @@ def build(style, oc_off, radii, drop_side, drop_back, ramp, lumps, cols=150, row
         a = abs(((az + 180) % 360) - 180)
         side = smoothstep(40, 75, a) * (1 - smoothstep(115, 150, a))
         back = smoothstep(115, 150, a)
-        return drop_side * side + drop_back * back
+        # a fringe: the front edge comes down over the forehead (0 = the usual hairline)
+        front = 1 - smoothstep(front_width * 0.6, front_width, a)
+        return drop_side * side + drop_back * back + drop_front * front
 
     def ramp_at(az):
         a = abs(((az + 180) % 360) - 180)
