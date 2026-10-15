@@ -1,4 +1,5 @@
 {
-  "buildCommand": "tsc -b && vite build",
-  "outputDirectory": "dist"
+  "buildCommand": "npm run build:studio",
+  "outputDirectory": "dist-studio",
+  "rewrites": [{ "source": "/(.*)", "destination": "/studio.html" }]
 }
