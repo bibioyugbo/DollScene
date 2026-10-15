@@ -4,12 +4,22 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "vite --config vite.studio.config.ts",
+    "build": "tsc -p tsconfig.studio.json && tsc -p tsconfig.node.json && vite build --config vite.studio.config.ts",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "vite preview --config vite.studio.config.ts",
     "test:logic": "npm --prefix functions run build && node scripts/logic-test.cjs",
-    "catalog": "node scripts/generate-catalog.mjs"
+    "catalog": "node scripts/generate-catalog.mjs",
+    "dev:studio": "vite --config vite.studio.config.ts",
+    "build:studio": "tsc -p tsconfig.studio.json && tsc -p tsconfig.node.json && vite build --config vite.studio.config.ts",
+    "preview:studio": "vite preview --config vite.studio.config.ts",
+    "character": "/Applications/Blender.app/Contents/MacOS/Blender -b --python scripts/character/build_character.py -- .character-build && scripts/character/optimize.sh .character-build",
+    "test:vatar": "npm --prefix functions run build && node scripts/vatar-test.cjs",
+    "dev:app": "vite",
+    "build:app": "tsc -b && vite build",
+    "preview:app": "vite preview",
+    "test:studio": "node scripts/test-studio.mjs",
+    "test:auth": "node --test tests/server/auth.test.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

@@ -1,0 +1,3727 @@
+{
+  "version": 1,
+  "license": "CC0-1.0 (MakeHuman / MPFB system assets)",
+  "generator": "scripts/character/build_character.py",
+  "macros": {
+    "gender": 0.0,
+    "age": 0.5,
+    "muscle": 0.5,
+    "weight": 0.5,
+    "proportions": 0.5,
+    "height": 0.5,
+    "cupsize": 0.55,
+    "firmness": 0.55,
+    "race": {
+      "african": 0.4,
+      "asian": 0.33,
+      "caucasian": 0.33
+    }
+  },
+  "heightM": 1.5917149051092565,
+  "morphs": [
+    {
+      "id": "NoseWidth",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "NoseBridge",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "NoseTip",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "NoseLength",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Lips",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "LipWidth",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "CupidsBow",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Jaw",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Chin",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "ChinWidth",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Cheekbones",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Cheeks",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Forehead",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "EyeSize",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "EyeSpacing",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "EyeOpen",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Brows",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "BrowAngle",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "FaceFull",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "FaceLength",
+      "neg": true,
+      "pos": true,
+      "group": "face"
+    },
+    {
+      "id": "Shoulders",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Bust",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "BustLift",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Waist",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Belly",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Hips",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Glutes",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Thighs",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Arms",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Calves",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "NeckFull",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Softness",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Muscle",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Masc",
+      "neg": false,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "MascSoft",
+      "neg": true,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "Pregnant",
+      "neg": false,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "ChestFlat",
+      "neg": false,
+      "pos": true,
+      "group": "body"
+    },
+    {
+      "id": "BackStraight",
+      "neg": false,
+      "pos": true,
+      "group": "body"
+    }
+  ],
+  "faceRect": [
+    0.6372490010261536,
+    0.007862999759614468,
+    0.9975150146484375,
+    0.8216339864730835
+  ],
+  "masks": {
+    "faceA": [
+      "lips",
+      "linerUpper",
+      "eyelid",
+      "blush"
+    ],
+    "faceB": [
+      "contour",
+      "highlight",
+      "underEye",
+      "browFill"
+    ],
+    "faceC": [
+      "face",
+      "lipLiner",
+      "scalpHair",
+      "linerLower"
+    ],
+    "faceD": [
+      "forehead",
+      "cheekL",
+      "cheekR",
+      "nose"
+    ],
+    "faceE": [
+      "chin",
+      "perimeter",
+      "innerCorner",
+      "browBone"
+    ],
+    "body": [
+      "nails"
+    ]
+  },
+  "eyes": [
+    "brown",
+    "brownlight",
+    "green",
+    "grey",
+    "bluegreen"
+  ],
+  "brows": [
+    "eyebrow001",
+    "eyebrow006",
+    "eyebrow010",
+    "eyebrow003",
+    "eyebrow008"
+  ],
+  "lashes": [
+    "eyelashes01",
+    "eyelashes02",
+    "eyelashes03"
+  ],
+  "hair": [
+    {
+      "id": "afro_short",
+      "name": "Short wide afro",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos"
+      ]
+    },
+    {
+      "id": "afro_big",
+      "name": "Big puffy afro",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos"
+      ]
+    },
+    {
+      "id": "afro_puffs",
+      "name": "Two afro puffs",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos"
+      ]
+    },
+    {
+      "id": "afro_fringe",
+      "name": "Cute fringe afro",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Neg",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos"
+      ]
+    },
+    {
+      "id": "two_braids",
+      "name": "Two braided ponytails",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos"
+      ]
+    },
+    {
+      "id": "fulani_braids",
+      "name": "Fulani braids",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "goddess_braids",
+      "name": "Boho Fulani braids",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "long_curls",
+      "name": "Long curly wig",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Chin_Neg",
+        "Chin_Pos",
+        "ChinWidth_Neg",
+        "ChinWidth_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "box_braids",
+      "name": "Box braids",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "knotless_braids",
+      "name": "Knotless braids",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "cornrows",
+      "name": "Cornrows",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos"
+      ]
+    },
+    {
+      "id": "twists",
+      "name": "Two-strand twists",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "bantu_knots",
+      "name": "Bantu knots",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos"
+      ]
+    },
+    {
+      "id": "locs",
+      "name": "Locs",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "locs_retwist",
+      "name": "Retwisted locs",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "microlocs",
+      "name": "Microlocs",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "freeform_locs",
+      "name": "Freeform locs",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "faux_locs",
+      "name": "Faux locs",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "curls",
+      "name": "Natural curls",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "braid_out",
+      "name": "Braid-out (loose)",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "wavy_wig",
+      "name": "Wavy wig",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Chin_Neg",
+        "Chin_Pos",
+        "ChinWidth_Neg",
+        "ChinWidth_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "EyeSpacing_Pos",
+        "Brows_Neg",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "BrowAngle_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "leave_out",
+      "name": "Leave-out",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Chin_Neg",
+        "ChinWidth_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "bun",
+      "name": "Sleek high bun",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos"
+      ]
+    },
+    {
+      "id": "bonnet",
+      "name": "Satin bonnet",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos"
+      ]
+    },
+    {
+      "id": "pixie",
+      "name": "Pixie cut",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Neg",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "BrowAngle_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open"
+      ]
+    },
+    {
+      "id": "short02",
+      "name": "Short natural",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "EyeSpacing_Pos",
+        "EyeOpen_Neg",
+        "Brows_Neg",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "BrowAngle_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Sleepy",
+        "Expr_Open",
+        "Expr_BrowsUp",
+        "Expr_Worried"
+      ]
+    },
+    {
+      "id": "bob02",
+      "name": "Silk-press bob",
+      "morphs": [
+        "NoseWidth_Neg",
+        "NoseWidth_Pos",
+        "NoseBridge_Neg",
+        "NoseBridge_Pos",
+        "NoseLength_Neg",
+        "NoseLength_Pos",
+        "LipWidth_Neg",
+        "LipWidth_Pos",
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Chin_Neg",
+        "ChinWidth_Neg",
+        "ChinWidth_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "EyeSize_Neg",
+        "EyeSize_Pos",
+        "EyeSpacing_Neg",
+        "EyeSpacing_Pos",
+        "EyeOpen_Neg",
+        "EyeOpen_Pos",
+        "Brows_Neg",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "BrowAngle_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_BlinkR",
+        "Expr_Sleepy",
+        "Expr_Smile",
+        "Expr_Open",
+        "Expr_BrowsUp",
+        "Expr_Worried",
+        "Expr_Squint",
+        "Expr_Wince"
+      ]
+    },
+    {
+      "id": "long01",
+      "name": "Straight wig",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Neg",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "BrowAngle_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "Shoulders_Neg",
+        "Shoulders_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_Open",
+        "Expr_BrowsUp"
+      ]
+    },
+    {
+      "id": "ponytail01",
+      "name": "Sleek ponytail",
+      "morphs": [
+        "Jaw_Neg",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos"
+      ]
+    },
+    {
+      "id": "braid01",
+      "name": "Single braid",
+      "morphs": [
+        "Jaw_Neg",
+        "Jaw_Pos",
+        "Cheekbones_Neg",
+        "Cheekbones_Pos",
+        "Cheeks_Neg",
+        "Cheeks_Pos",
+        "Forehead_Neg",
+        "Forehead_Pos",
+        "EyeSize_Neg",
+        "EyeSize_Pos",
+        "EyeSpacing_Neg",
+        "EyeSpacing_Pos",
+        "EyeOpen_Neg",
+        "EyeOpen_Pos",
+        "Brows_Neg",
+        "Brows_Pos",
+        "BrowAngle_Neg",
+        "BrowAngle_Pos",
+        "FaceFull_Neg",
+        "FaceFull_Pos",
+        "FaceLength_Neg",
+        "FaceLength_Pos",
+        "NeckFull_Neg",
+        "NeckFull_Pos",
+        "Softness_Neg",
+        "Muscle_Pos",
+        "Masc_Pos",
+        "MascSoft_Neg",
+        "MascSoft_Pos",
+        "Expr_BlinkR",
+        "Expr_Sleepy",
+        "Expr_Open",
+        "Expr_BrowsUp",
+        "Expr_Worried",
+        "Expr_Squint",
+        "Expr_Wince"
+      ]
+    }
+  ],
+  "outfits": [
+    {
+      "id": "female_sportsuit01",
+      "name": "Studio set",
+      "store": "novasport",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "female_casualsuit01",
+      "name": "Weekend casual",
+      "store": "okrika",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "female_casualsuit02",
+      "name": "Denim day",
+      "store": "okrika",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "female_elegantsuit01",
+      "name": "Evening",
+      "store": "moncherie",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "male_casualsuit01",
+      "name": "Easy tee & jeans",
+      "store": "okrika",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "male_casualsuit02",
+      "name": "Weekend layers",
+      "store": "okrika",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "male_casualsuit03",
+      "name": "Street casual",
+      "store": "tolaptsd",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "male_casualsuit04",
+      "name": "Relaxed knit",
+      "store": "okrika",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "male_casualsuit05",
+      "name": "Smart casual",
+      "store": "okrika",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "male_casualsuit06",
+      "name": "Off-duty",
+      "store": "novasport",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "male_elegantsuit01",
+      "name": "Tailored suit",
+      "store": "dopebyfabby",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "male_worksuit01",
+      "name": "Workwear",
+      "store": "tolaptsd",
+      "ease": 0.0,
+      "hideMask": true
+    }
+  ],
+  "shoes": [
+    {
+      "id": "shoes01",
+      "name": "Brown brogues",
+      "hideMask": true
+    },
+    {
+      "id": "shoes02",
+      "name": "Grey trainers",
+      "hideMask": true
+    },
+    {
+      "id": "shoes03",
+      "name": "Black loafers",
+      "hideMask": true
+    },
+    {
+      "id": "shoes04",
+      "name": "Black lace-ups",
+      "hideMask": true
+    },
+    {
+      "id": "shoes05",
+      "name": "White trainers",
+      "hideMask": true
+    },
+    {
+      "id": "shoes06",
+      "name": "Navy sneakers",
+      "hideMask": true
+    }
+  ],
+  "pieces": [
+    {
+      "id": "top_crop_tank",
+      "name": "Butterfly crop tank",
+      "slot": "top",
+      "store": "thai",
+      "colors": [
+        "#C8102E",
+        "#FFC72C",
+        "#2A1200"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "shoes_pumps",
+      "name": "Pointy pumps",
+      "slot": "shoes",
+      "store": "moncherie",
+      "colors": [
+        "#111111",
+        "#2A1A14",
+        "#111111"
+      ],
+      "finish": "patent",
+      "ease": 0.0,
+      "hideMask": true,
+      "arch": 0.5,
+      "lift": 0.0676
+    },
+    {
+      "id": "shoes_block_heels",
+      "name": "Block heels",
+      "slot": "shoes",
+      "store": "dopebyfabby",
+      "colors": [
+        "#D9B35B",
+        "#2A1A14",
+        "#D9B35B"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": false,
+      "arch": 0.42,
+      "lift": 0.0594
+    },
+    {
+      "id": "shoes_mules",
+      "name": "Heeled mules",
+      "slot": "shoes",
+      "store": "moncherie",
+      "colors": [
+        "#F2B8C6",
+        "#2A1A14",
+        "#F2B8C6"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": true,
+      "arch": 0.36,
+      "lift": 0.0531
+    },
+    {
+      "id": "shoes_strappy",
+      "name": "Strappy sandals",
+      "slot": "shoes",
+      "store": "booty",
+      "colors": [
+        "#C9A04A",
+        "#2A1A14",
+        "#C9A04A"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": false,
+      "arch": 0.5,
+      "lift": 0.0666
+    },
+    {
+      "id": "shoes_ankle_strap",
+      "name": "Ankle-strap heels",
+      "slot": "shoes",
+      "store": "dopebyfabby",
+      "colors": [
+        "#B0124A",
+        "#2A1A14",
+        "#D9B35B"
+      ],
+      "finish": "patent",
+      "ease": 0.0,
+      "hideMask": true,
+      "arch": 0.46,
+      "lift": 0.0636
+    },
+    {
+      "id": "shoes_platforms",
+      "name": "Platform heels",
+      "slot": "shoes",
+      "store": "okrika",
+      "colors": [
+        "#E07AA6",
+        "#FFFFFF",
+        "#E07AA6"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": false,
+      "arch": 0.42,
+      "lift": 0.0864
+    },
+    {
+      "id": "shoes_kitten",
+      "name": "Kitten heels",
+      "slot": "shoes",
+      "store": "thai",
+      "colors": [
+        "#F4EFE6",
+        "#2A1A14",
+        "#C9A04A"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": true,
+      "arch": 0.2,
+      "lift": 0.0346
+    },
+    {
+      "id": "shoes_beaded_sandals",
+      "name": "Coral beaded heels",
+      "slot": "shoes",
+      "store": "dejideji",
+      "colors": [
+        "#C9A04A",
+        "#5A3A22",
+        "#E4572E"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": false,
+      "arch": 0.3,
+      "lift": 0.0484
+    },
+    {
+      "id": "shoes_heel_boots",
+      "name": "Heeled boots",
+      "slot": "shoes",
+      "store": "tolaptsd",
+      "colors": [
+        "#141414",
+        "#141414",
+        "#8A8A8A"
+      ],
+      "finish": "leather",
+      "ease": 0.0,
+      "hideMask": true,
+      "arch": 0.34,
+      "lift": 0.0528
+    },
+    {
+      "id": "top_tank",
+      "name": "Ribbed tank",
+      "slot": "top",
+      "store": "thai",
+      "colors": [
+        "#F4F1EA",
+        "#1C1C1C",
+        "#C9A06A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_cami",
+      "name": "Satin cami",
+      "slot": "top",
+      "store": "moncherie",
+      "colors": [
+        "#9CB89A",
+        "#F4EFE6",
+        "#C9A06A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_corset",
+      "name": "Sweetheart corset",
+      "slot": "top",
+      "store": "moncherie",
+      "colors": [
+        "#F2B8C6",
+        "#E39AAD",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_bandeau",
+      "name": "Bandeau",
+      "slot": "top",
+      "store": "dopebyfabby",
+      "colors": [
+        "#0B6E4F",
+        "#0E8A63",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_baby_tee",
+      "name": "Y2K baby tee",
+      "slot": "top",
+      "store": "thai",
+      "colors": [
+        "#F7C6D9",
+        "#E0457B",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_oversized_tee",
+      "name": "No Rules oversized tee",
+      "slot": "top",
+      "store": "tolaptsd",
+      "colors": [
+        "#232323",
+        "#EDE8DD",
+        "#E63946"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "top_crop_tee",
+      "name": "Wild crop tee",
+      "slot": "top",
+      "store": "tolaptsd",
+      "colors": [
+        "#6E6E72",
+        "#141414",
+        "#F2C14E"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_flame_tee",
+      "name": "Flame tee",
+      "slot": "top",
+      "store": "okrika",
+      "colors": [
+        "#111111",
+        "#FF6A00",
+        "#FFD23F"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_buba",
+      "name": "Adire buba",
+      "slot": "top",
+      "store": "dejideji",
+      "colors": [
+        "#1E2A5C",
+        "#7E9BD6",
+        "#D9A441"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_peplum",
+      "name": "Ankara peplum top",
+      "slot": "top",
+      "store": "dejideji",
+      "colors": [
+        "#F2A33A",
+        "#1B7F79",
+        "#E4572E"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_mesh",
+      "name": "Mesh long sleeve",
+      "slot": "top",
+      "store": "tolaptsd",
+      "colors": [
+        "#0A0A0A",
+        "#0A0A0A",
+        "#8A8A8A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "top_sports_bra",
+      "name": "Sports bra",
+      "slot": "top",
+      "store": "novasport",
+      "colors": [
+        "#2D5BD0",
+        "#FFFFFF",
+        "#FF6A00"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_lace_bralette",
+      "name": "Lace bralette",
+      "slot": "top",
+      "store": "booty",
+      "colors": [
+        "#B0124A",
+        "#F2B8C6",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_baggy_jeans",
+      "name": "Baggy jeans",
+      "slot": "bottom",
+      "store": "thai",
+      "colors": [
+        "#7FA3C9",
+        "#D8A04A",
+        "#B8B8B8"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_skinny_jeans",
+      "name": "Skinny jeans",
+      "slot": "bottom",
+      "store": "okrika",
+      "colors": [
+        "#2B3A55",
+        "#C99A55",
+        "#9A9A9A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_ripped_jeans",
+      "name": "Ripped skinny jeans",
+      "slot": "bottom",
+      "store": "tolaptsd",
+      "colors": [
+        "#1E1E22",
+        "#D8D8D8",
+        "#9A9A9A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_cargo",
+      "name": "Cargo pants",
+      "slot": "bottom",
+      "store": "okrika",
+      "colors": [
+        "#5A5A3C",
+        "#4A4A30",
+        "#C9A06A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_flare_pants",
+      "name": "High-waist flares",
+      "slot": "bottom",
+      "store": "dopebyfabby",
+      "colors": [
+        "#0B6E4F",
+        "#0E8A63",
+        "#0B6E4F"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_leggings",
+      "name": "Leggings",
+      "slot": "bottom",
+      "store": "novasport",
+      "colors": [
+        "#141414",
+        "#FFFFFF",
+        "#2D5BD0"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_lace_briefs",
+      "name": "Lace briefs",
+      "slot": "bottom",
+      "store": "booty",
+      "colors": [
+        "#B0124A",
+        "#F2B8C6",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_mini_skirt",
+      "name": "A-line mini skirt",
+      "slot": "bottom",
+      "store": "thai",
+      "colors": [
+        "#EEEBE3",
+        "#D8D2C4",
+        "#B8B8B8"
+      ],
+      "finish": "cotton",
+      "ease": 0.0959,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_pleated_mini",
+      "name": "Tartan pleated mini",
+      "slot": "bottom",
+      "store": "tolaptsd",
+      "colors": [
+        "#A61E22",
+        "#141414",
+        "#F2C14E"
+      ],
+      "finish": "cotton",
+      "ease": 0.1099,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_satin_mini",
+      "name": "Satin mini skirt",
+      "slot": "bottom",
+      "store": "moncherie",
+      "colors": [
+        "#EBA9BA",
+        "#F7D6E0",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.1066,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_midi_skirt",
+      "name": "Floral midi skirt",
+      "slot": "bottom",
+      "store": "thai",
+      "colors": [
+        "#F6EFE3",
+        "#E8735A",
+        "#4FA65E"
+      ],
+      "finish": "cotton",
+      "ease": 0.1294,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_pencil_skirt",
+      "name": "Ankara pencil skirt",
+      "slot": "bottom",
+      "store": "dejideji",
+      "colors": [
+        "#F2A33A",
+        "#1B7F79",
+        "#E4572E"
+      ],
+      "finish": "cotton",
+      "ease": 0.076,
+      "hideMask": false
+    },
+    {
+      "id": "bottom_iro",
+      "name": "Adire iro (wrapper)",
+      "slot": "bottom",
+      "store": "dejideji",
+      "colors": [
+        "#1E2A5C",
+        "#7E9BD6",
+        "#D9A441"
+      ],
+      "finish": "cotton",
+      "ease": 0.0804,
+      "hideMask": false
+    },
+    {
+      "id": "dress_slip",
+      "name": "Satin slip dress",
+      "slot": "dress",
+      "store": "moncherie",
+      "colors": [
+        "#C9A7D8",
+        "#E6D3EF",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.1114,
+      "hideMask": true
+    },
+    {
+      "id": "dress_sequin_mini",
+      "name": "Gold sequin mini",
+      "slot": "dress",
+      "store": "dopebyfabby",
+      "colors": [
+        "#D9B35B",
+        "#F2D98A",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.0623,
+      "hideMask": true
+    },
+    {
+      "id": "dress_velvet_mini",
+      "name": "Velvet & gold mini",
+      "slot": "dress",
+      "store": "dejideji",
+      "colors": [
+        "#0B0B0E",
+        "#C9A04A",
+        "#E4572E"
+      ],
+      "finish": "cotton",
+      "ease": 0.0788,
+      "hideMask": true
+    },
+    {
+      "id": "dress_lace_bodysuit",
+      "name": "Lace bodysuit",
+      "slot": "dress",
+      "store": "booty",
+      "colors": [
+        "#111111",
+        "#B0124A",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": false
+    },
+    {
+      "id": "dress_maxi",
+      "name": "Lilac maxi dress",
+      "slot": "dress",
+      "store": "moncherie",
+      "colors": [
+        "#B9A2D8",
+        "#E8DDF4",
+        "#FFFFFF"
+      ],
+      "finish": "cotton",
+      "ease": 0.1659,
+      "hideMask": true
+    },
+    {
+      "id": "top_square_crop",
+      "name": "Square-neck crop top",
+      "slot": "top",
+      "store": "booty",
+      "colors": [
+        "#0B0B0E",
+        "#1A1A1E",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_micro_skirt",
+      "name": "Micro mini skirt",
+      "slot": "bottom",
+      "store": "booty",
+      "colors": [
+        "#0B0B0E",
+        "#1A1A1E",
+        "#D9B35B"
+      ],
+      "finish": "cotton",
+      "ease": 0.0474,
+      "hideMask": false
+    },
+    {
+      "id": "top_everyday_tee",
+      "name": "Everyday tee",
+      "slot": "top",
+      "store": "okrika",
+      "colors": [
+        "#F2F0EA",
+        "#B8A68A",
+        "#F2F0EA"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_overalls",
+      "name": "Denim overalls",
+      "slot": "bottom",
+      "store": "okrika",
+      "colors": [
+        "#5B7FA8",
+        "#D8A04A",
+        "#C9A04A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_wide_trousers",
+      "name": "Wide-leg trousers",
+      "slot": "bottom",
+      "store": "dopebyfabby",
+      "colors": [
+        "#E8DCC6",
+        "#D9C9AE",
+        "#C9A04A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_track_jacket",
+      "name": "Track jacket",
+      "slot": "top",
+      "store": "novasport",
+      "colors": [
+        "#141E3C",
+        "#FFFFFF",
+        "#E8E8E8"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_track_pants",
+      "name": "Track pants",
+      "slot": "bottom",
+      "store": "novasport",
+      "colors": [
+        "#141E3C",
+        "#FFFFFF",
+        "#E8E8E8"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "top_suit_jacket",
+      "name": "Tailored jacket",
+      "slot": "top",
+      "store": "dopebyfabby",
+      "colors": [
+        "#1E2740",
+        "#F4F4F2",
+        "#5A6E9A"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    },
+    {
+      "id": "bottom_suit_trousers",
+      "name": "Tailored trousers",
+      "slot": "bottom",
+      "store": "dopebyfabby",
+      "colors": [
+        "#1E2740",
+        "#1E2740",
+        "#1E2740"
+      ],
+      "finish": "cotton",
+      "ease": 0.0,
+      "hideMask": true
+    }
+  ],
+  "expressions": [
+    "Expr_BlinkL",
+    "Expr_BlinkR",
+    "Expr_Sleepy",
+    "Expr_Smile",
+    "Expr_Open",
+    "Expr_Pout",
+    "Expr_BrowsUp",
+    "Expr_Worried",
+    "Expr_Squint",
+    "Expr_Wince"
+  ],
+  "care": {
+    "landmarks": {
+      "foreheadC": {
+        "p": [
+          0.0,
+          1.52481,
+          0.13217
+        ],
+        "n": [
+          0.0,
+          0.3012,
+          0.95356
+        ],
+        "uv": [
+          0.80696,
+          0.51683
+        ]
+      },
+      "foreheadL": {
+        "p": [
+          0.02495,
+          1.52746,
+          0.12677
+        ],
+        "n": [
+          0.38244,
+          0.32462,
+          0.86508
+        ],
+        "uv": [
+          0.80379,
+          0.49245
+        ]
+      },
+      "foreheadR": {
+        "p": [
+          -0.02495,
+          1.52746,
+          0.12677
+        ],
+        "n": [
+          -0.38244,
+          0.32462,
+          0.86508
+        ],
+        "uv": [
+          0.80379,
+          0.54122
+        ]
+      },
+      "cheekL": {
+        "p": [
+          0.03651,
+          1.44916,
+          0.12333
+        ],
+        "n": [
+          0.53301,
+          -0.08022,
+          0.84229
+        ],
+        "uv": [
+          0.88287,
+          0.47335
+        ]
+      },
+      "cheekR": {
+        "p": [
+          -0.03651,
+          1.44916,
+          0.12333
+        ],
+        "n": [
+          -0.53301,
+          -0.08022,
+          0.84229
+        ],
+        "uv": [
+          0.88287,
+          0.56032
+        ]
+      },
+      "noseBridge": {
+        "p": [
+          0.0,
+          1.4677,
+          0.14526
+        ],
+        "n": [
+          0.0,
+          0.63256,
+          0.77451
+        ],
+        "uv": [
+          0.863,
+          0.51683
+        ]
+      },
+      "noseTip": {
+        "p": [
+          0.0,
+          1.45615,
+          0.15113
+        ],
+        "n": [
+          -0.0,
+          -0.08562,
+          0.99633
+        ],
+        "uv": [
+          0.87319,
+          0.51683
+        ]
+      },
+      "chin": {
+        "p": [
+          0.0,
+          1.39634,
+          0.13142
+        ],
+        "n": [
+          0.0,
+          -0.49747,
+          0.86748
+        ],
+        "uv": [
+          0.94639,
+          0.51683
+        ]
+      },
+      "underEyeL": {
+        "p": [
+          0.01761,
+          1.45885,
+          0.1296
+        ],
+        "n": [
+          0.57869,
+          0.12607,
+          0.80575
+        ],
+        "uv": [
+          0.87152,
+          0.49788
+        ]
+      },
+      "underEyeR": {
+        "p": [
+          -0.01761,
+          1.45885,
+          0.1296
+        ],
+        "n": [
+          -0.57868,
+          0.12607,
+          0.80575
+        ],
+        "uv": [
+          0.87152,
+          0.53579
+        ]
+      },
+      "lips": {
+        "p": [
+          0.0,
+          1.43678,
+          0.14561
+        ],
+        "n": [
+          -0.0,
+          0.18421,
+          0.98289
+        ],
+        "uv": [
+          0.89607,
+          0.51683
+        ]
+      },
+      "lipCornerL": {
+        "p": [
+          0.01311,
+          1.43522,
+          0.1408
+        ],
+        "n": [
+          0.57013,
+          0.08059,
+          0.81759
+        ],
+        "uv": [
+          0.89554,
+          0.50609
+        ]
+      },
+      "lipCornerR": {
+        "p": [
+          -0.01311,
+          1.43522,
+          0.1408
+        ],
+        "n": [
+          -0.57013,
+          0.08059,
+          0.81759
+        ],
+        "uv": [
+          0.89632,
+          0.52733
+        ]
+      },
+      "templeL": {
+        "p": [
+          0.05822,
+          1.50582,
+          0.09212
+        ],
+        "n": [
+          0.95592,
+          0.10694,
+          0.27348
+        ],
+        "uv": [
+          0.817,
+          0.43609
+        ]
+      },
+      "templeR": {
+        "p": [
+          -0.05822,
+          1.50582,
+          0.09212
+        ],
+        "n": [
+          -0.95592,
+          0.10694,
+          0.27348
+        ],
+        "uv": [
+          0.817,
+          0.59757
+        ]
+      },
+      "jawL": {
+        "p": [
+          0.04243,
+          1.40804,
+          0.09782
+        ],
+        "n": [
+          0.81394,
+          -0.502,
+          0.29241
+        ],
+        "uv": [
+          0.93243,
+          0.44715
+        ]
+      },
+      "jawR": {
+        "p": [
+          -0.04243,
+          1.40804,
+          0.09782
+        ],
+        "n": [
+          -0.81394,
+          -0.502,
+          0.29241
+        ],
+        "uv": [
+          0.93243,
+          0.58652
+        ]
+      },
+      "neck": {
+        "p": [
+          0.0,
+          1.26955,
+          0.09975
+        ],
+        "n": [
+          0.0,
+          0.50247,
+          0.86459
+        ],
+        "uv": [
+          0.38053,
+          0.20883
+        ]
+      },
+      "earLobeL": {
+        "p": [
+          0.07131,
+          1.44219,
+          0.04487
+        ],
+        "n": [
+          0.24296,
+          -0.94141,
+          -0.23394
+        ],
+        "uv": [
+          0.86822,
+          0.37014
+        ]
+      },
+      "earHelixL": {
+        "p": [
+          0.07606,
+          1.48961,
+          0.03498
+        ],
+        "n": [
+          0.03112,
+          0.8814,
+          -0.47135
+        ],
+        "uv": [
+          0.83389,
+          0.36814
+        ]
+      },
+      "earL": {
+        "p": [
+          0.06867,
+          1.47107,
+          0.04269
+        ],
+        "n": [
+          0.3788,
+          -0.91083,
+          0.164
+        ],
+        "uv": [
+          0.84353,
+          0.3762
+        ]
+      },
+      "earLobeR": {
+        "p": [
+          -0.07131,
+          1.44219,
+          0.04487
+        ],
+        "n": [
+          -0.24297,
+          -0.9414,
+          -0.23394
+        ],
+        "uv": [
+          0.86822,
+          0.66352
+        ]
+      },
+      "earHelixR": {
+        "p": [
+          -0.07606,
+          1.48961,
+          0.03498
+        ],
+        "n": [
+          -0.03112,
+          0.8814,
+          -0.47135
+        ],
+        "uv": [
+          0.83389,
+          0.66552
+        ]
+      },
+      "earR": {
+        "p": [
+          -0.06867,
+          1.47107,
+          0.04269
+        ],
+        "n": [
+          -0.37878,
+          -0.91084,
+          0.164
+        ],
+        "uv": [
+          0.84353,
+          0.65746
+        ]
+      },
+      "septum": {
+        "p": [
+          0.0,
+          1.44474,
+          0.1416
+        ],
+        "n": [
+          0.0,
+          -0.0831,
+          0.99654
+        ],
+        "uv": [
+          0.88432,
+          0.51683
+        ]
+      },
+      "nostrilL": {
+        "p": [
+          0.0,
+          1.45615,
+          0.15113
+        ],
+        "n": [
+          -0.0,
+          -0.08562,
+          0.99633
+        ],
+        "uv": [
+          0.87319,
+          0.51683
+        ]
+      },
+      "nostrilR": {
+        "p": [
+          -0.00269,
+          1.456,
+          0.15064
+        ],
+        "n": [
+          -0.29982,
+          -0.11784,
+          0.94669
+        ],
+        "uv": [
+          0.87299,
+          0.5184
+        ]
+      },
+      "labret": {
+        "p": [
+          0.0,
+          1.41863,
+          0.14166
+        ],
+        "n": [
+          -0.0,
+          -0.25115,
+          0.96795
+        ],
+        "uv": [
+          0.92144,
+          0.51684
+        ]
+      },
+      "browEndR": {
+        "p": [
+          -0.04316,
+          1.49679,
+          0.12184
+        ],
+        "n": [
+          -0.57134,
+          -0.41366,
+          0.70884
+        ],
+        "uv": [
+          0.82884,
+          0.56326
+        ]
+      },
+      "navel": {
+        "p": [
+          0.0,
+          0.94933,
+          0.13879
+        ],
+        "n": [
+          0.0,
+          0.18935,
+          0.98191
+        ],
+        "uv": [
+          0.38053,
+          0.44783
+        ]
+      }
+    },
+    "strokes": {
+      "forehead": [
+        [
+          -0.04161,
+          1.52552,
+          0.1158
+        ],
+        [
+          -0.0242,
+          1.52204,
+          0.12906
+        ],
+        [
+          -0.00754,
+          1.52464,
+          0.13194
+        ],
+        [
+          0.0,
+          1.52481,
+          0.13217
+        ],
+        [
+          0.00754,
+          1.52464,
+          0.13194
+        ],
+        [
+          0.0242,
+          1.52204,
+          0.12906
+        ],
+        [
+          0.04161,
+          1.52552,
+          0.1158
+        ]
+      ],
+      "cheekL": [
+        [
+          0.05076,
+          1.45615,
+          0.11379
+        ],
+        [
+          0.04641,
+          1.46491,
+          0.11853
+        ],
+        [
+          0.03437,
+          1.45466,
+          0.12483
+        ],
+        [
+          0.02642,
+          1.45154,
+          0.12777
+        ],
+        [
+          0.02236,
+          1.44219,
+          0.13137
+        ],
+        [
+          0.02441,
+          1.43784,
+          0.13138
+        ],
+        [
+          0.03416,
+          1.44154,
+          0.12416
+        ],
+        [
+          0.0459,
+          1.45273,
+          0.11728
+        ],
+        [
+          0.05076,
+          1.45615,
+          0.11379
+        ]
+      ],
+      "cheekR": [
+        [
+          -0.02236,
+          1.44219,
+          0.13137
+        ],
+        [
+          -0.02642,
+          1.45154,
+          0.12777
+        ],
+        [
+          -0.03437,
+          1.45466,
+          0.12483
+        ],
+        [
+          -0.04641,
+          1.46491,
+          0.11853
+        ],
+        [
+          -0.05076,
+          1.45615,
+          0.11379
+        ],
+        [
+          -0.0459,
+          1.45273,
+          0.11728
+        ],
+        [
+          -0.03416,
+          1.44154,
+          0.12416
+        ],
+        [
+          -0.02441,
+          1.43784,
+          0.13138
+        ],
+        [
+          -0.02236,
+          1.44219,
+          0.13137
+        ]
+      ],
+      "nose": [
+        [
+          0.0,
+          1.47091,
+          0.14273
+        ],
+        [
+          0.0,
+          1.45815,
+          0.15103
+        ],
+        [
+          0.0,
+          1.45615,
+          0.15113
+        ],
+        [
+          0.0,
+          1.45615,
+          0.15113
+        ],
+        [
+          0.0,
+          1.45615,
+          0.15113
+        ]
+      ],
+      "chin": [
+        [
+          -0.01907,
+          1.3972,
+          0.12454
+        ],
+        [
+          -0.00652,
+          1.39673,
+          0.13101
+        ],
+        [
+          0.0,
+          1.39634,
+          0.13142
+        ],
+        [
+          0.00652,
+          1.39673,
+          0.13101
+        ],
+        [
+          0.01907,
+          1.3972,
+          0.12454
+        ]
+      ],
+      "underEyeL": [
+        [
+          0.00298,
+          1.45792,
+          0.1505
+        ],
+        [
+          0.01413,
+          1.45714,
+          0.13964
+        ],
+        [
+          0.02256,
+          1.46341,
+          0.12675
+        ],
+        [
+          0.03513,
+          1.46156,
+          0.12343
+        ]
+      ],
+      "underEyeR": [
+        [
+          -0.00298,
+          1.45792,
+          0.1505
+        ],
+        [
+          -0.01413,
+          1.45714,
+          0.13964
+        ],
+        [
+          -0.02256,
+          1.46341,
+          0.12675
+        ],
+        [
+          -0.03513,
+          1.46156,
+          0.12343
+        ]
+      ],
+      "lips": [
+        [
+          -0.01311,
+          1.43522,
+          0.1408
+        ],
+        [
+          0.0,
+          1.43678,
+          0.14561
+        ],
+        [
+          0.0,
+          1.43678,
+          0.14561
+        ],
+        [
+          0.0,
+          1.43678,
+          0.14561
+        ],
+        [
+          0.01311,
+          1.43522,
+          0.1408
+        ]
+      ]
+    },
+    "spots": [
+      {
+        "p": [
+          -0.01467,
+          1.51841,
+          0.13318
+        ],
+        "n": [
+          -0.16636,
+          0.27478,
+          0.94701
+        ],
+        "uv": [
+          0.81167,
+          0.53126
+        ],
+        "id": "forehead1",
+        "r": 0.00306
+      },
+      {
+        "p": [
+          0.00763,
+          1.53038,
+          0.12989
+        ],
+        "n": [
+          0.09449,
+          0.33503,
+          0.93746
+        ],
+        "uv": [
+          0.80262,
+          0.51026
+        ],
+        "id": "forehead2",
+        "r": 0.00309
+      },
+      {
+        "p": [
+          0.04351,
+          1.45798,
+          0.12007
+        ],
+        "n": [
+          0.52347,
+          -0.07499,
+          0.84874
+        ],
+        "uv": [
+          0.87231,
+          0.46341
+        ],
+        "id": "cheekL",
+        "r": 0.00409
+      },
+      {
+        "p": [
+          -0.03236,
+          1.44782,
+          0.12565
+        ],
+        "n": [
+          -0.47259,
+          -0.00816,
+          0.88124
+        ],
+        "uv": [
+          0.88458,
+          0.55402
+        ],
+        "id": "cheekR",
+        "r": 0.0043
+      },
+      {
+        "p": [
+          0.0,
+          1.39634,
+          0.13142
+        ],
+        "n": [
+          0.0,
+          -0.49747,
+          0.86748
+        ],
+        "uv": [
+          0.94639,
+          0.51683
+        ],
+        "id": "chin",
+        "r": 0.00339
+      },
+      {
+        "p": [
+          0.00269,
+          1.456,
+          0.15064
+        ],
+        "n": [
+          0.29982,
+          -0.11784,
+          0.94669
+        ],
+        "uv": [
+          0.87299,
+          0.51527
+        ],
+        "id": "nose",
+        "r": 0.00217
+      },
+      {
+        "p": [
+          -0.04243,
+          1.40804,
+          0.09782
+        ],
+        "n": [
+          -0.81394,
+          -0.502,
+          0.29241
+        ],
+        "uv": [
+          0.93243,
+          0.58652
+        ],
+        "id": "jawR",
+        "r": 0.00419
+      },
+      {
+        "p": [
+          0.02337,
+          1.43027,
+          0.13263
+        ],
+        "n": [
+          0.56296,
+          -0.09567,
+          0.82093
+        ],
+        "uv": [
+          0.90279,
+          0.49272
+        ],
+        "id": "cheekL2",
+        "r": 0.00451
+      }
+    ],
+    "nails": [
+      {
+        "bone": "LeftHandThumb3",
+        "p": [
+          0.38692,
+          0.92647,
+          0.26032
+        ],
+        "n": [
+          -0.49512,
+          0.59881,
+          0.62951
+        ],
+        "dir": [
+          -0.11233,
+          -0.76259,
+          0.63705
+        ],
+        "width": 0.01035,
+        "length": 0.01128
+      },
+      {
+        "bone": "LeftHandIndex3",
+        "p": [
+          0.44787,
+          0.88558,
+          0.28688
+        ],
+        "n": [
+          0.67457,
+          0.24578,
+          0.6961
+        ],
+        "dir": [
+          -0.23908,
+          -0.81939,
+          0.521
+        ],
+        "width": 0.00872,
+        "length": 0.01287
+      },
+      {
+        "bone": "LeftHandMiddle3",
+        "p": [
+          0.47192,
+          0.86204,
+          0.26775
+        ],
+        "n": [
+          0.8595,
+          0.27118,
+          0.43328
+        ],
+        "dir": [
+          0.00926,
+          -0.85578,
+          0.51725
+        ],
+        "width": 0.00813,
+        "length": 0.01137
+      },
+      {
+        "bone": "LeftHandRing3",
+        "p": [
+          0.48434,
+          0.85474,
+          0.24005
+        ],
+        "n": [
+          0.90083,
+          0.15191,
+          0.40672
+        ],
+        "dir": [
+          0.00502,
+          -0.94037,
+          0.34011
+        ],
+        "width": 0.00818,
+        "length": 0.01181
+      },
+      {
+        "bone": "LeftHandPinky3",
+        "p": [
+          0.47928,
+          0.86262,
+          0.20688
+        ],
+        "n": [
+          0.95329,
+          0.09644,
+          0.28624
+        ],
+        "dir": [
+          0.01801,
+          -0.96412,
+          0.26485
+        ],
+        "width": 0.0066,
+        "length": 0.00673
+      },
+      {
+        "bone": "RightHandThumb3",
+        "p": [
+          -0.38692,
+          0.92647,
+          0.26032
+        ],
+        "n": [
+          0.49512,
+          0.59881,
+          0.62951
+        ],
+        "dir": [
+          0.11233,
+          -0.76259,
+          0.63705
+        ],
+        "width": 0.01035,
+        "length": 0.01128
+      },
+      {
+        "bone": "RightHandIndex3",
+        "p": [
+          -0.44787,
+          0.88558,
+          0.28688
+        ],
+        "n": [
+          -0.67457,
+          0.24578,
+          0.6961
+        ],
+        "dir": [
+          0.23908,
+          -0.81939,
+          0.521
+        ],
+        "width": 0.00872,
+        "length": 0.01287
+      },
+      {
+        "bone": "RightHandMiddle3",
+        "p": [
+          -0.47192,
+          0.86204,
+          0.26775
+        ],
+        "n": [
+          -0.8595,
+          0.27118,
+          0.43328
+        ],
+        "dir": [
+          -0.00926,
+          -0.85578,
+          0.51725
+        ],
+        "width": 0.00813,
+        "length": 0.01137
+      },
+      {
+        "bone": "RightHandRing3",
+        "p": [
+          -0.48434,
+          0.85474,
+          0.24005
+        ],
+        "n": [
+          -0.90083,
+          0.15191,
+          0.40672
+        ],
+        "dir": [
+          -0.00502,
+          -0.94037,
+          0.34011
+        ],
+        "width": 0.00818,
+        "length": 0.01181
+      },
+      {
+        "bone": "RightHandPinky3",
+        "p": [
+          -0.47928,
+          0.86262,
+          0.20688
+        ],
+        "n": [
+          -0.95329,
+          0.09644,
+          0.28624
+        ],
+        "dir": [
+          -0.01801,
+          -0.96412,
+          0.26485
+        ],
+        "width": 0.0066,
+        "length": 0.00673
+      }
+    ],
+    "jewellery": {
+      "neckBase": {
+        "p": [
+          0.0,
+          1.35839,
+          0.03076
+        ],
+        "r": 0.04774
+      },
+      "wristL": {
+        "p": [
+          0.41348,
+          0.97681,
+          0.15091
+        ],
+        "r": 0.01892,
+        "dir": [
+          0.51849,
+          -0.57406,
+          0.63374
+        ],
+        "bone": "LeftHand"
+      },
+      "ringL": {
+        "p": [
+          0.46589,
+          0.90146,
+          0.21424
+        ],
+        "r": 0.01093,
+        "dir": [
+          0.30586,
+          -0.8483,
+          0.43225
+        ],
+        "bone": "LeftHandRing1"
+      },
+      "wristR": {
+        "p": [
+          -0.41348,
+          0.97681,
+          0.15091
+        ],
+        "r": 0.01892,
+        "dir": [
+          -0.51849,
+          -0.57406,
+          0.63374
+        ],
+        "bone": "RightHand"
+      },
+      "ringR": {
+        "p": [
+          -0.46589,
+          0.90146,
+          0.21424
+        ],
+        "r": 0.01093,
+        "dir": [
+          -0.30586,
+          -0.8483,
+          0.43225
+        ],
+        "bone": "RightHandRing1"
+      },
+      "industrialAL": {
+        "p": [
+          0.06642,
+          1.47557,
+          0.05934
+        ],
+        "r": 0.0
+      },
+      "industrialBL": {
+        "p": [
+          0.07479,
+          1.47325,
+          0.02633
+        ],
+        "r": 0.0
+      },
+      "industrialAR": {
+        "p": [
+          -0.06642,
+          1.47557,
+          0.05934
+        ],
+        "r": 0.0
+      },
+      "industrialBR": {
+        "p": [
+          -0.07479,
+          1.47325,
+          0.02633
+        ],
+        "r": 0.0
+      }
+    },
+    "tattoos": {
+      "forearmL": {
+        "uv": [
+          0.71975,
+          0.18017
+        ],
+        "s": 0.4569,
+        "up": [
+          -0.9949,
+          0.101
+        ],
+        "right": [
+          -0.0995,
+          -0.995
+        ],
+        "p": [
+          0.38079,
+          1.0184,
+          0.13477
+        ],
+        "n": [
+          -0.29296,
+          0.5603,
+          0.77475
+        ]
+      },
+      "upperArmL": {
+        "uv": [
+          0.58981,
+          0.16516
+        ],
+        "s": 0.5709,
+        "up": [
+          -0.9914,
+          0.1305
+        ],
+        "right": [
+          0.1323,
+          -0.9912
+        ],
+        "p": [
+          0.26045,
+          1.19868,
+          0.02955
+        ],
+        "n": [
+          0.80215,
+          0.57771,
+          0.15104
+        ]
+      },
+      "shoulderBackL": {
+        "uv": [
+          0.5499,
+          0.10796
+        ],
+        "s": 0.4499,
+        "up": [
+          -0.7621,
+          0.6474
+        ],
+        "right": [
+          -0.2372,
+          -0.9715
+        ],
+        "p": [
+          0.14802,
+          1.26728,
+          -0.04564
+        ],
+        "n": [
+          0.18937,
+          0.13458,
+          -0.97264
+        ]
+      },
+      "ankleL": {
+        "uv": [
+          0.33514,
+          0.85937
+        ],
+        "s": 0.5183,
+        "up": [
+          -0.9998,
+          0.0191
+        ],
+        "right": [
+          0.4104,
+          -0.9119
+        ],
+        "p": [
+          0.19079,
+          0.06733,
+          0.02194
+        ],
+        "n": [
+          0.91561,
+          0.16055,
+          -0.36862
+        ]
+      },
+      "calfL": {
+        "uv": [
+          0.61261,
+          0.77237
+        ],
+        "s": 0.3815,
+        "up": [
+          -0.1096,
+          -0.994
+        ],
+        "right": [
+          0.9816,
+          -0.1908
+        ],
+        "p": [
+          0.13752,
+          0.2561,
+          -0.02583
+        ],
+        "n": [
+          -0.56982,
+          -0.20835,
+          -0.79492
+        ]
+      },
+      "thighL": {
+        "uv": [
+          0.51323,
+          0.57537
+        ],
+        "s": 0.471,
+        "up": [
+          -0.2639,
+          -0.9645
+        ],
+        "right": [
+          0.941,
+          -0.3384
+        ],
+        "p": [
+          0.17968,
+          0.69744,
+          0.07201
+        ],
+        "n": [
+          0.92397,
+          0.03847,
+          0.38054
+        ]
+      },
+      "hipL": {
+        "uv": [
+          0.47969,
+          0.50333
+        ],
+        "s": 0.6324,
+        "up": [
+          -0.0305,
+          -0.9995
+        ],
+        "right": [
+          0.9999,
+          -0.0113
+        ],
+        "p": [
+          0.1336,
+          0.84973,
+          0.0932
+        ],
+        "n": [
+          0.69919,
+          0.17762,
+          0.69252
+        ]
+      },
+      "ribsL": {
+        "uv": [
+          0.58131,
+          0.26722
+        ],
+        "s": 0.7038,
+        "up": [
+          -0.5675,
+          0.8234
+        ],
+        "right": [
+          -0.8838,
+          -0.468
+        ],
+        "p": [
+          0.15587,
+          1.20105,
+          0.00147
+        ],
+        "n": [
+          -0.35102,
+          -0.93439,
+          -0.06078
+        ]
+      },
+      "chestL": {
+        "uv": [
+          0.3972,
+          0.23192
+        ],
+        "s": 0.7414,
+        "up": [
+          0.235,
+          -0.972
+        ],
+        "right": [
+          0.9858,
+          -0.168
+        ],
+        "p": [
+          0.0301,
+          1.24238,
+          0.11527
+        ],
+        "n": [
+          0.00214,
+          0.43913,
+          0.89842
+        ]
+      },
+      "wristL": {
+        "uv": [
+          0.6021,
+          0.88526
+        ],
+        "s": 0.6882,
+        "up": [
+          0.6973,
+          -0.7168
+        ],
+        "right": [
+          0.6923,
+          0.7216
+        ],
+        "p": [
+          0.40777,
+          0.96262,
+          0.17342
+        ],
+        "n": [
+          -0.98138,
+          -0.11456,
+          -0.15416
+        ]
+      },
+      "forearmR": {
+        "uv": [
+          0.04131,
+          0.18017
+        ],
+        "s": 0.4569,
+        "up": [
+          0.9949,
+          0.101
+        ],
+        "right": [
+          -0.0995,
+          0.995
+        ],
+        "p": [
+          -0.38079,
+          1.0184,
+          0.13477
+        ],
+        "n": [
+          0.29296,
+          0.5603,
+          0.77475
+        ]
+      },
+      "upperArmR": {
+        "uv": [
+          0.17125,
+          0.16516
+        ],
+        "s": 0.5709,
+        "up": [
+          0.9914,
+          0.1305
+        ],
+        "right": [
+          0.1323,
+          0.9912
+        ],
+        "p": [
+          -0.26045,
+          1.19868,
+          0.02955
+        ],
+        "n": [
+          -0.80215,
+          0.57771,
+          0.15104
+        ]
+      },
+      "shoulderBackR": {
+        "uv": [
+          0.21116,
+          0.10796
+        ],
+        "s": 0.4499,
+        "up": [
+          0.7622,
+          0.6474
+        ],
+        "right": [
+          -0.2372,
+          0.9715
+        ],
+        "p": [
+          -0.14802,
+          1.26728,
+          -0.04564
+        ],
+        "n": [
+          -0.18937,
+          0.13458,
+          -0.97264
+        ]
+      },
+      "ankleR": {
+        "uv": [
+          0.0543,
+          0.85937
+        ],
+        "s": 0.5183,
+        "up": [
+          0.9998,
+          0.0191
+        ],
+        "right": [
+          0.4105,
+          0.9119
+        ],
+        "p": [
+          -0.19079,
+          0.06733,
+          0.02194
+        ],
+        "n": [
+          -0.91561,
+          0.16055,
+          -0.36862
+        ]
+      },
+      "calfR": {
+        "uv": [
+          0.14845,
+          0.77237
+        ],
+        "s": 0.3816,
+        "up": [
+          0.1096,
+          -0.994
+        ],
+        "right": [
+          0.9816,
+          0.1908
+        ],
+        "p": [
+          -0.13752,
+          0.2561,
+          -0.02583
+        ],
+        "n": [
+          0.56982,
+          -0.20835,
+          -0.79492
+        ]
+      },
+      "thighR": {
+        "uv": [
+          0.24783,
+          0.57537
+        ],
+        "s": 0.471,
+        "up": [
+          0.2639,
+          -0.9645
+        ],
+        "right": [
+          0.941,
+          0.3384
+        ],
+        "p": [
+          -0.17968,
+          0.69744,
+          0.07201
+        ],
+        "n": [
+          -0.92397,
+          0.03847,
+          0.38054
+        ]
+      },
+      "hipR": {
+        "uv": [
+          0.28137,
+          0.50333
+        ],
+        "s": 0.6324,
+        "up": [
+          0.0305,
+          -0.9995
+        ],
+        "right": [
+          0.9999,
+          0.0113
+        ],
+        "p": [
+          -0.1336,
+          0.84973,
+          0.0932
+        ],
+        "n": [
+          -0.69919,
+          0.17762,
+          0.69252
+        ]
+      },
+      "ribsR": {
+        "uv": [
+          0.17975,
+          0.26722
+        ],
+        "s": 0.7038,
+        "up": [
+          0.5676,
+          0.8233
+        ],
+        "right": [
+          -0.8838,
+          0.4679
+        ],
+        "p": [
+          -0.15587,
+          1.20105,
+          0.00147
+        ],
+        "n": [
+          0.35102,
+          -0.93439,
+          -0.06078
+        ]
+      },
+      "chestR": {
+        "uv": [
+          0.36386,
+          0.23192
+        ],
+        "s": 0.7415,
+        "up": [
+          -0.235,
+          -0.972
+        ],
+        "right": [
+          0.9858,
+          0.168
+        ],
+        "p": [
+          -0.0301,
+          1.24238,
+          0.11527
+        ],
+        "n": [
+          -0.00214,
+          0.43913,
+          0.89842
+        ]
+      },
+      "wristR": {
+        "uv": [
+          0.52231,
+          0.88477
+        ],
+        "s": 0.6882,
+        "up": [
+          -0.6811,
+          -0.7322
+        ],
+        "right": [
+          0.7086,
+          -0.7056
+        ],
+        "p": [
+          -0.40777,
+          0.96262,
+          0.17342
+        ],
+        "n": [
+          0.98138,
+          -0.11456,
+          -0.15416
+        ]
+      },
+      "nape": {
+        "uv": [
+          0.25651,
+          0.05879
+        ],
+        "s": 0.5899,
+        "up": [
+          0.996,
+          -0.0892
+        ],
+        "right": [
+          -0.2336,
+          0.9723
+        ],
+        "p": [
+          -0.0288,
+          1.33695,
+          -0.03205
+        ],
+        "n": [
+          0.07763,
+          0.47527,
+          -0.87641
+        ]
+      },
+      "lowerBack": {
+        "uv": [
+          0.16851,
+          0.45191
+        ],
+        "s": 0.497,
+        "up": [
+          0.3273,
+          -0.9449
+        ],
+        "right": [
+          0.9188,
+          0.3947
+        ],
+        "p": [
+          -0.0253,
+          0.91654,
+          -0.04632
+        ],
+        "n": [
+          0.00076,
+          0.46231,
+          -0.88672
+        ]
+      },
+      "sternum": {
+        "uv": [
+          0.38053,
+          0.36078
+        ],
+        "s": 0.834,
+        "up": [
+          0.0,
+          -1.0
+        ],
+        "right": [
+          1.0,
+          -0.0
+        ],
+        "p": [
+          0.0,
+          1.07918,
+          0.14284
+        ],
+        "n": [
+          -0.0,
+          0.01567,
+          0.99988
+        ]
+      }
+    }
+  }
+}

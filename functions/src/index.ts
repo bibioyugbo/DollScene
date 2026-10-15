@@ -148,3 +148,6 @@ export const onMessageCreated = onDocumentCreated('conversations/{cid}/messages/
   const dead = res.responses.map((r, i) => (!r.success ? tokens[i] : null)).filter((t): t is string => !!t)
   if (dead.length) await fs.doc(`users/${to}`).update({ pushTokens: tokens.filter((t) => !dead.includes(t)) })
 })
+
+// Lagos Life (Vatar Games) edition of the studio: sessions, looks, challenges, purchases.
+export { vatarApi } from './vatar'

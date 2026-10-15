@@ -36,3 +36,16 @@ ui-debug.log
 
 # Local safety copy of the pre-v2 source
 backup-pre-v2
+
+# Studio build output and the Blender character build scratch folder
+dist-studio
+.character-build
+.character-build.log
+
+# Blender sources (art/blender/**) stay local; only exported GLBs are committed
+*.blend
+*.blend1
+.test-build/
+.data/
+public/models/studio.next/
+public/models/studio.old/

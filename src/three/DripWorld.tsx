@@ -2,7 +2,7 @@ import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber'
 import { useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { CanvasTexture, Color, ExtrudeGeometry, Shape, SRGBColorSpace, type Group, type Mesh, type MeshStandardMaterial, type PointLight } from 'three'
 
-export type WorldStoreKind = 'streetwear' | 'classy' | 'basics' | 'thrift' | 'edgy' | 'baddie' | 'lingerie' | 'luxury' | 'sport' | 'football'
+export type WorldStoreKind = 'streetwear' | 'classy' | 'basics' | 'thrift' | 'edgy' | 'baddie' | 'lingerie' | 'luxury' | 'sport' | 'football'| "makeup" | "clinic";
 
 export interface WorldStore {
   id: string
@@ -636,8 +636,101 @@ function Football({ s }: { s: WorldStore }) {
   )
 }
 
-const BUILD: Record<WorldStoreKind, (p: { s: WorldStore }) => ReactNode> = { streetwear: Streetwear, classy: Classy, basics: Basics, thrift: Thrift, edgy: Edgy, baddie: Baddie, lingerie: Lingerie, luxury: Luxury, sport: Sport, football: Football }
+/** Glow Bar: pink vanity mirrors with bulbs, a counter of lipsticks and palettes. */
+function Makeup({ s }: { s: WorldStore }) {
+    return (
+        <Shell wall="#FFB3D5" trim="#D4AF37" interior="#FFF0F7" accent={s.accent}>
+            <Sign label={s.name} color="#FF2E88" style="neon" y={3.2} z={0.43} />
+            {/* vanity mirrors with bulbs */}
+            {[-1.2, 0.1, 1.4].map((x) => (
+                <group key={x} position={[x, 1.55, -1.36]}>
+                    <Box p={[0, 0, 0]} s={[0.9, 1.2, 0.03]} c="#EAF4FF">
+                        <meshStandardMaterial color="#EAF4FF" metalness={0.9} roughness={0.08} />
+                    </Box>
+                    {Array.from({ length: 10 }, (_, i) => (
+                        <mesh key={i} position={[i < 5 ? -0.5 : 0.5, 0.5 - (i % 5) * 0.25, 0.04]}>
+                            <sphereGeometry args={[0.05, 10, 10]} />
+                            <GlowMat color="#FFF3C4" off={0.2} on={2.6} />
+                        </mesh>
+                    ))}
+                </group>
+            ))}
+            {/* counter */}
+            <Box p={[0.5, 0.5, -0.5]} s={[3.4, 0.08, 0.7]} c="#FFFFFF" />
+            <Box p={[0.5, 0.25, -0.5]} s={[3.3, 0.5, 0.6]} c="#FF8CC4" />
+            {/* lipsticks and palettes on the counter */}
+            {Array.from({ length: 12 }, (_, i) => (
+                <mesh key={i} position={[-0.9 + i * 0.3, 0.64, -0.5]}>
+                    <cylinderGeometry args={[0.035, 0.035, 0.2, 10]} />
+                    <meshStandardMaterial color={s.stock[i % s.stock.length]} roughness={0.35} metalness={0.3} />
+                </mesh>
+            ))}
+            {[0, 1].map((i) => (
+                <Box key={i} p={[1.9 + i * 0.35, 0.57, -0.4]} s={[0.28, 0.04, 0.22]} c={s.stock[(i + 3) % s.stock.length]} />
+            ))}
+            {/* round pink pouf */}
+            <mesh position={[-1.55, 0.3, 0.9]} scale={[1, 0.6, 1]}>
+                <sphereGeometry args={[0.3, 20, 14]} />
+                <meshPhysicalMaterial color="#FF8CC4" roughness={0.3} sheen={1} />
+            </mesh>
+        </Shell>
+    )
+}
 
+/** Beauty Doctor: a clean teal-and-white clinic with a glowing cross, a treatment bed and a plant. */
+function Clinic({ s }: { s: WorldStore }) {
+    return (
+        <Shell wall="#E8F6F5" trim="#2BA6A0" interior="#FFFFFF" accent={s.accent}>
+            <Sign label={s.name} color="#2BA6A0" style="clean" y={3.25} z={0.43} h={0.8} />
+            {/* glowing medical cross */}
+            <group position={[2.05, 2.0, 0.44]}>
+                <Box p={[0, 0, 0]} s={[0.55, 0.16, 0.04]} c="#2BA6A0">
+                    <GlowMat color="#2BA6A0" off={0.3} on={2.2} />
+                </Box>
+                <Box p={[0, 0, 0]} s={[0.16, 0.55, 0.04]} c="#2BA6A0">
+                    <GlowMat color="#2BA6A0" off={0.3} on={2.2} />
+                </Box>
+            </group>
+            {/* treatment bed */}
+            <Box p={[0.3, 0.5, -0.6]} s={[1.9, 0.18, 0.75]} c="#FFFFFF" />
+            <Box p={[0.3, 0.28, -0.6]} s={[0.12, 0.4, 0.12]} c="#C7CAD1" />
+            <Box p={[-0.45, 0.68, -0.6]} s={[0.5, 0.2, 0.7]} c="#BFE8E5" />
+            {/* cabinet with bottles */}
+            <Box p={[1.7, 0.9, -1.2]} s={[1.0, 1.8, 0.35]} c="#D5ECEA" />
+            {Array.from({ length: 6 }, (_, i) => (
+                <mesh key={i} position={[1.4 + (i % 3) * 0.3, 1.2 + Math.floor(i / 3) * 0.45, -1.0]}>
+                    <cylinderGeometry args={[0.05, 0.05, 0.2, 10]} />
+                    <meshStandardMaterial color={s.stock[i % s.stock.length]} roughness={0.2} />
+                </mesh>
+            ))}
+            {/* plant */}
+            <mesh position={[-1.8, 0.3, 0.9]}>
+                <cylinderGeometry args={[0.18, 0.14, 0.4, 14]} />
+                <meshStandardMaterial color="#FFFFFF" roughness={0.6} />
+            </mesh>
+            <mesh position={[-1.8, 0.75, 0.9]}>
+                <sphereGeometry args={[0.28, 14, 12]} />
+                <meshStandardMaterial color="#3FA66B" roughness={0.9} />
+            </mesh>
+        </Shell>
+    )
+}
+
+// const BUILD: Record<WorldStoreKind, (p: { s: WorldStore }) => ReactNode> = { streetwear: Streetwear, makeup:Makeup, clinic:Clinic, classy: Classy, basics: Basics, thrift: Thrift, edgy: Edgy, baddie: Baddie, lingerie: Lingerie, luxury: Luxury, sport: Sport, football: Football }
+const BUILD: Record<WorldStoreKind, (p: { s: WorldStore }) => ReactNode> = {
+    streetwear: Streetwear,
+    makeup: Makeup,
+    clinic: Clinic,
+    classy: Classy,
+    basics: Basics,
+    thrift: Thrift,
+    edgy: Edgy,
+    baddie: Baddie,
+    lingerie: Lingerie,
+    luxury: Luxury,
+    sport: Sport,
+    football: Football,
+}
 function StoreNode({ store, index, lit, still, onEnter, onHover }: { store: WorldStore; index: number; lit: boolean; still: boolean; onEnter: (id: string) => void; onHover: (i: number | null) => void }) {
   const group = useRef<Group>(null)
   useGlow(group, lit, still)
