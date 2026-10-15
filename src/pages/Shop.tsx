@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import {lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties, type ComponentProps} from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { AppShell } from '../components/AppShell'
 import { ItemThumb } from '../components/art/ItemThumb'
@@ -20,6 +20,7 @@ import { useSession } from '../store/useSession'
 import { toast } from '../store/useToasts'
 
 const DollStage = lazy(() => import('../three/DollStage'))
+type RoomKindProp = NonNullable<ComponentProps<typeof DollStage>['room']>['kind']
 
 /* ------------------------------------------------------------------ stores */
 
@@ -241,8 +242,7 @@ const VIBE_LABEL: Record<Store['vibe'], string> = {
  * A 2D shopfront: striped awning, neon sign, a lit window with three pieces on
  * show, a door. The sign and window light up on hover, focus and when you walk in.
  */
-function Storefront({ store, lit, onEnter }: { store: Store; lit: boolean; onEnter: () => void }) {
-  const show = useMemo(() => {
+export function Storefront({ store, lit, onEnter }: { store: Store; lit: boolean; onEnter: () => void }) {  const show = useMemo(() => {
     const all = store.items().filter((i) => i.slot)
     const pick: CatalogItem[] = []
     for (const slot of ['dress', 'top', 'outerwear', 'shoes', 'bag', 'bottom', 'eyewear'] as OutfitSlot[]) {
@@ -422,7 +422,7 @@ function FittingRoom({ store, kind, label, onLeave }: { store: Store; kind: Worl
       {/* the store's own fitting room, full screen: decor, a mirror, and you */}
       <div className="absolute inset-0 motion-safe:animate-[walk-in_.9s_cubic-bezier(.2,.8,.3,1)_both]">
         <Suspense fallback={<SceneFallback label="Walking in…" />}>
-          <DollStage appearance={{ ...doll.appearance, outfit }} focus="full" interactive={false} reducedMotion={reduced} room={{ kind, accent: store.accent, stock: all.slice(0, 40).map((i) => i.colors[0]) }} label={`You in the ${store.name} fitting room`} />
+          <DollStage appearance={{ ...doll.appearance, outfit }} focus="full" interactive={false} reducedMotion={reduced} room={{ kind: kind as RoomKindProp, accent: store.accent, stock: all.slice(0, 40).map((i) => i.colors[0]) }} label={`You in the ${store.name} fitting room`} />
         </Suspense>
       </div>
 
