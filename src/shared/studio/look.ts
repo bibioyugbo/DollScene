@@ -29,16 +29,19 @@ export const FACE_MORPHS = [
   'BrowAngle',
   'FaceFull',
   'FaceLength',
+  'NoseTipWidth',
 ] as const
 /**
  * Masc: presentation, 0.5 (the feminine base) .. 1 masculine; below 0.5 changes nothing.
  * Every body morph changes shape relative to one shared skeleton (the build removes the joint drift
  * MakeHuman's macros carry), so limb lengths and proportions follow `height` only, never weight.
  */
-export const BODY_MORPHS = ['Shoulders', 'Bust', 'BustLift', 'Waist', 'Belly', 'Hips', 'Glutes', 'Thighs', 'Arms', 'Calves', 'NeckFull', 'Softness', 'Muscle', 'Masc', 'Pregnant', 'ChestFlat', 'BackStraight'] as const
+export const BODY_MORPHS = ['Shoulders', 'Bust', 'BustLift', 'Waist', 'Belly', 'Hips', 'Glutes', 'Thighs', 'Arms', 'Calves', 'NeckFull', 'Softness', 'Muscle', 'Masc', 'Pregnant', 'ChestFlat', 'BackStraight', 'MascSoft'] as const
 export type FaceMorph = (typeof FACE_MORPHS)[number]
 export type BodyMorph = (typeof BODY_MORPHS)[number]
 export type MorphId = FaceMorph | BodyMorph
+/** Tallest a doll can be (relative to the base female's 1.59 m): men on the male base reach ~1.85 m. */
+export const MAX_HEIGHT = 1.16
 export const ALL_MORPHS: readonly MorphId[] = [...FACE_MORPHS, ...BODY_MORPHS]
 
 /** Facial expression shape keys on the body (single-sided, 0 rest .. 1 full). Never saved. */
@@ -82,6 +85,10 @@ export const HAIR_IDS = [
   'long01',
   'ponytail01',
   'braid01',
+  'jayda_braids',
+  'doechii_cornrows',
+  'long_straight_fringe',
+  'short_locs',
 ] as const
 /** Renamed hair ids: old saves still load. */
 const HAIR_RENAMES: Record<string, (typeof HAIR_IDS)[number]> = { afro01: 'afro_big', afro: 'afro_big' }
@@ -230,7 +237,8 @@ export interface Extras {
   color: string
 }
 export const TATTOO_DESIGNS = ['rose', 'butterfly', 'heart', 'star', 'moon', 'snake', 'script', 'vine', 'dagger', 'sun', 'swallow', 'band'] as const
-export const TATTOO_SPOTS = ['forearmL', 'forearmR', 'upperArmL', 'upperArmR', 'shoulderBackL', 'shoulderBackR', 'ankleL', 'ankleR', 'calfL', 'calfR', 'thighL', 'thighR', 'hipL', 'hipR', 'ribsL', 'ribsR', 'chestL', 'chestR', 'wristL', 'wristR', 'nape', 'lowerBack', 'sternum'] as const
+/** Tattoos only go where they're seen: the arms (upper arm, forearm, wrist), the neck, the ankles and the face. */
+export const TATTOO_SPOTS = ['forearmL', 'forearmR', 'upperArmL', 'upperArmR', 'wristL', 'wristR', 'ankleL', 'ankleR', 'nape', 'neckSideL', 'neckSideR', 'faceL', 'faceR'] as const
 export type TattooDesign = (typeof TATTOO_DESIGNS)[number]
 export type TattooSpot = (typeof TATTOO_SPOTS)[number]
 export interface Tattoo {
@@ -246,8 +254,8 @@ export const DEFAULT_EXTRAS: Extras = { held: 'none', head: 'none', coralBeads: 
 export type Undertone = (typeof UNDERTONES)[number]
 
 /** Braids that can be taken down into a braid-out, and locs that can be retwisted. */
-export const BRAIDED: readonly HairId[] = ['fulani_braids', 'box_braids', 'knotless_braids', 'twists', 'cornrows']
-export const LOCS: readonly HairId[] = ['locs', 'locs_retwist', 'microlocs', 'freeform_locs', 'faux_locs']
+export const BRAIDED: readonly HairId[] = ['fulani_braids', 'box_braids', 'knotless_braids', 'twists', 'cornrows', 'jayda_braids', 'doechii_cornrows']
+export const LOCS: readonly HairId[] = ['locs', 'locs_retwist', 'microlocs', 'freeform_locs', 'faux_locs', 'short_locs']
 
 /** Haircare progress: wet hair, the sleep bonnet, and a section-by-section takedown or retwist. */
 export interface HairCare {
@@ -431,7 +439,7 @@ export type MarkSpot = (typeof MARK_SPOTS)[number]
 /* ------------------------------------------------------------------ clinic */
 
 /** Beauty-clinic procedures (fictional avatar changes). Intensity 0..1 each; see clinic.ts. */
-export const CLINIC_IDS = ['lipFiller', 'noseRefine', 'noseLift', 'cheekFiller', 'jawContour', 'chinFiller', 'underEye', 'hairline', 'transplant', 'bbl', 'lipo'] as const
+export const CLINIC_IDS = ['lipFiller', 'noseRefine', 'noseLift', 'cheekFiller', 'jawContour', 'chinFiller', 'underEye', 'bbl', 'lipo', 'breastAug', 'ribRemoval', 'glowDrip'] as const
 export type ClinicId = (typeof CLINIC_IDS)[number]
 
 /* ------------------------------------------------------------------ the look */
@@ -709,7 +717,7 @@ export function sanitizeLook(input: unknown): StudioLook {
   const profile = obj(x.profile)
   const scene = obj(x.scene)
   const transforms = Array.isArray(x.transforms) ? x.transforms.filter((t): t is string => typeof t === 'string' && /^[a-z0-9-]{1,32}$/.test(t)).slice(0, 16) : []
-  const h = typeof x.height === 'number' && Number.isFinite(x.height) ? Math.min(1.06, Math.max(0.94, x.height)) : 1
+  const h = typeof x.height === 'number' && Number.isFinite(x.height) ? Math.min(MAX_HEIGHT, Math.max(0.94, x.height)) : 1
   const legacyV1 = x.v !== 2
   return {
     v: 2,

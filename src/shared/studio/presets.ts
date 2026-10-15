@@ -1,4 +1,4 @@
-import { DEFAULT_EXTRAS, DEFAULT_LOOK, DEFAULT_MAKEUP, HEELS, needsHeels, neutralMorphs, type Extras, type Makeup, type MorphId, type StudioLook, type Tattoo, type Wear, type Worn } from './look'
+import { DEFAULT_EXTRAS, DEFAULT_LOOK, DEFAULT_MAKEUP, HEELS, MAX_HEIGHT, needsHeels, neutralMorphs, type Extras, type Makeup, type MorphId, type StudioLook, type Tattoo, type Wear, type Worn } from './look'
 
 /* ------------------------------------------------------------------ skin */
 
@@ -190,8 +190,9 @@ export const w = (id: string, p: string, s2 = p, a = s2): Worn => ({ id, colors:
  * glutes) are left as they are: they're who she is. Fat bodies keep their softness everywhere.
  */
 export function leanLimbs(m: Partial<Record<MorphId, number>>): Partial<Record<MorphId, number>> {
-  if ((m.Softness ?? 0.5) >= 0.75) return m
-  const masc = (m.Masc ?? 0.5) >= 1
+  // men are the male base as built (only their weight and height change)
+  if ((m.Softness ?? 0.5) >= 0.75 || (m.Masc ?? 0.5) >= 1) return m
+  const masc = false
   const out = { ...m }
   out.Thighs = Math.min(out.Thighs ?? 0.5, masc ? 0.42 : 0.44)
   out.Arms = Math.min(out.Arms ?? 0.5, masc ? 0.46 : 0.4)
@@ -210,7 +211,8 @@ function character(id: string, name: string, blurb: string, patch: CharacterPatc
     ...structuredClone(DEFAULT_LOOK),
     morphs: { ...neutralMorphs(), ...leanLimbs(patch.morphs ?? {}) },
     // long and slender (a little taller) unless fat
-    height: Math.min(1.06, (patch.height ?? 1) * ((patch.morphs?.Softness ?? 0.5) >= 0.75 ? 1 : 1.02)),
+    // men: their own height on the male base; women long and slender (a little taller) unless fat
+    height: (patch.morphs?.Masc ?? 0.5) >= 1 ? Math.min(MAX_HEIGHT, patch.height ?? 1.1) : Math.min(1.06, (patch.height ?? 1) * ((patch.morphs?.Softness ?? 0.5) >= 0.75 ? 1 : 1.02)),
     skin: { tone, undertone: patch.undertone ?? 'warm', glow: 0.35, mark: patch.mark ?? 'none', markAt: patch.markAt ?? 'cheekL' },
     eyes: { iris: patch.eyes ?? 'brown' },
     brows: { ...DEFAULT_LOOK.brows, ...patch.brows },
@@ -258,33 +260,18 @@ function slimmer(m: Partial<Record<MorphId, number>>, k = 0.08) {
 }
 const body = (t: BodyType, extra: Partial<Record<MorphId, number>> = {}) => slimmer({ ...BODY_TYPES[t], ...extra }, t === 'plus' || t === 'superPlus' ? 0.04 : 0.08)
 /**
- * Masculine bodies: a flat, male chest (no bust at all: the body templates' bust is for women),
- * a firmer, higher chest line, broader shoulders. Plus-size men stay soft, but never get breasts.
+ * Men: every man IS the male base body (base_male.blend: broad shoulders, a straight back, a flat,
+ * toned stomach, a male chest, full legs, proportionate hands), built as Masc_Pos in the character
+ * build. Only two things change between men: height (look.height) and weight (MascSoft, measured on
+ * the male base itself: lean 0 .. base 0.5 .. heavy 1). Every female body slider stays neutral, so
+ * nothing from the female base (bust, hips, her fat or muscle) is layered onto a man. Face sliders
+ * are per man, passed in `face`.
  */
-const male = (t: BodyType, extra: Partial<Record<MorphId, number>> = {}) => {
-  const b: Partial<Record<MorphId, number>> = BODY_TYPES[t]
-  const fat = t === 'plus' || t === 'superPlus'
-  // the user's male base: slightly broad shoulders, a straight back, a flat chest, narrow hips, a
-  // modest seat, long lean legs; a toned or slightly soft tummy. Fat men stay soft, legs still lean.
-  return {
-    ...b,
-    Masc: 1,
-    Bust: 0,
-    ChestFlat: 1,
-    BackStraight: 1,
-    BustLift: 0.5,
-    Softness: fat ? b.Softness : Math.min(b.Softness ?? 0.5, 0.4),
-    Belly: fat ? b.Belly : Math.min(b.Belly ?? 0.5, 0.5),
-    Waist: fat ? b.Waist : Math.min(b.Waist ?? 0.5, 0.46),
-    Hips: Math.min(b.Hips ?? 0.5, fat ? 0.42 : 0.34),
-    Glutes: Math.min(b.Glutes ?? 0.5, fat ? 0.46 : 0.4),
-    Thighs: Math.min(b.Thighs ?? 0.5, fat ? 0.48 : 0.4),
-    Calves: Math.min(b.Calves ?? 0.5, fat ? 0.5 : 0.44),
-    Arms: fat ? b.Arms : 0.46,
-    Shoulders: 0.68,
-    Muscle: fat ? 0.52 : 0.62,
-    ...extra,
-  }
+export const MALE_WEIGHT: Record<BodyType, number> = { slim: 0.2, athletic: 0.38, average: 0.5, curvy: 0.6, plus: 0.8, superPlus: 0.95 }
+export const MALE_HEIGHT: Record<BodyType, number> = { slim: 1.1, athletic: 1.11, average: 1.1, curvy: 1.09, plus: 1.1, superPlus: 1.09 }
+const male = (t: BodyType, face: Partial<Record<MorphId, number>> = {}) => {
+  const out: Partial<Record<MorphId, number>> = { ...face, Masc: 1, MascSoft: MALE_WEIGHT[t] }
+  return out
 }
 
 /**
@@ -326,7 +313,7 @@ export const CHARACTER_PRESETS: CharacterPreset[] = [
     wear: { dress: w('dress_maxi', '#B9A2D8', '#E8DDF4', '#FFFFFF'), shoes: w('shoes_block_heels', '#E8DDF4', '#2A1A14', '#D9B35B') },
     tattoos: [
       { design: 'rose', at: 'forearmL', ink: '#1A1A22', size: 1.1 },
-      { design: 'swallow', at: 'chestR', ink: '#1A1A22', size: 0.8 },
+      { design: 'swallow', at: 'neckSideR', ink: '#1A1A22', size: 0.8 },
       { design: 'script', at: 'wristR', ink: '#1A1A22', size: 0.8 },
       { design: 'butterfly', at: 'ankleL', ink: '#1A1A22', size: 0.8 },
     ],
@@ -398,19 +385,19 @@ export const CHARACTER_PRESETS: CharacterPreset[] = [
   }),
   character('tobi', 'Tobi', 'Dad jokes on tap, cries at every single wedding.', {
     tone: '#45291D',
-    morphs: male('average', { Softness: 0.48, Belly: 0.56, Jaw: 0.66, Chin: 0.58, NoseWidth: 0.66, Lips: 0.6, Brows: 0.44 }),
+    morphs: male('average', { Jaw: 0.66, Chin: 0.58, NoseWidth: 0.66, Lips: 0.6, Brows: 0.44 }),
     hair: { style: 'locs', color: '#0E0B0B' },
     wear: { top: w('top_oversized_tee', '#1E5A4A', '#EDE8DD', '#F2C14E'), bottom: w('bottom_cargo', '#3A3A2E', '#2A2A22', '#B8B8B8'), shoes: w('shoes05', '#FFFFFF') },
     jewellery: { glasses: 'round', frame: '#0C0808', rings: true },
     tattoos: [{ design: 'band', at: 'upperArmR', ink: '#1A1A22', size: 1.2 }],
     brows: { shape: 'eyebrow003', color: '#0C0808' },
-    height: 1.05,
+    height: 1.11,
   }),
   character('bibi', 'Bibi', 'Happy-go-lucky trend chaser. Runs on vibes and matcha.', {
     tone: '#583524',
     morphs: body('curvy', { NoseWidth: 0.6, Lips: 0.66, Cheekbones: 0.62, EyeSize: 0.56 }),
-    // 613 blonde: the palest honey/platinum blonde braiding hair
-    hair: { style: 'goddess_braids', color: '#E3C48E', tip: '#F1E0B8', blend: 0.55, preset: 'blonde_613' },
+    // dark green bantu knots
+    hair: { style: 'bantu_knots', color: '#123D24', tip: '#123D24', blend: 0, preset: 'custom' },
     // a small yellow butterfly on a red crop tank, baggy jeans
     wear: { top: w('top_crop_tank', '#C8102E', '#FFC72C', '#2A1200'), bottom: w('bottom_baggy_jeans', '#7FA3C9', '#D8A04A', '#B8B8B8'), shoes: w('shoes05', '#FFFFFF') },
     extras: { held: 'matcha' },
@@ -419,12 +406,12 @@ export const CHARACTER_PRESETS: CharacterPreset[] = [
   character('femi', 'Femi', 'Built like a wardrobe, soft as a pillow. Fixes everything except his love life.', {
     tone: '#2B1A14',
     undertone: 'cool',
-    morphs: male('plus', { Jaw: 0.7, Chin: 0.62, NoseWidth: 0.7, Lips: 0.66, Shoulders: 0.74, Muscle: 0.6 }),
+    morphs: male('plus', { Jaw: 0.7, Chin: 0.62, NoseWidth: 0.7, Lips: 0.66 }),
     hair: { style: 'cornrows', color: '#0A0A0C' },
     // a sporty three-stripe tracksuit
     wear: { top: w('top_track_jacket', '#141E3C', '#FFFFFF', '#E8E8E8'), bottom: w('bottom_track_pants', '#141E3C', '#FFFFFF', '#E8E8E8'), shoes: w('shoes05', '#FFFFFF') },
     brows: { shape: 'eyebrow008' },
-    height: 1.06,
+    height: 1.12,
   }),
   character('chidi', 'Chidi', 'Suit on, sunnies on, invoice ready. Allergic to being underdressed.', {
     tone: '#7E5238',
@@ -433,12 +420,13 @@ export const CHARACTER_PRESETS: CharacterPreset[] = [
     // a tailored two-piece suit over a crisp shirt
     wear: { top: w('top_suit_jacket', '#1E2740', '#F4F4F2', '#5A6E9A'), bottom: w('bottom_suit_trousers', '#1E2740', '#F4F4F2', '#5A6E9A'), shoes: w('shoes03', '#FFFFFF') },
     jewellery: { glasses: 'sunnies', frame: '#0C0808', rings: true },
-    height: 1.05,
+    height: 1.11,
   }),
   character('lola', 'Lola', 'Five a.m. runs, protein in everything, a playlist that genuinely slaps.', {
     tone: '#4E2F20',
     morphs: body('slim', { Muscle: 0.6, NoseWidth: 0.58, Lips: 0.62, EyeSize: 0.56 }),
-    hair: { style: 'knotless_braids', color: '#141010', tip: '#B9854A', blend: 0.4, preset: 'custom' },
+    // Doechii-inspired sculpted swirl cornrows
+    hair: { style: 'doechii_cornrows', color: '#141010' },
     wear: { top: w('top_sports_bra', '#111111', '#E63946', '#FFFFFF'), bottom: w('bottom_leggings', '#111111', '#E63946', '#FFFFFF'), shoes: w('shoes05', '#FFFFFF') },
     jewellery: { navel: true, ears: 'studs' },
     height: 1.03,
@@ -446,11 +434,11 @@ export const CHARACTER_PRESETS: CharacterPreset[] = [
   character('jiwoo', 'Ji-woo', 'Fluent in sarcasm. Owns nine black tees, all different, apparently.', {
     tone: '#DDBB9C',
     undertone: 'neutral',
-    // androgynous: the chest kept, but small
-    morphs: body('slim', { Masc: 0.72, Bust: 0.16, BackStraight: 0.6, EyeOpen: 0.4, EyeSize: 0.46, NoseWidth: 0.42, Lips: 0.5, Jaw: 0.56 }),
+    morphs: male('slim', { EyeOpen: 0.4, EyeSize: 0.46, NoseWidth: 0.42, Lips: 0.5, Jaw: 0.56 }),
     hair: { style: 'pixie', color: '#141010', tip: '#1E7A7A', blend: 0.6, preset: 'custom' },
     wear: { top: w('top_oversized_tee', '#232323', '#EDE8DD', '#E63946'), bottom: w('bottom_ripped_jeans', '#7FA3C9', '#D8A04A', '#B8B8B8'), shoes: w('shoes04', '#FFFFFF') },
     jewellery: { ears: 'huggies', helix: true, industrial: true },
+    height: 1.07,
   }),
   character('kemi', 'Kemi', 'Walks like a runway, trains like a fighter, texts back like a ghost.', {
     tone: '#C0916E',
@@ -474,13 +462,12 @@ export const CHARACTER_PRESETS: CharacterPreset[] = [
   }),
   character('jayden', 'Jayden', 'Frosted tips, flame tee, burns you a mixtape whether you asked or not.', {
     tone: '#88593D',
-    // a good man's build: broad, straight-backed, fat overall, but lean in the thigh
-    morphs: male('plus', { Thighs: 0.46, Jaw: 0.6, Chin: 0.56, Lips: 0.56 }),
+    morphs: male('plus', { Jaw: 0.6, Chin: 0.56, Lips: 0.56 }),
     hair: { style: 'short02', color: '#2A1A12', tip: '#F1E0B8', blend: 0.75, preset: 'custom' },
     wear: { top: w('top_flame_tee', '#111111', '#FF6A00', '#FFD23F'), bottom: w('bottom_cargo', '#7FA3C9', '#2A2A22', '#B8B8B8'), shoes: w('shoes05', '#FFFFFF') },
     jewellery: { ears: 'studs', metal: 'silver' },
     extras: { chains: true },
-    height: 1.04,
+    height: 1.1,
   }),
   character('elias', 'Elias', 'Writes poetry about rain. Smiled once, in 2019, by accident.', {
     tone: '#EFDAC5',
@@ -496,12 +483,13 @@ export const CHARACTER_PRESETS: CharacterPreset[] = [
       { design: 'snake', at: 'forearmR', ink: '#141418', size: 1.1 },
       { design: 'moon', at: 'nape', ink: '#141418', size: 0.8 },
     ],
-    height: 1.04,
+    height: 1.1,
   }),
   character('remi', 'Remi', 'Lends you her hoodie, steals your girl, fixes your bike after.', {
     tone: '#6B4430',
     morphs: body('athletic', { Masc: 0.66, Bust: 0.34, Jaw: 0.6, Shoulders: 0.62, Lips: 0.58 }),
-    hair: { style: 'afro_short', color: '#0A0A0C' },
+    // short black locs
+    hair: { style: 'short_locs', color: '#0A0A0C' },
     wear: { top: w('top_oversized_tee', '#EDE8DD', '#232323', '#E63946'), bottom: w('bottom_cargo', '#4A5A3A', '#2A2A22', '#B8B8B8'), shoes: w('shoes02', '#FFFFFF') },
     jewellery: { septum: true, ears: 'huggies', metal: 'silver' },
     extras: { chains: true },
@@ -612,9 +600,10 @@ export function randomDoll(seed: number, available: { hair: string[]; pieces: { 
   morphs.Masc = masc
   if (masc > 0.5) {
     morphs.Jaw = near(0.64, 0.08)
-    morphs.Shoulders = near(0.62, 0.08)
-    morphs.Bust = masc >= 1 ? 0 : Math.min(morphs.Bust ?? 0.5, 0.3)
-    if (masc >= 1) morphs.ChestFlat = 1
+    if (masc < 1) {
+      morphs.Shoulders = near(0.62, 0.08)
+      morphs.Bust = Math.min(morphs.Bust ?? 0.5, 0.3)
+    }
   }
   const hairs = available.hair.filter((h) => h !== 'bonnet')
   const style = r() < 0.05 ? 'none' : pick(hairs)
@@ -631,7 +620,7 @@ export function randomDoll(seed: number, available: { hair: string[]; pieces: { 
     wear: randomWear(r, available.pieces, masc > 0.5),
     eyes: pick(EYES_BY_DEPTH[depth]),
     brows: { color: depth === 'light' && r() < 0.4 ? '#6B4A2A' : '#140D0B' },
-    height: masc > 0.5 ? 1.02 + r() * 0.04 : 0.95 + r() * 0.08,
+    height: masc >= 1 ? MALE_HEIGHT[type] - 0.04 + r() * 0.08 : masc > 0.5 ? 1.02 + r() * 0.04 : 0.95 + r() * 0.08,
     mark: pick(marks),
     markAt: pick(['cheekL', 'cheekR', 'lipCornerL', 'templeR', 'jawL'] as const),
     jewellery: r() < 0.16 ? { glasses: pick(['round', 'square'] as const), frame: pick(['#1A1416', '#7A1F2B', '#C9A06A', '#2A3A6A']) } : { ears: pick(['none', 'studs', 'hoops', 'huggies'] as const) },

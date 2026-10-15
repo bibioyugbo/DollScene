@@ -17,6 +17,9 @@ const BASE_M = 0.075
 
 type Draw = (c: CanvasRenderingContext2D) => void
 
+/** Small spots take a smaller design: a face tattoo is a dainty mark, the side of the neck medium. */
+const SPOT_SCALE: Partial<Record<TattooSpot, number>> = { faceL: 0.3, faceR: 0.3, neckSideL: 0.62, neckSideR: 0.62 }
+
 const stroke = (c: CanvasRenderingContext2D, w = 3.2) => {
   c.lineWidth = w
   c.lineCap = 'round'
@@ -220,9 +223,11 @@ export class TattooLayer {
       if (!a) continue
       const k = 1 - Math.min(1, fade[t.at] ?? 0)
       if (k <= 0.001) continue
-      // (a scale far outside a body's ~0.3..1 UV per metre means a seam anchor: never paint it huge)
-      if (!(a.s > 0.15 && a.s < 1.5)) continue
-      const px = (BASE_M * t.size * a.s * SIZE) / 100 // canvas px per design unit
+      // (a scale far outside a body's ~0.3..1 UV per metre means a seam anchor: never paint it huge;
+      // the face has its own, finer UV island)
+      const face = t.at === 'faceL' || t.at === 'faceR'
+      if (!(a.s > 0.15 && a.s < (face ? 6 : 1.5))) continue
+      const px = (BASE_M * t.size * (SPOT_SCALE[t.at] ?? 1) * a.s * SIZE) / 100 // canvas px per design unit
       c.save()
       c.translate(a.uv[0] * SIZE, a.uv[1] * SIZE)
       // design up (-y) onto the skin's up in UV

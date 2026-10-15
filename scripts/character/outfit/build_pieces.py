@@ -618,6 +618,13 @@ def denim_masks(base, fade=0.35):
     return fn
 
 
+
+def seat_ease(base, idx):
+    """How much of a trouser's added room stays over the seat (back of the hips and upper thighs):
+    little, so the seat follows the body (men's especially) and the room goes to the legs."""
+    co, nrm = base.co, base.normal
+    return 1 - 0.8 * np.clip(nrm[idx, 1], 0, 1) * smoothstep(base.z_knee + 0.05, base.z_hip - 0.05, co[idx, 2])
+
 def jeans_piece(base, pid, name, store, colors, fit="slim", rips=None, flare=0.0, top_off=0.06, hem_z=None):
     p = Piece(base, pid, name, "bottom", store, colors)
     F, ok = bo.legs_field(base, base.z_waist - top_off, hem_z if hem_z is not None else base.z_ankle + 0.03)
@@ -633,7 +640,7 @@ def jeans_piece(base, pid, name, store, colors, fit="slim", rips=None, flare=0.0
             # hem; inner sides stay modest so the legs never meet
             outward = np.clip(nrm[idx, 0] * np.sign(co[idx, 0]) * 0.5 + 0.5, 0, 1)
             grow = smoothstep(h + 0.02, h - 0.1, z) * 0.006 + smoothstep(h - 0.12, k + 0.04, z) * 0.026 + smoothstep(k, base.z_ankle, z) * 0.016
-            o = o + grow * (0.35 + 0.65 * outward)
+            o = o + grow * (0.35 + 0.65 * outward) * seat_ease(base, idx)
         if flare:
             o = o + flare * smoothstep(k + 0.02, base.z_ankle + 0.03, z) ** 1.6
         return o
@@ -679,7 +686,7 @@ def cargo(base):
         outward = np.clip(nrm[idx, 0] * np.sign(co[idx, 0]) * 0.5 + 0.5, 0, 1)
         # a straight, roomy leg (no thigh curve): close over the hips, the room from mid-thigh down
         grow = smoothstep(h + 0.02, h - 0.1, z) * 0.006 + smoothstep(h - 0.12, k + 0.04, z) * 0.028 + smoothstep(k, base.z_ankle, z) * 0.012
-        return 0.006 + grow * (0.35 + 0.65 * outward) + 0.004 * smoothstep(base.z_crotch + 0.02, base.z_crotch - 0.03, z)
+        return 0.006 + grow * (0.35 + 0.65 * outward) * seat_ease(base, idx) + 0.004 * smoothstep(base.z_crotch + 0.02, base.z_crotch - 0.03, z)
 
     def fn(P, N, C, Fm):
         x, z = P[..., 0], P[..., 2]
@@ -892,13 +899,13 @@ def trousers(base, pid, name, store, colors, width=1.0, finish="cotton", stripes
         z = co[idx, 2]
         o = 0.0045 + 0.004 * smoothstep(base.z_crotch + 0.02, base.z_crotch - 0.03, z)
         outward = np.clip(nrm[idx, 0] * np.sign(co[idx, 0]) * 0.5 + 0.5, 0, 1)
-        if width > 1.2:
+        if width > 1.1:
             # wide-leg: fitted over the hips (no balloon), the leg falling wide and straight from
             # mid-thigh to a wide hem
             grow = smoothstep(h + 0.02, h - 0.12, z) * 0.012 + smoothstep(h - 0.1, k + 0.05, z) * 0.03 * width + smoothstep(k, base.z_ankle, z) * 0.012
-            return o + grow * (0.45 + 0.55 * outward)
+            return o + grow * (0.45 + 0.55 * outward) * seat_ease(base, idx)
         grow = smoothstep(h + 0.02, h - 0.2, z) * 0.03 + smoothstep(k, base.z_ankle, z) * 0.026
-        return o + width * grow * (0.35 + 0.65 * outward)
+        return o + width * grow * (0.35 + 0.65 * outward) * seat_ease(base, idx)
 
     def fn(P, N, C, Fm):
         z = P[..., 2]
@@ -987,7 +994,7 @@ def overalls(base):
         o = np.where(upper, 0.012, o)  # bib and straps sit over the top worn under them
         outward = np.clip(nrm[idx, 0] * np.sign(co[idx, 0]) * 0.5 + 0.5, 0, 1)
         grow = smoothstep(h + 0.02, h - 0.2, zz) * 0.016 + smoothstep(k, base.z_ankle, zz) * 0.012
-        return o + grow * (0.35 + 0.65 * outward)
+        return o + grow * (0.35 + 0.65 * outward) * seat_ease(base, idx)
 
     dm = denim_masks(base, fade=0.25)
 
@@ -1087,7 +1094,7 @@ GARMENTS = {
     "bottom_micro_skirt": micro_skirt,
     "top_everyday_tee": lambda b: tee(b, "top_everyday_tee", "Everyday tee", "okrika", ["#F2F0EA", "#B8A68A", "#F2F0EA"], b.z_hip + 0.0, 0.3, off=0.004, inflate=28, graphic=g_stains),
     "bottom_overalls": overalls,
-    "bottom_wide_trousers": lambda b: trousers(b, "bottom_wide_trousers", "Wide-leg trousers", "dopebyfabby", ["#E8DCC6", "#D9C9AE", "#C9A04A"], width=1.6, finish="satin"),
+    "bottom_wide_trousers": lambda b: trousers(b, "bottom_wide_trousers", "Wide-leg trousers", "dopebyfabby", ["#E8DCC6", "#D9C9AE", "#C9A04A"], width=1.25, finish="satin"),
     "top_track_jacket": track_jacket,
     "bottom_track_pants": lambda b: trousers(b, "bottom_track_pants", "Track pants", "novasport", ["#141E3C", "#FFFFFF", "#E8E8E8"], width=0.5, stripes=True, band=0.03),
     "top_suit_jacket": suit_jacket,

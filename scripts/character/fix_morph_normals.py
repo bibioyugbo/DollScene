@@ -3,7 +3,7 @@ Correct the NORMAL deltas of the morphs that are built ON TOP of other morphs.
 
 glTF morph normals are per key, relative to the basis: Blender writes each key's normal delta as
 normals(basis + key) - normals(basis). That's right for keys used on their own, but ChestFlat_Pos
-(the male chest, worn with Masc_Pos + Bust_Neg) and BackStraight_Pos (the straight back, worn with
+(the male chest, worn with Masc_Pos) and BackStraight_Pos (the straight back, worn with
 Masc_Pos) were measured on the masculine body: applied to the female basis their shape means
 something else, so their normal deltas are wrong. The game sums the keys: the positions come out
 right but the shading shows craters and rings round where the breasts were.
@@ -27,8 +27,11 @@ import numpy as np
 
 FIXES = {
     # key: the morphs it is always worn with
-    "ChestFlat_Pos": ("Masc_Pos", "Bust_Neg"),
+    "ChestFlat_Pos": ("Masc_Pos",),
     "BackStraight_Pos": ("Masc_Pos",),
+    # a man's weight is measured on the male base (Masc_Pos) too
+    "MascSoft_Neg": ("Masc_Pos",),
+    "MascSoft_Pos": ("Masc_Pos",),
 }
 DT = {5126: np.float32, 5125: np.uint32, 5123: np.uint16, 5121: np.uint8}
 NCOMP = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}

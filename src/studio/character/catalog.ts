@@ -25,7 +25,8 @@ export interface CareData {
   nails: { bone: string; p: V3; n: V3; dir: V3; width: number; length: number }[]
   jewellery: Record<string, { p: V3; r: number; dir?: V3; bone?: string }>
   /** Tattoo anchors: body UV, UV units per metre of skin there, the UV direction of "up". */
-  tattoos?: Partial<Record<TattooSpot, { uv: [number, number]; s: number; up: [number, number]; right?: [number, number]; p: V3; n: V3 }>>
+  // every anchor the build measured (also ones only used to place jewellery, e.g. chestL)
+  tattoos?: Partial<Record<TattooSpot | (string & {}), { uv: [number, number]; s: number; up: [number, number]; right?: [number, number]; p: V3; n: V3 }>>
 }
 
 /** A wardrobe piece (scripts/character/outfit/build_pieces.py, shoes.py). */

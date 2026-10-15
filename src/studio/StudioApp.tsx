@@ -16,7 +16,7 @@ import { StudioStage, type Insets, type StageTheme } from './stage/StudioStage'
 import { SkinHealer } from './state/healing'
 import { useStudio } from './state/store'
 import { Arrow3D } from './ui/Arrow3D'
-import { Boot, BOOT_MIN_MS } from './ui/Boot'
+import { Boot } from './ui/Boot'
 import { openPeer } from './ui/Chat'
 import { EventView } from './ui/EventView'
 import { ConfirmDialog, installAsyncHandlers, Toasts } from './ui/feedback'
@@ -140,18 +140,11 @@ export default function StudioApp() {
   const uiHidden = useStudio((s) => s.uiHidden)
   const booth = useStudio((s) => s.booth)
   const spotPick = useStudio((s) => s.spotPick)
-  const ready = useStudio((s) => s.characterReady)
   const look = useStudio((s) => s.look)
   const pre = usePreload()
   const [sessionReady, setSessionReady] = useState(false)
   const [modelError, setModelError] = useState(false)
   const [attempt, setAttempt] = useState(0)
-  const [bootGone, setBootGone] = useState(false)
-  const [bootTimeUp, setBootTimeUp] = useState(false)
-  useEffect(() => {
-    const t = window.setTimeout(() => setBootTimeUp(true), BOOT_MIN_MS)
-    return () => window.clearTimeout(t)
-  }, [])
   const [sceneLoading, setSceneLoading] = useState(false)
   const [sceneReadyId, setSceneReadyId] = useState<string | null>(null)
   const [size, setSize] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
@@ -191,18 +184,18 @@ export default function StudioApp() {
     return () => document.removeEventListener('pointerdown', go)
   }, [])
 
-  // Boot ends when the catalog, the session, the 3D doll and every preloaded asset are really ready.
+  // Boot ends when the catalog and the session are known (the doll pops in on the landing).
   const bootError = catalogError ? 'DollScene couldn’t load. Check your connection.' : modelError ? 'Your doll couldn’t load. Check your connection.' : null
   useEffect(() => {
-    // Opens after the short status lines once the doll herself is ready; every other model,
-    // texture and thumbnail keeps preloading in the background (swaps wait for their file).
-    if (phase === 'boot' && catalog && sessionReady && ready && bootTimeUp && !bootError) {
+    // No loading screen: the landing opens the moment the catalog and session are known; the doll
+    // appears on it as soon as her model lands, and everything else keeps preloading behind it.
+    if (phase === 'boot' && catalog && sessionReady && !bootError) {
       // signed in (a remembered 30-day session): straight to the street with her own doll
       const back = useAuth.getState().status === 'signed-in' && useStudio.getState().look.profile.onboarded
       useStudio.getState().setPhase(back ? 'hub' : 'onboard')
       useStudio.getState().setFraming('full')
     }
-  }, [phase, catalog, sessionReady, ready, bootTimeUp, bootError])
+  }, [phase, catalog, sessionReady, bootError])
   // dev screenshots: once the game is open AND every module has preloaded
   useEffect(() => {
     if (phase !== 'boot' && pre.modulesReady && pre.otherReady) markShotReady()
@@ -401,7 +394,8 @@ export default function StudioApp() {
         <ConfirmDialog />
       </div>
 
-      {!bootGone && <Boot error={bootError} onRetry={retry} leaving={phase !== 'boot'} onGone={() => setBootGone(true)} />}
+      {/* only if the game can't load at all: the reason and a retry (there is no loading screen) */}
+      {bootError && <Boot error={bootError} onRetry={retry} />}
       <RescueOnHide />
       <SkinHealer />
       <RealtimeSync />

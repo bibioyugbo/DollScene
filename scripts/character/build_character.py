@@ -59,6 +59,8 @@ FACE_MORPHS = {
     "NoseBridge": ([("nose-width1-decr", 1)], [("nose-width1-incr", 1)]),
     "NoseTip": ([("nose-point-down", 1)], [("nose-point-up", 1)]),
     "NoseLength": ([("nose-scale-vert-decr", 1)], [("nose-scale-vert-incr", 1)]),
+    # the tip's width: Neg = a sharper, narrower tip (clinic: nose refine, tip lift)
+    "NoseTipWidth": ([("nose-point-width-decr", 1), ("nose-width3-decr", 0.6)], [("nose-point-width-incr", 1), ("nose-width3-incr", 0.6)]),
     "Lips": ([("mouth-upperlip-volume-decr", 1), ("mouth-lowerlip-volume-decr", 1)], [("mouth-upperlip-volume-incr", 1), ("mouth-lowerlip-volume-incr", 1)]),
     "LipWidth": ([("mouth-scale-horiz-decr", 1)], [("mouth-scale-horiz-incr", 1)]),
     "CupidsBow": ([("mouth-cupidsbow-decr", 1)], [("mouth-cupidsbow-incr", 1)]),
@@ -95,18 +97,40 @@ BODY_MORPHS = {
     "Muscle": ([("macro:muscle", 0.2)], [("macro:muscle", 0.85)]),
     # Presentation: MakeHuman's gender macro from the base (0, feminine) to 1 (masculine). Only the
     # positive side differs from the base, so 0.5..1 in the app goes feminine -> masculine.
-    # The masculine end follows the user's male base (~/Downloads/base_male.blend: gender 1, muscle
-    # 0.3, proportions 0.9, cup 0.4, firmness 1, toned stomach and pelvis, pectorals), with leaner
-    # thighs (no upperleg fat, thigh girth down) and weight left to the Softness slider.
-    "Masc": (
-        [("macro:gender", 0.0)],
-        [("macro:gender", 1.0), ("macro:muscle", 0.42), ("macro:proportions", 0.9), ("macro:cupsize", 0.0), ("macro:firmness", 1.0),
-         ("torso-muscle-pectoral-incr", 0.8), ("stomach-tone-incr", 1.0), ("pelvis-tone-decr", 0.99), ("hip-waist-down", 0.33), ("stomach-navel-in", 0.21),
-         ("measure-thigh-circ-decr", 0.5), ("buttocks-volume-decr", 0.25)] + lr("upperleg-fat-decr", 0.45),
-    ),
+    # The masculine end IS the user's male base body (~/Downloads/base_male.blend), exactly: its
+    # macros and every body target it sets (MALE_BASE below). Its face targets are left out so each
+    # man keeps his own face sliders; its race mix too (race mostly shapes the face).
+    "Masc": ([("macro:gender", 0.0)], "MALE_BASE"),
+    # A man's weight, on the male base itself (every man is the male base; only height and this
+    # change between them): 0.5 = the base (weight 0.7), 0 = lean (0.4), 1 = heavy (1.0). Its deltas
+    # are taken relative to the male base, so it adds on top of Masc_Pos. Men keep Softness etc. at 0.5.
+    "MascSoft": ("MALE_LEAN", "MALE_HEAVY"),
     # A pregnancy bump (only on a doll that asks for it): one-sided, 0.5 = none .. 1 = full term.
     "Pregnant": ([], [("stomach-pregnant-incr", 1.5)]),
 }
+
+# ~/Downloads/base_male.blend, read off its MPFB properties and shape keys: macros, then every body
+# target at its value. Left out: its face targets (cheek/chin/ear/eye/brow/mouth/nose: each man keeps
+# his own face), race (face) and "bulge-incr" (under clothing; it pushed through trousers).
+MALE_MACROS = [("macro:gender", 1.0), ("macro:muscle", 0.3), ("macro:weight", 0.7), ("macro:proportions", 0.9), ("macro:height", 0.7), ("macro:cupsize", 0.4), ("macro:firmness", 1.0)]
+MALE_TARGETS = [
+    ("hip-scale-depth-incr", 0.84), ("hip-trans-down", 0.99), ("hip-waist-down", 0.33), ("measure-knee-circ-decr", 0.07),
+    ("neck-scale-depth-incr", 0.06), ("pelvis-tone-decr", 0.99), ("stomach-navel-in", 0.21), ("stomach-tone-incr", 1.0),
+    ("torso-muscle-pectoral-incr", 1.0),
+] + lr("upperleg-fat-incr", 0.21) + lr("foot-scale-decr", 1.0)
+MALE_BASE = MALE_MACROS + MALE_TARGETS
+
+
+def _male_at_weight(w):
+    return [(n, w if n == "macro:weight" else v) for n, v in MALE_MACROS] + MALE_TARGETS
+
+
+_NAMED = {"MALE_BASE": MALE_BASE, "MALE_LEAN": _male_at_weight(0.4), "MALE_HEAVY": _male_at_weight(1.0)}
+for _grp in (BODY_MORPHS,):
+    for _k, (_n, _p) in list(_grp.items()):
+        _grp[_k] = (_NAMED.get(_n, _n) if isinstance(_n, str) else _n, _NAMED.get(_p, _p) if isinstance(_p, str) else _p)
+# morphs whose deltas are relative to another morph's full shape (subtracted after baking)
+RELATIVE_TO = {"MascSoft_Neg": "Masc_Pos", "MascSoft_Pos": "Masc_Pos"}
 
 EYES = ["brown", "brownlight", "green", "grey", "bluegreen"]
 BROWS = ["eyebrow001", "eyebrow006", "eyebrow010", "eyebrow003", "eyebrow008"]
@@ -147,6 +171,10 @@ HAIR = {
     "long01": ("blend", "Straight wig"),
     "ponytail01": ("blend", "Sleek ponytail"),
     "braid01": ("blend", "Single braid"),
+    "jayda_braids": ("blend", "Jayda Wayda braids"),
+    "doechii_cornrows": ("blend", "Sculpted cornrows"),
+    "long_straight_fringe": ("blend", "Long straight wig with fringe"),
+    "short_locs": ("blend", "Short locs"),
 }
 HAIR_BLENDS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "blender", "hair")
 HAIR_TEX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "hair_tex")
@@ -457,6 +485,11 @@ for group in (FACE_MORPHS, BODY_MORPHS):
             clear_recipe(recipe)
             log("morph", morph + suffix, "max body delta %.4f m" % np.abs(d["__body__"]).max(), "joint drift removed %.4f m" % drift)
 
+for _name, _base in RELATIVE_TO.items():
+    for _k in deltas[_name]:
+        deltas[_name][_k] = deltas[_name][_k] - deltas[_base][_k]
+    log("morph", _name, "relative to", _base, "max body delta %.4f m" % np.abs(deltas[_name]["__body__"]).max())
+
 _J = joint_positions()
 assert np.allclose(_J[0], J_NEUTRAL[0], atol=1e-5) and np.allclose(_J[1], J_NEUTRAL[1], atol=1e-5), "rig did not return to the neutral fit"
 
@@ -482,7 +515,7 @@ from mathutils.kdtree import KDTree  # noqa: E402
 _E = np.empty(len(human.data.edges) * 2, dtype=np.int64)
 human.data.edges.foreach_get("vertices", _E)
 _E = _E.reshape(-1, 2)
-_P = neutral_body + deltas["Masc_Pos"]["__body__"] + deltas["Bust_Neg"]["__body__"]
+_P = neutral_body + deltas["Masc_Pos"]["__body__"]
 _gi = human.vertex_groups["nipple"].index
 _nip = np.array([any(g.group == _gi and g.weight > 0.5 for g in v.groups) for v in human.data.vertices])
 _w = np.zeros(len(_P))
@@ -576,6 +609,36 @@ from mathutils.kdtree import KDTree  # noqa: E402
 
 _body_grp = human.vertex_groups["body"].index
 _neck_z = (rig.matrix_world @ rig.data.bones["mixamorig:Neck"].head_local).z
+# the nipple and five rings round it: where a garment's shape changes are relaxed (see below)
+_bust_soft = _nring.copy()
+for _ in range(2):
+    _r2 = _bust_soft.copy()
+    _r2[_E[_bust_soft[_E[:, 0]], 1]] = True
+    _r2[_E[_bust_soft[_E[:, 1]], 0]] = True
+    _bust_soft = _r2
+
+# Soft nipples: the tips are relaxed into the breast (the areola stays in the skin texture), at rest
+# and in every shape key, so a fitted top, corset or dress lies smoothly over the bust and nothing
+# pierces the fabric. Done before garments copy the body's changes, so they match exactly.
+_bdeg = np.maximum(np.bincount(_E.ravel(), minlength=len(neutral_body)), 1).astype(np.float64)
+
+
+def _relax(f, mask, iters=40, k=0.6):
+    f = f.copy()
+    for _ in range(iters):
+        acc = np.zeros_like(f)
+        np.add.at(acc, _E[:, 0], f[_E[:, 1]])
+        np.add.at(acc, _E[:, 1], f[_E[:, 0]])
+        f[mask] += (acc[mask] / _bdeg[mask][:, None] - f[mask]) * k
+    return f
+
+
+neutral_body[:] = _relax(neutral_body, _bust_soft, iters=90, k=0.7)
+for _name, _d in deltas.items():
+    if _name != "ChestFlat_Pos":
+        _d["__body__"] = _relax(_d["__body__"], _bust_soft, iters=90, k=0.7)
+log("soft nipples", int(_nring.sum()), "verts at rest,", int(_bust_soft.sum()), "in the keys")
+
 _anchor = np.array([any(g.group == _body_grp and g.weight > 0.5 for g in v.groups) for v in human.data.vertices]) & (neutral_body[:, 2] > _neck_z - 0.02)
 _anchor_idx = np.nonzero(_anchor)[0]
 _kd = KDTree(len(_anchor_idx))
@@ -597,6 +660,7 @@ for k, o in custom.items():
         wts[vi] = w / w.sum()
     for name, d in deltas.items():
         d[k] = (d["__body__"][nbr] * wts[..., None]).sum(axis=1)
+
 
 # Store outfits: a shell vertex takes the morph deltas of the body vertex it was cut from (so it
 # follows every shape exactly); tube vertices (skirts) blend the 6 nearest skin vertices below the neck.
@@ -627,6 +691,23 @@ for k, o in custom.items():
         wts[vi] = w / w.sum()
     for name, d in deltas.items():
         d[k] = (d["__body__"][nbr] * wts[..., None]).sum(axis=1)
+    # Over the nipples the fabric stays smooth in EVERY body shape: a shell vertex copies its body
+    # vertex's changes exactly, and the bust keys grow the nipple's point, which would push straight
+    # through a fitted top. There the changes are relaxed over the garment's own surface.
+    _over = (src_ >= 0) & _bust_soft[np.maximum(src_, 0)]
+    if _over.any():
+        _ge = np.empty(len(o.data.edges) * 2, dtype=np.int64)
+        o.data.edges.foreach_get("vertices", _ge)
+        _ge = _ge.reshape(-1, 2)
+        _gdeg = np.maximum(np.bincount(_ge.ravel(), minlength=len(co_)), 1).astype(np.float64)
+        for name, d in deltas.items():
+            f_ = d[k].copy()
+            for _ in range(40):
+                acc = np.zeros_like(f_)
+                np.add.at(acc, _ge[:, 0], f_[_ge[:, 1]])
+                np.add.at(acc, _ge[:, 1], f_[_ge[:, 0]])
+                f_[_over] += (acc[_over] / _gdeg[_over][:, None] - f_[_over]) * 0.6
+            d[k] = f_
     o.data.attributes.remove(o.data.attributes["_src"])
 
 # ----------------------------------------------------------------------------- 3. bake neutral, rebuild shape keys
@@ -1367,6 +1448,11 @@ for side_, sg in (("Left", 1), ("Right", -1)):
     tattoos["chest" + S_] = tattoo(np.array([0.065 * sg, -0.08, neck_z - 0.075]), 0.06, lambda P: -P[:, 1], Z)
     wr, wr_d = bone_pt(f"{side_}Hand", 0.0)
     tattoos["wrist" + S_] = tattoo(wr - wr_d * 0.02, 0.035, lambda P: -P[:, 1], -wr_d)
+    # the side of the neck (below the ear) and the face (on the cheekbone, under the outer eye)
+    nks, _ = bone_pt("Neck", 0.45)
+    tattoos["neckSide" + S_] = tattoo(nks + np.array([0.04 * sg, -0.005, 0]), 0.03, lambda P, sg=sg: P[:, 0] * sg - np.abs(P[:, 1]) * 0.3, Z)
+    fc = co[landmarks["cheek" + S_]] * 0.45 + co[landmarks["temple" + S_]] * 0.55 + np.array([0, 0, -0.012])
+    tattoos["face" + S_] = tattoo(fc, 0.012, lambda P: -P[:, 1], Z)
 nk, _ = bone_pt("Neck", 0.3)
 tattoos["nape"] = tattoo(nk, 0.06, lambda P: P[:, 1], Z)
 sp0, _ = bone_pt("Spine", 0.2)

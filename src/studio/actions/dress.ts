@@ -33,7 +33,12 @@ function showOff(dur = 1.6): Move[] {
   ]
 }
 
-export function hairStyleStep(id: HairId, name: string, color?: string): StepDef {
+/**
+ * A new hairstyle: it simply appears on her head. No hands, no brushing; the change is on the doll
+ * the moment the tile is tapped (preview at the start) and kept a beat later. Colour is never
+ * touched here: the Hair colour section owns it.
+ */
+export function hairStyleStep(id: HairId, name: string): StepDef {
   return {
     id: `hair:style:${id}`,
     name,
@@ -42,21 +47,13 @@ export function hairStyleStep(id: HairId, name: string, color?: string): StepDef
     regions: ['hair'],
     products: [],
     mode: 'preview',
-    moves: () => {
-      const kind = hairKind(id)
-      const strokes = brushStrokes(kind, kind === 'locs' ? null : { id: kind === 'coily' ? 'comb' : 'hairbrush', hold: 'grip' })
-      return [{ dur: 0.25, tick: (t: number) => void (t < 0.1 && sfx('whoosh')) }, ...strokes.slice(0, 6)]
-    },
+    moves: () => [{ dur: 0.2, tick: (t: number) => void (t < 0.2 && sfx('whoosh')) }],
     apply: (l: StudioLook) => {
       l.hair.style = id
       l.hair.care.change = null
       l.hair.care.bonnet = false
-      if (color) {
-        if (l.hair.blend === 0) l.hair.tip = color
-        l.hair.color = color
-        l.hair.preset = 'custom'
-      }
     },
+    verify: (l) => l.hair.style === id,
     done: `${name}. Gorgeous.`,
   }
 }

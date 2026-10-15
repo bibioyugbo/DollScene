@@ -300,6 +300,19 @@ export const useStudio = create<StudioState>((set, get) => ({
   setPhase: (phase) => set(phase === 'hub' ? { phase, room: null } : { phase }),
   enterRoom(room, category) {
     get().cancelPreview()
+    if (room === 'makeup') {
+      // The glam studio starts on a bare face: glasses, sunnies, face piercings and headwear come
+      // off (one Undo step); she puts any of them back on purpose.
+      const { look, past } = get()
+      const j = look.jewellery
+      if (j.glasses !== 'none' || j.nose !== 'none' || j.septum || j.lip !== 'none' || j.brow || look.extras.head !== 'none' || look.extras.glassesChain) {
+        const next = clone(look)
+        Object.assign(next.jewellery, { glasses: 'none', nose: 'none', septum: false, lip: 'none', brow: false })
+        next.extras.head = 'none'
+        next.extras.glassesChain = false
+        set({ look: next, past: [...past, look].slice(-HISTORY), future: [] })
+      }
+    }
     const c = category ?? ROOMS[room].categories[0]
     set({ phase: 'studio', room, category: c, framing: CATEGORY_FRAMING[c], before: clone(get().look), sheetOpen: true, clinicPreview: null, uiHidden: false, angle: 'front', spin: 0 })
   },

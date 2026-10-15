@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { PROCEDURES } from '../../../shared/studio/clinic'
 import { HAIR_COLOR_PRESETS } from '../../../shared/studio/hairColors'
-import { HEELS, LOCS, needsHeels, TATTOO_DESIGNS, type ClinicId, type Extras, type HairId, type Jewellery, type MorphId, type PieceSlot, type SpotId, type StudioLook, type TattooDesign, type TattooSpot } from '../../../shared/studio/look'
-import { MAKEUP_PRESETS, mixHex } from '../../../shared/studio/presets'
+import { HEELS, LOCS, needsHeels, TATTOO_DESIGNS, TATTOO_SPOTS, type ClinicId, type Extras, type HairId, type Jewellery, type MorphId, type PieceSlot, type SpotId, type StudioLook, type TattooDesign, type TattooSpot } from '../../../shared/studio/look'
+import { MAKEUP_PRESETS, mixHex, SKIN_TONES } from '../../../shared/studio/presets'
 import { dressStep, hairColourStep, hairStyleStep, tattooRemoveStep, tattooStep, wearStep } from '../../actions/dress'
 import { BONNET_ON, BRUSH, DRY, HAIR_PRODUCTS, hairKind, RETWIST, RETWIST_TO, TAKEDOWN, TAKEDOWN_TO, WASH } from '../../actions/haircare'
 import { amountOf, BROW_STEP, lookStep, makeupStep, REMOVE_ALL, shadeProduct, type MakeupKey } from '../../actions/makeup'
@@ -67,7 +67,7 @@ export const CATEGORY_NAMES: Record<Category, string> = {
   tattoos: 'Tattoo studio',
   piercings: 'Piercing counter',
   clinicFace: 'Face',
-  clinicBody: 'Body & hair',
+  clinicBody: 'Body',
 }
 
 const P = (id: string, name: string, color: string): Product => ({ id, name, blurb: '', color })
@@ -348,23 +348,6 @@ function makeupTiles(cat: Category, look: StudioLook): Tile[] {
 
 /* ------------------------------------------------------------------ Hair Studio */
 
-export const HAIR_PALETTE = [
-  { color: '#0A0A0C', name: 'Jet black' },
-  { color: '#2A1A12', name: 'Dark brown' },
-  { color: '#6B3A22', name: 'Chestnut' },
-  { color: '#B9854A', name: 'Honey blonde' },
-  { color: '#E6DCC8', name: 'Platinum' },
-  { color: '#E3C48E', name: '613 blonde' },
-  { color: '#A3202A', name: 'Red' },
-  { color: '#B5552A', name: 'Ginger' },
-  { color: '#5E1A26', name: 'Burgundy' },
-  { color: '#E07AA6', name: 'Pink' },
-  { color: '#1E7A7A', name: 'Teal' },
-  { color: '#2D5BD0', name: 'Blue' },
-  { color: '#6A3FB0', name: 'Violet' },
-  { color: '#C0C0C8', name: 'Silver' },
-]
-
 function HairThumb({ id }: { id: string }) {
   return (
     <span className="relative block h-full w-full overflow-hidden rounded-[14px] bg-white/10">
@@ -384,12 +367,6 @@ function hairTiles(cat: Category, look: StudioLook, catalog: CharacterCatalog): 
           art: <HairThumb id={h.id} />,
           on: look.hair.style === h.id,
           run: () => runStep(hairStyleStep(h.id as HairId, h.name), { product: shadeProduct(look.hair.color), target: null, option: null }),
-          palette: {
-            label: `${h.name} colours`,
-            colors: HAIR_PALETTE,
-            value: look.hair.style === h.id ? look.hair.color : null,
-            onPick: (c: string) => void runStep(hairStyleStep(h.id as HairId, h.name, c), { product: shadeProduct(c), target: null, option: null }),
-          },
           sfx: 'whoosh' as const,
         }))
       tiles.push({
@@ -613,10 +590,11 @@ const CLINIC_ART: Record<ClinicId, ArtKind> = {
   jawContour: 'chisel',
   chinFiller: 'syringe',
   underEye: 'syringe',
-  hairline: 'hairline',
-  transplant: 'hairline',
   bbl: 'body',
   lipo: 'body',
+  breastAug: 'body',
+  ribRemoval: 'body',
+  glowDrip: 'drip',
 }
 
 function unsupported(p: (typeof PROCEDURES)[number], catalog: CharacterCatalog): string | null {
@@ -630,18 +608,18 @@ function unsupported(p: (typeof PROCEDURES)[number], catalog: CharacterCatalog):
 
 /** Where each design goes first (then the next free spot). */
 const TATTOO_HOME: Record<TattooDesign, TattooSpot[]> = {
-  rose: ['forearmL', 'thighR', 'shoulderBackL'],
-  butterfly: ['ankleL', 'lowerBack', 'chestL'],
-  heart: ['wristR', 'hipL', 'ankleR'],
-  star: ['wristL', 'ankleR', 'nape'],
-  moon: ['nape', 'wristR', 'ribsL'],
-  snake: ['forearmR', 'thighL', 'calfR'],
-  script: ['wristR', 'ribsR', 'chestR'],
-  vine: ['ribsL', 'calfL', 'hipR'],
-  dagger: ['forearmL', 'calfR', 'thighL'],
-  sun: ['upperArmL', 'shoulderBackR', 'lowerBack'],
-  swallow: ['chestR', 'chestL', 'hipR'],
-  band: ['upperArmR', 'upperArmL', 'calfL'],
+  rose: ['forearmL', 'neckSideR', 'upperArmR'],
+  butterfly: ['ankleL', 'neckSideL', 'wristR'],
+  heart: ['faceR', 'wristR', 'ankleR'],
+  star: ['faceL', 'wristL', 'ankleR'],
+  moon: ['nape', 'wristR', 'faceR'],
+  snake: ['forearmR', 'neckSideL', 'upperArmL'],
+  script: ['wristR', 'neckSideR', 'forearmL'],
+  vine: ['ankleL', 'forearmR', 'neckSideL'],
+  dagger: ['forearmL', 'neckSideR', 'upperArmR'],
+  sun: ['upperArmL', 'nape', 'ankleR'],
+  swallow: ['neckSideL', 'upperArmR', 'wristL'],
+  band: ['upperArmR', 'upperArmL', 'ankleL'],
 }
 const SPOT_NAME = (s: TattooSpot) =>
   s
@@ -673,7 +651,7 @@ function doctorTiles(cat: Category, look: StudioLook): Tile[] {
   if (cat === 'tattoos') {
     const ink = '#1A1A22'
     const add: Tile[] = TATTOO_DESIGNS.map((d) => {
-      const spot = [...TATTOO_HOME[d], ...(['calfL', 'calfR', 'thighL', 'thighR', 'hipL', 'hipR'] as TattooSpot[])].find((s) => !look.tattoos.some((t) => t.at === s))
+      const spot = [...TATTOO_HOME[d], ...TATTOO_SPOTS].find((s) => !look.tattoos.some((t) => t.at === s))
       return {
         id: `ink:${d}`,
         label: `${d[0].toUpperCase()}${d.slice(1)} tattoo`,
@@ -762,45 +740,64 @@ function jewelleryTiles(look: StudioLook): Tile[] {
   ]
 }
 
+/** One shade lighter on the cast's skin-tone ladder (deepest first), from the nearest step. */
+export function lighterTone(tone: string, steps = 1): string {
+  const rgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
+  const t = rgb(tone)
+  let best = 0
+  let bd = Infinity
+  SKIN_TONES.forEach((c, i) => {
+    const d = rgb(c).reduce((s, v, k) => s + (v - t[k]) ** 2, 0)
+    if (d < bd) (bd = d), (best = i)
+  })
+  return SKIN_TONES[Math.max(0, Math.min(SKIN_TONES.length - 1, best + steps))]
+}
+
 function clinicTiles(cat: Category, look: StudioLook, catalog: CharacterCatalog): Tile[] {
   if (cat === 'tattoos' || cat === 'piercings' || cat === 'jewellery') return doctorTiles(cat, look)
-  const area = cat === 'clinicFace' ? ['face'] : ['body', 'hair']
-  return [
-    {
-      id: 'drip',
+  const area = cat === 'clinicFace' ? 'face' : 'body'
+  const tiles: Tile[] = PROCEDURES.filter((p) => p.area === area).map((p) => {
+    const applied = look.clinic[p.id] ?? 0
+    const why = unsupported(p, catalog)
+    return {
+      id: `clinic:${p.id}`,
+      label: p.name,
+      art: <Art kind={CLINIC_ART[p.id]} color="#F2B8C6" skin={look.skin.tone} />,
+      on: applied > 0,
+      blocked: why,
+      run: async () => {
+        const s = useStudio.getState()
+        s.setFraming(p.framing)
+        // no confirm dialogs: tap applies it (in full, so the change is obvious), tap again
+        // reverses it (and Undo always works)
+        if (applied > 0) return s.apply((l) => void delete l.clinic[p.id])
+        await runStep(wearStep(p.name, (l) => void (l.clinic[p.id] = 1), p.framing), { product: shadeProduct('#fff'), target: null, option: null })
+      },
+    }
+  })
+  if (area === 'face') {
+    // Glow drip: the skin one shade lighter (tap again: back to her own shade)
+    const on = (look.clinic.glowDrip ?? 0) > 0
+    tiles.unshift({
+      id: 'clinic:glowDrip',
       label: 'Glow drip',
       art: <Art kind="drip" color="#F2A33A" />,
-      on: look.care.glow > 0.7,
+      on,
       run: async () => {
+        const s = useStudio.getState()
+        s.setFraming('face')
+        if (on) return s.apply((l) => void ((l.skin.tone = lighterTone(l.skin.tone, -2)), delete l.clinic.glowDrip))
         await runStep(
           wearStep('Glow drip', (l) => {
-            l.care.glow = Math.min(1, l.care.glow + 0.4)
-            l.care.hydration = Math.min(1, l.care.hydration + 0.3)
-          }),
+            l.skin.tone = lighterTone(l.skin.tone, 2)
+            l.clinic.glowDrip = 1
+          }, 'face'),
           { product: shadeProduct('#fff'), target: null, option: null },
         )
       },
-    },
-    ...PROCEDURES.filter((p) => area.includes(p.area)).map((p) => {
-      const applied = look.clinic[p.id] ?? 0
-      const why = unsupported(p, catalog)
-      return {
-        id: `clinic:${p.id}`,
-        label: p.name,
-        art: <Art kind={CLINIC_ART[p.id]} color="#F2B8C6" skin={look.skin.tone} />,
-        on: applied > 0,
-        badge: applied > 0 ? `${Math.round(applied * 100)}%` : undefined,
-        blocked: why,
-        run: async () => {
-          const s = useStudio.getState()
-          s.setFraming(p.framing)
-          // no confirm dialogs: tap applies it, tap again reverses it (and Undo always works)
-          if (applied > 0) return s.apply((l) => void delete l.clinic[p.id])
-          await runStep(wearStep(p.name, (l) => void (l.clinic[p.id] = 0.6), p.framing), { product: shadeProduct('#fff'), target: null, option: null })
-        },
-      }
-    }),
-  ]
+    })
+  }
+  return tiles
 }
 
 /* ------------------------------------------------------------------ dispatch */

@@ -33,7 +33,7 @@ export function hairKind(style: HairId): HairKind {
 }
 
 /** What a takedown turns each braided style into. */
-export const TAKEDOWN_TO: Partial<Record<HairId, HairId>> = { fulani_braids: 'braid_out', box_braids: 'braid_out', knotless_braids: 'braid_out', twists: 'braid_out', cornrows: 'braid_out', bantu_knots: 'braid_out' }
+export const TAKEDOWN_TO: Partial<Record<HairId, HairId>> = { fulani_braids: 'braid_out', box_braids: 'braid_out', knotless_braids: 'braid_out', twists: 'braid_out', cornrows: 'braid_out', bantu_knots: 'braid_out', jayda_braids: 'braid_out', doechii_cornrows: 'braid_out' }
 /** Retwists keep the exact loc layout. */
 export const RETWIST_TO: Partial<Record<HairId, HairId>> = { locs: 'locs_retwist' }
 

@@ -87,7 +87,7 @@ class Base:
         self.in_body = np.array([any(g.group == gi and g.weight > 0.5 for g in v.groups) for v in me.vertices])
         nv = len(self.co)
         self.nv = nv
-        # Clothes rest on a smooth bust: the nipple and three rings around it are relaxed flat for
+        # Clothes rest on a smooth bust: the nipple and five rings around it are relaxed flat for
         # the garments' benefit only (the body itself is unchanged), so fitted tops, corsets and
         # dresses never show points poking through the fabric.
         if "nipple" in self.body.vertex_groups:
@@ -96,17 +96,17 @@ class Base:
             ee = np.empty(len(me.edges) * 2, dtype=np.int64)
             me.edges.foreach_get("vertices", ee)
             ee = ee.reshape(-1, 2)
-            for _ in range(3):
+            for _ in range(5):
                 r2 = ring.copy()
                 r2[ee[ring[ee[:, 0]], 1]] = True
                 r2[ee[ring[ee[:, 1]], 0]] = True
                 ring = r2
             deg = np.bincount(ee.ravel(), minlength=nv).astype(np.float64)
-            for _ in range(60):
+            for _ in range(90):
                 acc = np.zeros_like(self.co)
                 np.add.at(acc, ee[:, 0], self.co[ee[:, 1]])
                 np.add.at(acc, ee[:, 1], self.co[ee[:, 0]])
-                self.co[ring] += (acc[ring] / np.maximum(deg[ring], 1)[:, None] - self.co[ring]) * 0.6
+                self.co[ring] += (acc[ring] / np.maximum(deg[ring], 1)[:, None] - self.co[ring]) * 0.7
         # topology + normals of the mixed rest shape (helpers dropped so normals are the skin's)
         bm = bmesh.new()
         bm.from_mesh(me)

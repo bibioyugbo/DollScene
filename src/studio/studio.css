@@ -528,9 +528,6 @@
   .ds-medallion, .ds-ico-tilt, .ds-air, .ds-spin, .ds-swing, .ds-float, .ds-glint, .ds-twinkle-s, .ds-lipstick { animation: none; }
 }
 
-.ds-boot-line { animation: ds-boot-line 0.45s ease both; }
-@keyframes ds-boot-line { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .ds-boot-line { animation: none; } }
 
 /* "tap the pimple": a soft pulse that says "here" */
 .ds-spot {

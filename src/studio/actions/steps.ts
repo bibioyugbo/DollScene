@@ -87,17 +87,23 @@ const ASMR: Partial<Record<string, { kind: Sfx; every: number; after?: number }>
   patchOn: { kind: 'dab', every: 0.8 },
 }
 
+let stepSeq = 0
+
 export async function runStep(step: StepDef, ctx: Omit<StepCtx, 'look' | 'reduced'> & { reduced?: boolean }): Promise<ActionResult> {
   const store = useStudio.getState()
   if (!getCharacter()) {
     store.notify('Your doll is still getting ready. Try again in a moment.', 'info')
     return 'cancelled'
   }
-  // Let any running step settle (and roll back) before this one touches the look.
+  // Let any running step settle (and roll back) before this one touches the look. Taps can come
+  // faster than steps settle: only the LATEST tap goes on, and a step superseded while it ran never
+  // rolls the look back over the newer step's change (that left the old hairstyle stuck on).
+  const my = ++stepSeq
   if (current) {
     cancelAction()
     await current.catch(() => 'cancelled')
   }
+  if (my !== stepSeq) return 'cancelled'
   const reduced = ctx.reduced ?? (typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
   const full: StepCtx = { ...ctx, look: useStudio.getState().look, reduced }
   const blocked = step.blocked?.(full.look)
@@ -106,7 +112,12 @@ export async function runStep(step: StepDef, ctx: Omit<StepCtx, 'look' | 'reduce
     return 'cancelled'
   }
   resetAllFx()
-  if (step.mode === 'preview') useStudio.getState().preview((l) => step.apply(l, full))
+  if (step.mode === 'preview') {
+    // a clean base: a superseded step's leftover preview never leaks into this one
+    useStudio.getState().cancelPreview()
+    full.look = useStudio.getState().look
+    useStudio.getState().preview((l) => step.apply(l, full))
+  }
   step.before?.(full)
   let moves: Move[]
   try {
@@ -127,9 +138,10 @@ export async function runStep(step: StepDef, ctx: Omit<StepCtx, 'look' | 'reduce
   if (current === p) current = null
   resetAllFx()
   if (r === 'cancelled') {
-    if (step.mode === 'preview') useStudio.getState().cancelPreview()
+    if (step.mode === 'preview' && my === stepSeq) useStudio.getState().cancelPreview()
     return r
   }
+  if (my !== stepSeq) return 'cancelled'
   const s = useStudio.getState()
   if (step.mode === 'preview') s.commit()
   else s.apply((l) => step.apply(l, full))

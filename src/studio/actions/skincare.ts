@@ -78,7 +78,6 @@ export const PRODUCTS = {
   serum: [
     P('hydra-drops', 'Hydra Drops', 'Hydrating serum: plump and bouncy.', '#BFE3F7'),
     P('bright-10', 'Bright 10', 'Niacinamide-style serum: smoother looking skin.', '#F1E7C9'),
-    P('glow-oil', 'Glow Oil', 'Facial oil: a lit-from-within sheen.', '#E9B95A'),
     P('eye-wake', 'Eye Wake Serum', 'Light drops for the under-eyes.', '#E5D4F2'),
     P('spot-serum', 'Clear Spot Serum', 'Calms every visible spot at once.', '#D3EED2'),
   ],
@@ -525,10 +524,6 @@ export const SERUM: StepDef = {
     const c = l.care
     if (product.id === 'hydra-drops') c.hydration = clamp01(c.hydration + 0.25)
     if (product.id === 'bright-10') c.texture = clamp01(c.texture - 0.15)
-    if (product.id === 'glow-oil') {
-      c.glow = clamp01(c.glow + 0.2)
-      c.hydration = clamp01(c.hydration + 0.1)
-    }
     if (product.id === 'eye-wake') c.underEye = clamp01(c.underEye - 0.15)
     if (product.id === 'spot-serum') for (const id of Object.keys(c.spots) as SpotId[]) if (c.spots[id] === 'pimple' || c.spots[id] === 'popped') c.spots[id] = 'treated'
     markDone(l, 'serum')

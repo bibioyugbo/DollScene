@@ -475,7 +475,7 @@ export function applyLookToSkin(u: SkinUniforms, look: StudioLook, opts: { revea
   u.uBase.value.set(FINISH_ROUGH[m.foundationFinish], m.powder.amount * rv('powder') * (1 - m.setting * 0.6), m.setting * rv('setting'), m.foundation.amount * rv('foundation'))
   setLayer(u.uBrow, look.brows.color, BROW_FILL[look.brows.style])
   const clinic = opts.clinic ?? look.clinic
-  const hairline = Math.max(clinicEffect(look, 'hairline', clinic), clinicEffect(look, 'density', clinic) * 0.6)
+  const hairline = 0 // (the hairline and density procedures were retired)
   setLayer(u.uScalp, look.hair.color, look.hair.style === 'none' ? look.hair.crop : 0.35)
   setLayer(u.uNails, look.nails.color, look.nails.toes ? look.nails.amount : 0)
 

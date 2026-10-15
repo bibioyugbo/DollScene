@@ -26,7 +26,7 @@ import {
   type Texture,
 } from 'three'
 import { SkeletonUtils } from 'three-stdlib'
-import { clinicEffect, effectiveMorphs } from '../../shared/studio/clinic'
+import { effectiveMorphs } from '../../shared/studio/clinic'
 import { ALL_MORPHS, EXPRESSIONS, PIECE_SLOTS, SPOT_IDS, TATTOO_SPOTS, type ClinicId, type ExpressionId, type HairId, type MorphId, type PieceSlot, type SpotId, type StudioLook, type Worn } from '../../shared/studio/look'
 import { actionProps, getCharacter, headNormal, headUp, isRunning, landmarkNormal, setCharacter, stepActions, type Character } from '../actions/engine'
 import { fx } from '../state/fx'
@@ -287,7 +287,7 @@ function tintHair(mat: MeshStandardMaterial, u: HairUniforms, l: StudioLook) {
   skinColor(l.skin.tone, l.skin.undertone, u.uPartColor.value).multiplyScalar(0.68)
 }
 
-function HairModule({ id, base, registry, look, head, headLocalC, mode = 0, dir = 0, wetAs, clinic, onLoaded }: HairModuleProps) {
+function HairModule({ id, base, registry, look, head, headLocalC, mode = 0, dir = 0, wetAs, onLoaded }: HairModuleProps) {
   const tinted = useRef<{ mat: MeshStandardMaterial; u: HairUniforms }[]>([])
   const meshes = useRef<Mesh[]>([])
   const lookRef = useRef(look)
@@ -334,7 +334,7 @@ function HairModule({ id, base, registry, look, head, headLocalC, mode = 0, dir 
       wet: Math.max(look.hair.care.wet, fx.hair.wet),
       foam: fx.hair.foam,
       cream: fx.hair.cream,
-      density: clinicEffect(look, 'density', clinic),
+      density: 0,
       response,
       sections,
       mode,

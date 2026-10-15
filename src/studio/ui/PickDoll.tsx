@@ -105,7 +105,7 @@ function SignIn({ wide, onDone, onRegister }: { wide: boolean; onDone: () => voi
         <span className="sr-only">Password</span>
         <input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" type="password" autoComplete="current-password" className={field} />
       </label>
-      <button type="submit" disabled={busy} aria-label="Sign in" className="ds-cta mt-12 flex h-14 w-[62%] min-w-[200px] items-center justify-center gap-2 self-center rounded-2xl text-[18px] font-black tracking-tight disabled:opacity-60">
+      <button type="submit" disabled={busy} aria-label="Sign in" className="ds-cta mt-12 flex h-[76px] w-[62%] min-w-[200px] items-center justify-center gap-2 self-center rounded-2xl text-[18px] font-black tracking-tight disabled:opacity-60">
         {busy ? 'Signing in…' : 'Enter'}
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M9 5l7 7-7 7" />
@@ -249,7 +249,7 @@ export function PickDoll({ wide, size: vp, catalog, onNext }: { wide: boolean; s
               type="submit"
               disabled={checking}
               aria-label={localError ? `Enter (${localError})` : 'Enter DollScene'}
-              className="ds-cta pointer-events-auto mt-12 flex h-14 w-[62%] min-w-[200px] items-center justify-center gap-2 self-center rounded-2xl text-[18px] font-black tracking-tight disabled:opacity-60"
+              className="ds-cta pointer-events-auto mt-12 flex h-[76px] w-[62%] min-w-[200px] items-center justify-center gap-2 self-center rounded-2xl text-[18px] font-black tracking-tight disabled:opacity-60"
             >
               {checking ? 'Creating…' : 'Enter'}
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
